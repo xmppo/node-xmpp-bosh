@@ -15,6 +15,8 @@ var MAX_DATA_HELD_BYTES = 30000;
 // BOSH session.
 var MAX_BOSH_CONNECTIONS = 3;
 
+// The maximum number of packets on either side of the current 'rid'
+// that we are willing to accept.
 var WINDOW_SIZE = 2;
 
 
@@ -238,13 +240,12 @@ exports.createServer = function(options) {
 
 	function is_valid_packet(node, state) {
 		console.log("is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
-		return state && node.attrs.sid && node.attrs.rid && 
-			node.attrs.rid > state.rid && node.attrs.rid < state.rid + state.window + 1;
-		// TODO: Allow variance of "window" rids.
-	}
 
-	function increment_rid(state) {
-		state.rid += 1;
+		// Allow variance of "window" rids on either side. This is in violation
+		// of the XEP though.
+		return state && node.attrs.sid && node.attrs.rid && 
+			node.attrs.rid > state.rid - state.window && 
+			node.attrs.rid < state.rid + state.window + 1;
 	}
 
 	function get_state(node) {
@@ -392,6 +393,7 @@ exports.createServer = function(options) {
 	}
 
 	function send_no_requeue(ro, state, response) {
+		/* Send a response, but do NOT requeue if it fails */
 		console.log("send_no_requeue()");
 		ro.res.on('error', function() { });
 
@@ -412,6 +414,7 @@ exports.createServer = function(options) {
 	}
 
 	function send_or_queue(ro, response, sstate) {
+		/* Send a response and requeue if the sending fails */
 		console.log("send_or_queue::ro:", ro != null);
 		if (ro) {
 			// On error, try the next one or start the timer if there
@@ -582,6 +585,7 @@ exports.createServer = function(options) {
 				var sstate = null;
 
 				if (sname) {
+					// The stream name is included in the BOSH request.
 					sstate = sn_state[sname];
 
 					// If the stream name is present, but the stream is not valid, we
@@ -594,6 +598,7 @@ exports.createServer = function(options) {
 
 
 				if (!sid) {
+					// No stream ID in BOSH request. Not phare enuph.
 					res.destroy();
 					return;
 				}
@@ -602,6 +607,8 @@ exports.createServer = function(options) {
 
 				// Are we the only stream for this BOSH session?
 				if (state && state.streams.length == 1) {
+					// Yes, we are. Let's pretend that the stream name came along
+					// with this request.
 					sstate = sn_state[state.streams[0]];
 				}
 
@@ -612,22 +619,27 @@ exports.createServer = function(options) {
 					return;
 				}
 
-				if (node.attrs.rid == state.rid + 1) {
-					increment_rid(state);
-				}
+				// Set the current rid to the max. RID we have received till now.
+				state.rid = Math.max(state.rid, node.attrs.rid);
 
-				// The client has enabled ACKs.
+				// Has the client has enabled ACKs?
 				if (state.ack) {
+					/* Begin ACK handling */
+
 					var _uar_keys = dutil.get_keys(state.unacked_responses);
 					if (_uar_keys.length > WINDOW_SIZE * 4 /* We are fairly generous */) {
-						// The client seems to be buggy. We turn off ACKs
+						// The client seems to be buggy. It has not ACKed the
+						// last WINDOW_SIZE * 4 requests. We turn off ACKs.
 						delete state.ack;
 						state.unacked_responses = { };
 					}
 
 					if (node.attrs.ack) {
+						// If the request from the client includes an ACK, we delete all
+						// packets with an 'rid' less than or equal to this value since
+						// the client has seen all those packets.
 						_uar_keys.forEach(function(rid) {
-							if (rid < node.attrs.ack) {
+							if (rid <= node.attrs.ack) {
 								delete state.unacked_responses[rid];
 							}
 						});
@@ -638,13 +650,17 @@ exports.createServer = function(options) {
 						&& node.attrs.ack < state.max_rid_sent 
 						&& state.unacked_responses[node.attrs.ack]) {
 							var _ts = state.unacked_responses[node.attrs.ack];
-							// We inject a response packet into the pending queue.
+
+							// We inject a response packet into the pending queue to 
+							// notify the client that it _may_ have missed something.
 							state.pending = new ltx.Element('body', {
 								report: node.attrs.ack + 1, 
 								time: new Date() - _ts, 
 								xmlns: 'http://jabber.org/protocol/httpbind'
 							});
 					}
+
+					/* End ACK handling */
 				}
 
 				// Add to held response objects for this BOSH session
