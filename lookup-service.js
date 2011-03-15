@@ -4,8 +4,14 @@ function XMPPLookupService(domain_name, server_name) {
 	this._domain_name = domain_name;
 	this._server_name = server_name;
 
-	if (domain_name in { "gmail.com": 1, "talk.google.com": 1, "chat.facebook.com": 1} ) {
-		this._server_name = domain_name;
+	var _special = {
+		"gmail.com": "talk.google.com", 
+		"talk.google.com": "talk.google.com", 
+		"chat.facebook.com": "chat.facebook.com"
+	};
+
+	if (domain_name in _special) {
+		this._server_name = _special[domain_name];
 	}
 }
 

@@ -4,6 +4,11 @@ var us     = require('./underscore.js');
 var dutil  = require('./dutil.js');
 
 
+var NS_XMPP_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
+var NS_STREAM = 'http://etherx.jabber.org/streams';
+var NS_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams';
+
+
 function XMPPProxy(xmpp_host, lookup_service, void_star) {
 	this._xmpp_host = xmpp_host;
 	this._void_star = void_star;
@@ -21,15 +26,62 @@ XMPPProxy.prototype = new _ee.EventEmitter();
 exports.Proxy = XMPPProxy;
 
 dutil.extend(XMPPProxy.prototype, {
-	connect: function() {
-		console.log(this);
-		this._sock = new net.Stream(); 
-			// net.createConnection(this._port, this._host);
+	_detach_handlers: function() {
+		this._sock.removeAllListeners('connect');
+		this._sock.removeAllListeners('data');
+		this._sock.removeAllListeners('error');
+	}, 
 
+	_attach_handlers: function() {
 		this._sock.on('connect', dutil.hitch(this, this._on_connect));
 		this._sock.on('data',    dutil.hitch(this, this._on_data));
 		this._sock.on('error',   dutil.hitch(this, this._on_error));
+		// TODO: Handle the 'end' event.
+	}, 
 
+	_starttls: function() {
+		var self = this;
+		this._detach_handlers();
+
+		var ct = require('./starttls.js')(this._sock, { }, function() {
+			// Restart the stream.
+			self.restart();
+	    });
+
+	    // The socket is now the cleartext stream
+		this._sock = ct;
+
+		self._attach_handlers();
+	},
+
+	_on_stanza: function(stanza) {
+		// Check if this is a STARTTLS request or response.
+		console.log("Is stream:features?", stanza.is('features'));
+		console.log("logging starttls:", stanza.getChild('starttls'));
+		if (stanza.is('features') &&
+			stanza.getChild('starttls')) {
+			/* Signal willingness to perform TLS handshake */
+			console.log("STARTTLS requested");
+			var _starttls_request = 
+				new ltx.Element('starttls', {
+					xmlns: NS_XMPP_TLS
+				}).toString();
+			console.log("Writing out STARTTLS request:", _starttls_request);
+			this.send(_starttls_request);
+		} else if (stanza.is('proceed')) {
+	        /* Server is waiting for TLS handshake */
+		    this._starttls();
+		}
+		else {
+			// No it is neither. We just handle it as a normal stanza.
+			this.emit('stanza', stanza, this._void_star);
+		}
+	},
+
+	connect: function() {
+		// console.log(this);
+		this._sock = new net.Stream();
+		this._attach_handlers();
 		this._lookup_service.connect(this._sock);
 
 		this._stream_start_xml = 
@@ -105,7 +157,7 @@ dutil.extend(XMPPProxy.prototype, {
 					stanza.attrs["xmlns:stream"] = 'http://etherx.jabber.org/streams';
 					stanza.attrs["xmlns"] = 'jabber:client';
 					console.log("Emiting stanza:", stanza);
-					self.emit('stanza', stanza, self._void_star);
+					self._on_stanza(stanza);
 				}
 				catch (ex) {
 					// Eat the exception.

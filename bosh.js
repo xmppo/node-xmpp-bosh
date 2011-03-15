@@ -230,6 +230,7 @@ exports.createServer = function(options) {
 	function is_valid_packet(node, state) {
 		return state && node.attrs.sid && node.attrs.rid && 
 			node.attrs.rid == state.rid + 1;
+		// TODO: Allow variance of "window" rids.
 	}
 
 	function increment_rid(state) {
@@ -368,7 +369,7 @@ exports.createServer = function(options) {
 		// If no one picks up this packet within state.inactivity second, 
 		// we should report back to the connector.
 		var to = setTimeout(function() {
-			var _index = held.pending.indexOf(_po);
+			var _index = state.pending.indexOf(_po);
 			state.pending.splice(_index, 1);
 			bee.emit('no-client', connector_response);
 		}, state.inactivity * 1000);
