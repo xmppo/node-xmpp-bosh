@@ -39,8 +39,8 @@ bosh_server.on('stream-restart', function(sstate) {
 	conn.stream_restart(sstate);
 });
 
-bosh_server.on('stream-terminate', function(stream_name) {
-	conn.stream_terminate(stream_name);
+bosh_server.on('stream-terminate', function(sstate) {
+	conn.stream_terminate(sstate);
 });
 
 bosh_server.on('no-client', function(response) {

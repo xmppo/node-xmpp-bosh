@@ -195,7 +195,7 @@ exports.createServer = function(options) {
 	function session_terminate(state) {
 		state.res.forEach(function(res) {
 			try {
-				res.destroy();
+				res.res.destroy();
 			}
 			catch (ex) {
 				console.error("session_terminate::Caught exception '" + ex + "' while destroying socket");
@@ -637,7 +637,7 @@ exports.createServer = function(options) {
 				// Set the current rid to the max. RID we have received till now.
 				state.rid = Math.max(state.rid, node.attrs.rid);
 
-				// Has the client has enabled ACKs?
+				// Has the client enabled ACKs?
 				if (state.ack) {
 					/* Begin ACK handling */
 
@@ -718,7 +718,8 @@ exports.createServer = function(options) {
 						if (stanzas.length > 0) {
 							emit_stanzas_event(stanzas, state, sstate);
 						}
-						bee.emit('stream-terminate', sstate.name);
+						stream_terminate(sstate, state)
+						bee.emit('stream-terminate', sstate);
 					});
 
 

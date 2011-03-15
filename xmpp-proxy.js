@@ -96,6 +96,10 @@ dutil.extend(XMPPProxy.prototype, {
 	},
 
 	terminate: function() {
+		// Detach the data handler so that we don't get any more events.
+		this._sock.removeAllListeners('data');
+
+		// Write the stream termination tag
 		this._sock.write("</stream:stream>");
 		this._sock.destroy();
 	},
