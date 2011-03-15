@@ -128,6 +128,9 @@ dutil.extend(XMPPProxy.prototype, {
 				var gt_pos = this._buff.search(">");
 				if (gt_pos != -1) {
 					console.log("Got stream packet");
+					var _ss_stanza = this._buff.substring(0, gt_pos) + "</:stream:stream>";
+					// TODO: Parse _ss_stanza and extract the attributes.
+
 					this._buff = this._buff.substring(gt_pos+1);
 				}
 				this._first = false;

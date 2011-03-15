@@ -68,6 +68,8 @@ function inflated_attrs(node) {
 
 // Begin packet type checkers
 function is_session_creation_packet(node) {
+	// Coded according to the rules mentioned here:
+	// http://xmpp.org/extensions/xep-0124.html#session-request
 	var ia = inflated_attrs(node);
 	return node.attrs.to && node.attrs['xml:lang'] &&
 		node.attrs.ver && node.attrs.wait &&
@@ -77,6 +79,9 @@ function is_session_creation_packet(node) {
 
 
 function is_stream_restart_packet(node) {
+	// Coded according to the rules mentioned here:
+	// http://xmpp.org/extensions/xep-0206.html#create and
+	// http://xmpp.org/extensions/xep-0206.html#preconditions-sasl
 	var ia = inflated_attrs(node);
 	return ia["urn:xmpp:xbosh:restart"] == "true" && 
 		node.attrs['to'] && 
@@ -84,6 +89,8 @@ function is_stream_restart_packet(node) {
 }
 
 function is_stream_add_request(node) {
+	// Coded according to the rules mentioned here:
+	// http://xmpp.org/extensions/xep-0124.html#multi-add
 	return node.attrs.to && 
 		node.attrs.sid && 
 		node.attrs.rid && 
@@ -92,6 +99,8 @@ function is_stream_add_request(node) {
 }
 
 function is_stream_terminate_request(node) {
+	// Coded according to the rules mentioned here:
+	// http://xmpp.org/extensions/xep-0124.html#terminate
 	return node.attrs.sid && 
 		node.attrs.rid && 
 		node.attrs.type == "terminate";
@@ -117,6 +126,7 @@ exports.createServer = function(options) {
 	//     hold:
 	//     res: [ An array of HTTP response objects ]
 	//     pending: [ An array of pending responses to send to the client ]
+	//     ... and other jazz ...
 	//   }
 	// }
 	//
@@ -761,3 +771,9 @@ exports.createServer = function(options) {
 	return bee;
 
 };
+
+// TODO: Handle error conditions comprehensively
+// http://xmpp.org/extensions/xep-0124.html#schema
+
+// TODO: Terminate the connection with the XMPP server after X units of time.
+// However, this logic will go inside the Connector, not anywhere else.
