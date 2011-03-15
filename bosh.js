@@ -430,7 +430,7 @@ exports.createServer = function(options) {
 		console.log("send pending responses:", state.pending.length);
 
 		if (state.pending.length > 0) {
-			var ro = get_response_object(_po.sstate);
+			var ro = get_response_object(state);
 			var _po = state.pending.shift();
 			send_or_queue(ro, _po.response, _po.sstate);
 		}

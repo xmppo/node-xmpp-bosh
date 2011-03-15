@@ -66,12 +66,16 @@ dutil.extend(XMPPProxy.prototype, {
 		if (this._first) {
 			// TODO: Parse and save attribites from the first response
 			// so that we may replay them in all subsequent responses.
-			var gt_pos = this._buff.search(">");
-			if (gt_pos != -1) {
-				console.log("Got stream packet");
-				this._buff = this._buff.substring(gt_pos+1);
+			var ss_pos = this._buff.search("<stream:stream");
+			if (ss_pos != -1) {
+				this._buff = this._buff.substring(ss_pos);
+				var gt_pos = this._buff.search(">");
+				if (gt_pos != -1) {
+					console.log("Got stream packet");
+					this._buff = this._buff.substring(gt_pos+1);
+				}
+				this._first = false;
 			}
-			this._first = false;
 		}
 
 		// console.log("buff is:", this._buff);
