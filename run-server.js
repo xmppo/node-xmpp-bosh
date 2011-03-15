@@ -1,6 +1,4 @@
 var bosh  = require('./bosh.js');
-var nh    = require('./null-handler.js');
-// var cbh   = require('./callback-handler.js');
 var us    = require('./underscore.js');
 var dutil = require('./dutil.js');
 var xpc   = require('./xmpp-proxy-connector.js');
@@ -10,13 +8,7 @@ var xpc   = require('./xmpp-proxy-connector.js');
 
 // Instantiate a bosh server with the connector as a parameter.
 var bosh_server = bosh.createServer({
-	filters: [{
-		path: nh.re,
-		handler: nh
-	}/*, {
-		path: cbh.re, // /^\/http-bind\/callback\//, 
-		handler: cbh
-	}*/], 
+	path: /^\/http-bind\/$/, 
 	port: 8081
 });
 

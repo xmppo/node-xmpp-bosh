@@ -1,15 +1,13 @@
-var net   = require('net');
-var ltx   = require('ltx');
-var us    = require('./underscore.js');
-var dutil = require('./dutil.js');
+var net    = require('net');
+var ltx    = require('ltx');
+var us     = require('./underscore.js');
+var dutil  = require('./dutil.js');
 
 
-
-function XMPPProxy(port, host, xmpp_host, void_star) {
-	this._port = port;
-	this._host = host;
-	this._xmpp_host = xmpp_host || host;
+function XMPPProxy(xmpp_host, lookup_service, void_star) {
+	this._xmpp_host = xmpp_host;
 	this._void_star = void_star;
+	this._lookup_service = lookup_service;
 
 	this._buff = '';
 	this._first = true;
@@ -25,10 +23,14 @@ exports.Proxy = XMPPProxy;
 dutil.extend(XMPPProxy.prototype, {
 	connect: function() {
 		console.log(this);
-		this._sock = net.createConnection(this._port, this._host);
+		this._sock = new net.Stream(); 
+			// net.createConnection(this._port, this._host);
+
 		this._sock.on('connect', dutil.hitch(this, this._on_connect));
 		this._sock.on('data',    dutil.hitch(this, this._on_data));
 		this._sock.on('error',   dutil.hitch(this, this._on_error));
+
+		this._lookup_service.connect(this._sock);
 
 		this._stream_start_xml = 
 			dutil.sprintf("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' to='%s' version='%s'>", 
@@ -62,6 +64,8 @@ dutil.extend(XMPPProxy.prototype, {
 		this._buff += d.toString();
 
 		if (this._first) {
+			// TODO: Parse and save attribites from the first response
+			// so that we may replay them in all subsequent responses.
 			var gt_pos = this._buff.search(">");
 			if (gt_pos != -1) {
 				console.log("Got stream packet");

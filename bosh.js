@@ -6,6 +6,16 @@ var dutil = require('./dutil.js');
 var us    = require('./underscore.js');
 
 
+
+// The maximum number of bytes that the BOSH server will 
+// "hold" from the client.
+var MAX_DATA_HELD_BYTES = 30000;
+
+// Don't entertain more than 3 simultaneous connections on any
+// BOSH session.
+var MAX_BOSH_CONNECTIONS = 3;
+
+
 function xml_parse(xml) {
 	var node = null;
 	xml = xml.trim();
@@ -87,11 +97,11 @@ function is_stream_terminate_request(node) {
 
 
 
-// options: { filters: [], port: }
+// options: { path: , port: }
 exports.createServer = function(options) {
 
-	var nf   = options.filters.length;
-	var filters = options.filters;
+	var path = options.path;
+	var port = options.port;
 
 	// This encapsulates the state for the BOSH session
 	//
@@ -129,20 +139,19 @@ exports.createServer = function(options) {
 	// hold:
 	// content: 
 	// The stream name is independent of the state
-	function new_state_object(options, filter, res) {
-		options.filter = filter;
+	function new_state_object(options, res) {
 		options.res = [ ];
 		options.pending = [ ];
 		options.streams = [ ];
 		options.inactivity = 120;
-		add_held_http_connection(options, filter, res);
+		add_held_http_connection(options, res);
 
 		return options;
 	}
 
 
 	// Begin session handlers
-	function session_create(node, filter, res) {
+	function session_create(node, res) {
 		var sid = uuid();
 		var opt = {
 			sid: sid, 
@@ -156,14 +165,19 @@ exports.createServer = function(options) {
 			opt.content = node.attrs.content;
 		}
 
-		var state = new_state_object(opt, filter, res);
+		var state = new_state_object(opt, res);
 		sid_state[sid] = state;
 		return state;
 	}
 
-	function session_terminate(node, state) {
+	function session_terminate(state) {
 		state.res.forEach(function(res) {
-			res.destroy();
+			try {
+				res.destroy();
+			}
+			catch (ex) {
+				console.error("session_terminate::Caught exception '" + ex + "' while destroying socket");
+			}
 		});
 
 		state.res = [ ];
@@ -229,9 +243,21 @@ exports.createServer = function(options) {
 	}
 
 
-	function add_held_http_connection(state, filter, res) {
+	function add_held_http_connection(state, res) {
+		// If a client makes more connections than allowed, trim them.
+		// http://xmpp.org/extensions/xep-0124.html#overactive
+
+		if (state.res.length >= MAX_BOSH_CONNECTIONS) {
+			// Just send the termination message and destroy the socket.
+			var _ro = {
+				res: res, 
+				to: null
+			};
+			send_session_terminate(_ro, state, 'policy-violation');
+			session_terminate(state);
+		}
+
 		var ro = {
-			filter: filter, 
 			res: res, 
 			// timeout the connection if no one uses it for more than state.wait sec.
 			to: setTimeout(function() {
@@ -244,10 +270,11 @@ exports.createServer = function(options) {
 				// Send back an empty body element.
 				send_no_requeue(ro, new ltx.Element('body', {
 					xmlns: 'http://jabber.org/protocol/httpbind'
-				}).toString());
+				}));
 			}, state.wait/6 /* For testing */ * 1000)
 		};
 		state.res.push(ro);
+
 		return state;
 	}
 
@@ -287,8 +314,7 @@ exports.createServer = function(options) {
 			from:       sstate.to, 
 			content:    state.content, 
 			// secure:     'false', 
-			// authid:     'b077a9e9', 
-			// "window":   3
+			// "window":   3 // TODO: Handle window size mismatches
 		});
 
 		send_or_queue(ro, response, sstate);
@@ -358,29 +384,26 @@ exports.createServer = function(options) {
 			"Content-Type": "text/xml"
 		});
 
-		ro.res.end(response);
+		ro.res.end(response.toString());
 	}
 
 	function send_or_queue(ro, response, sstate) {
 		if (ro) {
-			ro.filter.handler.post_handler(response, function(post_handler_response) {
+			// On error, try the next one or start the timer if there
+			// is nothing left to try.
+			ro.res.on('error', function() {
+				var _ro = get_response_object(sstate);
 
-				// On error, try the next one or start the timer if there
-				// is nothing left to try.
-				ro.res.on('error', function() {
-					var _ro = get_response_object(sstate);
-
-					if (_ro) {
-						// Try the next one
-						send_or_queue(_ro, response, sstate);
-					}
-					else {
-						on_no_client_found(response, sstate);
-					}
-				});
-
-				send_no_requeue(ro, post_handler_response);
+				if (_ro) {
+					// Try the next one
+					send_or_queue(_ro, response, sstate);
+				}
+				else {
+					on_no_client_found(response, sstate);
+				}
 			});
+
+			send_no_requeue(ro, response);
 		}
 		else {
 			// No HTTP connection for sending the response exists.
@@ -411,6 +434,18 @@ exports.createServer = function(options) {
 			var _po = state.pending.shift();
 			send_or_queue(ro, _po.response, _po.sstate);
 		}
+	}
+
+	function send_session_terminate(ro, state, condition) {
+		var attrs = {
+			xmlns:      'http://jabber.org/protocol/httpbind', 
+			sid:        state.sid, 
+			type:       'terminate', 
+			condition:  condition
+		};
+		var response = new ltx.Element('body', attrs);
+
+		send_no_requeue(ro, response);
 	}
 
 
@@ -444,12 +479,13 @@ exports.createServer = function(options) {
 	bee.addListener('terminate', function(sstate) {
 		// We send a terminate response to the client.
 		var ro = get_response_object(sstate);
-		var response = new ltx.Element('body', {
+		var attrs = {
 			xmlns:      'http://jabber.org/protocol/httpbind', 
 			stream:     sstate.name, 
 			sid:        sstate.state.sid, 
 			type:       'terminate'
-		});
+		};
+		var response = new ltx.Element('body', attrs);
 
 		stream_terminate(sstate, sstate.state);
 		send_or_queue(ro, response, sstate);
@@ -462,9 +498,22 @@ exports.createServer = function(options) {
 		console.log("Someone connected. u:", u);
 
 		var data = [];
+		var data_len = 0;
 
 		req.on('data', function(d) {
-			data.push(d.toString());
+			var _d = d.toString();
+			data_len += d.length;
+
+			// Prevent attacks. If data (in its entirety) gets too big, 
+			// terminate the connection.
+			if (data_len > MAX_DATA_HELD_BYTES) {
+				// Terminate the connection
+				data = [];
+				req.destroy();
+				return;
+			}
+
+			data.push(_d);
 		})
 		.on('end', function() {
 			var node = xml_parse(data.join(""));
@@ -476,25 +525,15 @@ exports.createServer = function(options) {
 			}
 
 			var state = get_state(node);
-			var f = null;
+			var ppos = u.pathname.search(path);
 
-			for (var i = 0; i < nf; ++i) {
-				f = filters[i];
-
-				// console.log("Matching against:", f);
-
-				if (u.pathname.search(f.path) == 0) {
-					break;
-				}
-				f = null;
-			}
-
-			if (!f) {
+			if (req.method != "POST" || ppos == -1) {
+				console.error("Invalid request");
 				res.destory();
 				return;
 			}
 
-			console.log("Matched handler:", f);
+			console.log("Processing request");
 
 			// Get the array of XML stanzas.
 			var stanzas = node.children;
@@ -504,7 +543,7 @@ exports.createServer = function(options) {
 			// Check if this is a session start packet.
 			if (is_session_creation_packet(node)) {
 				console.log("Session creation");
-				var state  = session_create(node, f, res);
+				var state  = session_create(node, res);
 				var sstate = stream_add(state, node);
 
 				// Respond to the client.
@@ -550,7 +589,7 @@ exports.createServer = function(options) {
 				increment_rid(state);
 
 				// Add to held response objects for this BOSH session
-				add_held_http_connection(state, f, res);
+				add_held_http_connection(state, res);
 
 				// Process pending (queued) responses (if any)
 				send_pending_responses(state);
@@ -596,7 +635,7 @@ exports.createServer = function(options) {
 					// Terminate the session if all streams in this session have
 					// been terminated.
 					if (state.streams.length == 0) {
-						session_terminate(node, state);
+						session_terminate(state);
 					}
 					
 					// Once a stream is terminated, there is no point sending 
@@ -613,7 +652,12 @@ exports.createServer = function(options) {
 			}
 			
 
-		}); // on('end')
+		}) // on('end')
+
+		.on('error', function(ex) {
+			console.error("Exception while processing request: " + ex);
+			console.error(ex.stack);
+		});
 
 	});
 

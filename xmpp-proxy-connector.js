@@ -1,6 +1,7 @@
-var xp    = require('./xmpp-proxy.js');
-var us    = require('./underscore.js');
-var dutil = require('./dutil.js');
+var xp     = require('./xmpp-proxy.js');
+var us     = require('./underscore.js');
+var dutil  = require('./dutil.js');
+var lookup = require('./lookup-service.js');
 
 
 function XMPPProxyConnector(bosh_server) {
@@ -11,7 +12,7 @@ function XMPPProxyConnector(bosh_server) {
 	//   stream_name: {
 	//     sstate: sstate, 
 	//     proxy: The XMPP proxy object for this stream, 
-	//     pending: [ An array of pending outgoing stanzas ]
+	//     pending: [ An array of pending outgoing stanzas ] // TODO: This needs to be populated
 	//   }
 	// }
 	//
@@ -52,7 +53,10 @@ XMPPProxyConnector.prototype = {
 		}
 
 		// Create a new stream.
-		var proxy = new this.Proxy(5222, "xmpp2.chat.pw", "directi.com", sstate);
+		var proxy = new this.Proxy(sstate.to, 
+			new lookup.LookupService(sstate.to), 
+			sstate);
+
 		var stream = {
 			sstate: sstate, 
 			proxy: proxy, 
