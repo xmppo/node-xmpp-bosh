@@ -147,9 +147,20 @@ exports.createServer = function(options) {
 		options.res = [ ];
 		options.pending = [ ];
 		options.streams = [ ];
+
+		// A set of responses that have been sent by the BOSH server, but
+		// not yet ACKed by the client.
+		// Format: { rid: new Date() }
 		options.unacked_responses = { };
+
+		// The Max value of the 'rid' (request ID) that has been 
+		// sent by BOSH to the client. i.e. The highest request ID
+		// responded to by us.
 		options.max_rid_sent = options.rid - 1;
+
+		// TODO: How much inactivity can we tolerate (in sec)?
 		options.inactivity = 120;
+
 		options.window = WINDOW_SIZE;
 		add_held_http_connection(options, options.rid, res);
 
@@ -330,7 +341,7 @@ exports.createServer = function(options) {
 			// secure:     'false', 
 			// 'ack' is set by the client. If the client sets 'ack', then we also
 			// do acknowledged request/response.
-			"window":   WINDOW_SIZE // TODO: Handle window size mismatches
+			"window":   WINDOW_SIZE // Handle window size mismatches
 		});
 
 		send_or_queue(ro, response, sstate);
@@ -477,7 +488,9 @@ exports.createServer = function(options) {
 	}
 
 
-
+	// The BOSH event emitter. People outside will subscribe to
+	// events from this guy. We return an instance of BoshEventEmitter
+	// to the outside world when anyone calls createServer()
 	function BoshEventEmitter() {
 	}
 
@@ -504,6 +517,8 @@ exports.createServer = function(options) {
 	});
 
 	// This event is raised when the server terminates the connection.
+	// The Connector typically raises this even so that we can tell
+	// the client that such an event has occurred.
 	bee.addListener('terminate', function(sstate) {
 		// We send a terminate response to the client.
 		var ro = get_response_object(sstate);
