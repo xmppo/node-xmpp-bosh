@@ -15,6 +15,8 @@ var MAX_DATA_HELD_BYTES = 30000;
 // BOSH session.
 var MAX_BOSH_CONNECTIONS = 3;
 
+var WINDOW_SIZE = 2;
+
 
 function xml_parse(xml) {
 	var node = null;
@@ -143,8 +145,11 @@ exports.createServer = function(options) {
 		options.res = [ ];
 		options.pending = [ ];
 		options.streams = [ ];
+		options.unacked_responses = { };
+		options.max_rid_sent = options.rid - 1;
 		options.inactivity = 120;
-		add_held_http_connection(options, res);
+		options.window = WINDOW_SIZE;
+		add_held_http_connection(options, options.rid, res);
 
 		return options;
 	}
@@ -163,6 +168,10 @@ exports.createServer = function(options) {
 
 		if (node.attrs.content) {
 			opt.content = node.attrs.content;
+		}
+
+		if (node.attrs.ack) {
+			opt.ack = 1;
 		}
 
 		var state = new_state_object(opt, res);
@@ -228,8 +237,9 @@ exports.createServer = function(options) {
 
 
 	function is_valid_packet(node, state) {
+		console.log("is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
 		return state && node.attrs.sid && node.attrs.rid && 
-			node.attrs.rid == state.rid + 1;
+			node.attrs.rid > state.rid && node.attrs.rid < state.rid + state.window + 1;
 		// TODO: Allow variance of "window" rids.
 	}
 
@@ -244,7 +254,7 @@ exports.createServer = function(options) {
 	}
 
 
-	function add_held_http_connection(state, res) {
+	function add_held_http_connection(state, rid, res) {
 		// If a client makes more connections than allowed, trim them.
 		// http://xmpp.org/extensions/xep-0124.html#overactive
 
@@ -252,7 +262,8 @@ exports.createServer = function(options) {
 			// Just send the termination message and destroy the socket.
 			var _ro = {
 				res: res, 
-				to: null
+				to: null, 
+				rid: rid // This is the 'rid' of the request associated with this response.
 			};
 			send_session_terminate(_ro, state, 'policy-violation');
 			session_terminate(state);
@@ -260,6 +271,7 @@ exports.createServer = function(options) {
 
 		var ro = {
 			res: res, 
+			rid: rid, // This is the 'rid' of the request associated with this response.
 			// timeout the connection if no one uses it for more than state.wait sec.
 			to: setTimeout(function() {
 				var pos = state.res.indexOf(ro);
@@ -269,7 +281,7 @@ exports.createServer = function(options) {
 				// Remove self from list of held connections.
 				state.res.splice(pos, 1);
 				// Send back an empty body element.
-				send_no_requeue(ro, new ltx.Element('body', {
+				send_no_requeue(ro, state, new ltx.Element('body', {
 					xmlns: 'http://jabber.org/protocol/httpbind'
 				}));
 			}, state.wait/6 /* For testing */ * 1000)
@@ -310,12 +322,14 @@ exports.createServer = function(options) {
 			ver:        state.ver, 
 			polling:    20, 
 			inactivity: 60, 
-			requests:   2, 
+			requests:   WINDOW_SIZE, 
 			hold:       state.hold, 
 			from:       sstate.to, 
 			content:    state.content, 
 			// secure:     'false', 
-			// "window":   3 // TODO: Handle window size mismatches
+			// 'ack' is set by the client. If the client sets 'ack', then we also
+			// do acknowledged request/response.
+			"window":   WINDOW_SIZE // TODO: Handle window size mismatches
 		});
 
 		send_or_queue(ro, response, sstate);
@@ -371,13 +385,14 @@ exports.createServer = function(options) {
 		var to = setTimeout(function() {
 			var _index = state.pending.indexOf(_po);
 			state.pending.splice(_index, 1);
-			bee.emit('no-client', connector_response);
+			bee.emit('no-client', response);
 		}, state.inactivity * 1000);
 
 		_po.to = to;
 	}
 
-	function send_no_requeue(ro, response) {
+	function send_no_requeue(ro, state, response) {
+		console.log("send_no_requeue()");
 		ro.res.on('error', function() { });
 
 		console.log("Writing response:", response);
@@ -385,10 +400,19 @@ exports.createServer = function(options) {
 			"Content-Type": "text/xml"
 		});
 
+		// If the client has enabled ACKs, then acknowledge the highest request
+		// that we have received till now -- if it is not the current request.
+		if (state.ack && ro.rid < state.rid) {
+			response.attrs.ack = state.rid;
+			state.unacked_responses[ro.rid] = new Date();
+			state.max_rid_sent = Math.max(state.max_rid_sent, ro.rid);
+		}
+
 		ro.res.end(response.toString());
 	}
 
 	function send_or_queue(ro, response, sstate) {
+		console.log("send_or_queue::ro:", ro != null);
 		if (ro) {
 			// On error, try the next one or start the timer if there
 			// is nothing left to try.
@@ -404,7 +428,7 @@ exports.createServer = function(options) {
 				}
 			});
 
-			send_no_requeue(ro, response);
+			send_no_requeue(ro, sstate.state, response);
 		}
 		else {
 			// No HTTP connection for sending the response exists.
@@ -446,7 +470,7 @@ exports.createServer = function(options) {
 		};
 		var response = new ltx.Element('body', attrs);
 
-		send_no_requeue(ro, response);
+		send_no_requeue(ro, state, response);
 	}
 
 
@@ -583,14 +607,48 @@ exports.createServer = function(options) {
 
 				// Check the validity of the packet and the BOSH session
 				if (!state || !is_valid_packet(node, state)) {
+					console.error("NOT a Valid packet");
 					res.destroy();
 					return;
 				}
 
-				increment_rid(state);
+				if (node.attrs.rid == state.rid + 1) {
+					increment_rid(state);
+				}
+
+				// The client has enabled ACKs.
+				if (state.ack) {
+					var _uar_keys = dutil.get_keys(state.unacked_responses);
+					if (_uar_keys.length > WINDOW_SIZE * 4 /* We are fairly generous */) {
+						// The client seems to be buggy. We turn off ACKs
+						delete state.ack;
+						state.unacked_responses = { };
+					}
+
+					if (node.attrs.ack) {
+						_uar_keys.forEach(function(rid) {
+							if (rid < node.attrs.ack) {
+								delete state.unacked_responses[rid];
+							}
+						});
+					}
+
+					// And has not acknowledged the receipt of the last message we sent it.
+					if (node.attrs.ack 
+						&& node.attrs.ack < state.max_rid_sent 
+						&& state.unacked_responses[node.attrs.ack]) {
+							var _ts = state.unacked_responses[node.attrs.ack];
+							// We inject a response packet into the pending queue.
+							state.pending = new ltx.Element('body', {
+								report: node.attrs.ack + 1, 
+								time: new Date() - _ts, 
+								xmlns: 'http://jabber.org/protocol/httpbind'
+							});
+					}
+				}
 
 				// Add to held response objects for this BOSH session
-				add_held_http_connection(state, res);
+				add_held_http_connection(state, node.attrs.rid, res);
 
 				// Process pending (queued) responses (if any)
 				send_pending_responses(state);

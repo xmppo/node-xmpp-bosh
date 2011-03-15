@@ -56,8 +56,8 @@ dutil.extend(XMPPProxy.prototype, {
 
 	_on_stanza: function(stanza) {
 		// Check if this is a STARTTLS request or response.
-		console.log("Is stream:features?", stanza.is('features'));
-		console.log("logging starttls:", stanza.getChild('starttls'));
+		// console.log("Is stream:features?", stanza.is('features'));
+		// console.log("logging starttls:", stanza.getChild('starttls'));
 		if (stanza.is('features') &&
 			stanza.getChild('starttls')) {
 			/* Signal willingness to perform TLS handshake */

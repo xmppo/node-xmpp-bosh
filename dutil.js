@@ -92,6 +92,14 @@ function not(proc) {
 	};
 }
 
+function get_keys(o) {
+	var r = [ ];
+	for (var k in o) {
+		r.push(k);
+	}
+	return r;
+}
+
 
 exports.extend = extend;
 exports.repeat = repeat;
@@ -101,3 +109,4 @@ exports.map = map;
 exports.sprintf = sprintf;
 exports.hitch = hitch;
 exports.not    = not;
+exports.get_keys = get_keys;
