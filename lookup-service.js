@@ -49,12 +49,16 @@ XMPPLookupService.prototype = {
 			_cl.splice.apply(_cl, _connect_listeners);
 		}
 
-		function _on_socket_connect(e) {
-
-			// Remove self from list of event listeners.
+		function _rollback() {
+			// Remove custom error handlers that we attached on the socket.
+			socket.removeListener('error', _on_socket_error);
 			socket.removeListener('connect', _on_socket_connect);
 
 			_reattach_socket_listeners();
+		}
+
+		function _on_socket_connect(e) {
+			_rollback();
 
 			// Re-trigger the connect event.
 			socket.emit('connect', e);
@@ -101,11 +105,7 @@ XMPPLookupService.prototype = {
 		}
 
 		function give_up_trying_to_connect(e) {
-			// Remove custom error handlers that we attached on the socket.
-			socket.removeListener('error', _on_socket_error);
-			socket.removeListener('connect', _on_socket_connect);
-
-			_reattach_socket_listeners();
+			_rollback();
 
 			// Trigger the error event.
 			socket.emit('error', e);
