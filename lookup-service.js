@@ -1,5 +1,22 @@
 var SRV = require('./srv.js');
 
+/* The XMPPLookupService tries to resolve the host name to connect to
+ * in various ways. The order in which it tries is as follows:
+ *
+ * 1. Try to directly connect to a host if the server_name parameter is passed
+ *
+ * 2. Try to connect using rules for the chat.pw chat service. This means
+ * connecting to DOMAIN_NAME.chat.pw
+ *
+ * 3. Try to do an SRV record lookup for _xmpp-client._tcp record on the 
+ * target domain passed in as domain_name.
+ *
+ * The port is always 5222 - there is no way to override this as of now.
+ *
+ * A 'connect' event is raised on the passed 'socket' if connection succeeds.
+ * If all attempts fail, an 'error' event is raised on the 'socket'.
+ *
+ */
 function XMPPLookupService(domain_name, server_name) {
 	this._domain_name = domain_name;
 	this._server_name = server_name;
@@ -14,7 +31,6 @@ function XMPPLookupService(domain_name, server_name) {
 	}
 }
 
-// TODO: The error handler is lost if lookup is successful in certain cases. Fix that.
 
 XMPPLookupService.prototype = {
 	connect: function(socket) {

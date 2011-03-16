@@ -190,10 +190,12 @@ exports.createServer = function(options) {
 		};
 
 		if (node.attrs.content) {
+			// If the client included a content attribute, we mimic it.
 			opt.content = node.attrs.content;
 		}
 
 		if (node.attrs.ack) {
+			// If the client included an ack attribute, we support ACKs.
 			opt.ack = 1;
 		}
 
@@ -203,6 +205,10 @@ exports.createServer = function(options) {
 	}
 
 	function session_terminate(state) {
+		if (state.streams.length != 0) {
+			console.error("Terminating potentially non-empty BOSH session with SID: " + state.sid);
+		}
+
 		state.res.forEach(function(res) {
 			try {
 				res.res.destroy();
@@ -244,6 +250,9 @@ exports.createServer = function(options) {
 			return sn_state[x];
 		}).filter(dutil.not(us.isUndefined))
 		.filter(dutil.not(us.isNull));
+
+		// TODO: From streams, remove all entries that are 
+		// null or undefined, and log this condition.
 	}
 
 	function stream_terminate(stream, state) {
@@ -539,9 +548,15 @@ exports.createServer = function(options) {
 			type:       'terminate'
 		};
 		var response = new ltx.Element('body', attrs);
+		var state = sstate.state;
 
-		stream_terminate(sstate, sstate.state);
+		stream_terminate(sstate, state);
 		send_or_queue(ro, response, sstate);
+
+		// Should we terminate the BOSH session as well?
+		if (state.streams.length == 0) {
+			session_terminate(state);
+		}
 	});
 
 

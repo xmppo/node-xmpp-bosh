@@ -181,10 +181,3 @@ dutil.extend(XMPPProxy.prototype, {
 		this.emit('error', ex, this._void_star);
 	}
 });
-
-
-/*
-xp.on('stanza', function(stanza, data) {
-	console.log("STANZA:", stanza);
-});
-*/

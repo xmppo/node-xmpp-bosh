@@ -4,6 +4,11 @@ var dutil  = require('./dutil.js');
 var lookup = require('./lookup-service.js');
 
 
+var _30_MINUTES_IN_SEC = 30 * 60;
+var _60_MINUTES_IN_SEC = 60 * 60;
+
+
+
 function XMPPProxyConnector(bosh_server) {
 	this.Proxy = xp.Proxy;
 	this.bosh_server = bosh_server;
@@ -12,6 +17,7 @@ function XMPPProxyConnector(bosh_server) {
 	//   stream_name: {
 	//     sstate: sstate, 
 	//     proxy: The XMPP proxy object for this stream, 
+	//     activity: The timestamp of the last activity on this stream (from the BOSH end)
 	//     pending: [ An array of pending outgoing stanzas ] // TODO: This needs to be populated
 	//   }
 	// }
@@ -34,15 +40,41 @@ function XMPPProxyConnector(bosh_server) {
 		this.bosh_server.emit('response', stanza, sstate);
 	});
 
+	var self = this;
+
+	// Setup a BOSH stream garbage collector that terminates 
+	// XMPP streams after a certain period of inactivity.
+	this._gc_interval = setInterval(function() {
+		var skeys = dutil.get_keys(self.strrams);
+		var _cts = new Date();
+
+		skeys.forEach(function(k) {
+			if (_cts - self.streams[k].activity > _60_MINUTES_IN_SEC * 1000) {
+				// Terminate this stream.
+				// 1. From the XMPP end
+				self.stream_terminate(self.streams[k]);
+				// TODO: 2. From the BOSH end.
+
+				// 3. Delete this stream from our set of held streams.
+				delete self.streams[k];
+			}
+		});
+	}, _30_MINUTES_IN_SEC * 1000);
+
 }
 
 XMPPProxyConnector.prototype = {
+	_update_activity: function(sstate) {
+		sstate.activity = new Date();
+	},
+
 	stanza: function(stanza, sstate) {
 		var ss = this.streams[sstate.name];
 		if (!ss) {
 			return;
 		}
 
+		this._update_activity(ss);
 		ss.proxy.send(stanza.toString());
 	}, 
 
@@ -60,6 +92,7 @@ XMPPProxyConnector.prototype = {
 		var stream = {
 			sstate: sstate, 
 			proxy: proxy, 
+			activity: new Date(), 
 			pending: [ ]
 		};
 		this.streams[sstate.name] = stream;
@@ -77,6 +110,7 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
+		this._update_activity(ss);
 		ss.proxy.restart();
 	}, 
 
@@ -87,6 +121,7 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
+		this._update_activity(ss);
 		ss.proxy.terminate();
 		delete this.streams[sstate.name];
 	}, 
