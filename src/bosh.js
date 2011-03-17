@@ -569,6 +569,7 @@ exports.createServer = function(options) {
 		var data_len = 0;
 
 		req.on('data', function(d) {
+			console.log("onData:", d.toString());
 			var _d = d.toString();
 			data_len += d.length;
 
