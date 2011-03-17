@@ -68,6 +68,13 @@ function main() {
 		BOSH_ENDPOINT = opts.endpoint;
 	}
 
+	if (XMPP_USERNAME == "user@example.com") {
+		// The user probably forgot to pass params.
+		console.log("Usage: node basic.js --username='user@example.com' " +
+			"--password='password' --host='http://localhost:5280' --endpoint='/http-bind/'");
+		process.exit(2);
+	}
+
 	connect();
 }
 
