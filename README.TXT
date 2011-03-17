@@ -102,6 +102,8 @@ The project itself is divided into 4 main components as of now.
     * node-expat
     * ltx
     * node-uuid 
+    * tav
+    * jsdom (for tests)
 
 [G] Tested with:
 
