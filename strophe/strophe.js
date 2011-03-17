@@ -53,6 +53,8 @@
  *    seem to work on jsdom).
  * 5. While getting the response from XMLHttpRequest, manually convery the text
  *    data to XML.
+ * 6. All calls to nodeName should replaced by nodeName.toLowerCase() since jsdom
+ *    seems to always uppercase node names.
  *
  */
 var XMLHttpRequest = require('./XMLHttpRequest.js').XMLHttpRequest;
@@ -800,16 +802,16 @@ Strophe = {
             elem = elem.tree();
         }
 
-        var nodeName = elem.nodeName/**/ .toLowerCase();
+        var nodeName = elem.nodeName.toLowerCase();
         var i, child;
 
         if (elem.getAttribute("_realname")) {
-            nodeName = elem.getAttribute("_realname");
+            nodeName = elem.getAttribute("_realname").toLowerCase();
         }
 
-        result = "<" + nodeName;
+        result = "<" + nodeName.toLowerCase();
         for (i = 0; i < elem.attributes.length; i++) {
-               if(elem.attributes[i].nodeName != "_realname") {
+               if(elem.attributes[i].nodeName.toLowerCase() != "_realname") {
                  result += " " + elem.attributes[i].nodeName.toLowerCase() +
                 "='" + elem.attributes[i].value
                     .replace(/&/g, "&amp;")
@@ -830,7 +832,7 @@ Strophe = {
                     result += child.nodeValue;
                 }
             }
-            result += "</" + nodeName + ">";
+            result += "</" + nodeName.toLowerCase() + ">";
         } else {
             result += "/>";
         }
@@ -1336,7 +1338,7 @@ Strophe.Request.prototype = {
      */
     getResponse: function ()
     {
-		console.log("getResponse:", this.xhr.responseXML, ":", this.xhr.responseText);
+		// console.log("getResponse:", this.xhr.responseXML, ":", this.xhr.responseText);
 
         var node = null;
         if (this.xhr.responseXML && this.xhr.responseXML.documentElement) {
@@ -2908,11 +2910,11 @@ Strophe.Connection.prototype = {
 
         for (i = 0; i < elem._childNodes.length; i++) {
             child = elem._childNodes[i];
-            if (child.nodeName == 'bind') {
+            if (child.nodeName.toLowerCase() == 'bind') {
                 this.do_bind = true;
             }
 
-            if (child.nodeName == 'session') {
+            if (child.nodeName.toLowerCase() == 'session') {
                 this.do_session = true;
             }
         }

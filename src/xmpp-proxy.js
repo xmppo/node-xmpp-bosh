@@ -163,7 +163,7 @@ dutil.extend(XMPPProxy.prototype, {
 					stanza.parent = null;
 					stanza.attrs["xmlns:stream"] = 'http://etherx.jabber.org/streams';
 					stanza.attrs["xmlns"] = 'jabber:client';
-					console.log("Emiting stanza:", stanza);
+					console.log("XMPP Proxy::Emiting stanza:", stanza);
 					self._on_stanza(stanza);
 				}
 				catch (ex) {
