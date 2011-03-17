@@ -100,6 +100,14 @@ function get_keys(o) {
 	return r;
 }
 
+function rev_hash(o) {
+	var r = { };
+	for (var k in o) {
+		r[o[k]] = k;
+	}
+	return r;
+}
+
 
 exports.extend = extend;
 exports.repeat = repeat;
@@ -110,3 +118,4 @@ exports.sprintf = sprintf;
 exports.hitch = hitch;
 exports.not    = not;
 exports.get_keys = get_keys;
+exports.rev_hash = rev_hash
