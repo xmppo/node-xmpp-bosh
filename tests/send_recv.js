@@ -81,25 +81,6 @@ function start_test() {
 }
 
 
-function onConnect(status)
-{
-
-    if (status == Strophe.Status.CONNECTING) {
-		log('Strophe is connecting.');
-    } else if (status == Strophe.Status.CONNFAIL) {
-		log('Strophe failed to connect.');
-		process.exit(1);
-    } else if (status == Strophe.Status.DISCONNECTING) {
-		log('Strophe is disconnecting.');
-    } else if (status == Strophe.Status.DISCONNECTED) {
-		log('Strophe is disconnected.');
-		process.exit(0);
-	} else if (status == Strophe.Status.CONNECTED) {
-		log('Strophe is connected.');
-		multicast_packets();
-    }
-}
-
 function main() {
 	var opts = require('tav').set();
 
