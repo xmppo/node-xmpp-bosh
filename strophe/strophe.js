@@ -43,7 +43,18 @@
  *    The bound function.
  */
 
-/* Make it work on node.js: Nodify */
+/* Make it work on node.js: Nodify
+ *
+ * Steps:
+ * 1. Create the global objects: window, document, Base64, MD5 and XMLHttpRequest
+ * 2. Use the node-XMLHttpRequest module.
+ * 3. Use jsdom for the document object - since it supports DOM functions.
+ * 4. Replace all calls to childNodes with _childNodes (since the former doesn't
+ *    seem to work on jsdom).
+ * 5. While getting the response from XMLHttpRequest, manually convery the text
+ *    data to XML.
+ *
+ */
 var XMLHttpRequest = require('./XMLHttpRequest.js').XMLHttpRequest;
 var Base64         = require('./Base64.js').Base64;
 var MD5            = require('./MD5.js').MD5;
@@ -57,8 +68,6 @@ window = {
 	MD5: MD5
 }
 
-// var s = require('./strophe.js');
-// exports.name = "Dhruv";
 exports.Strophe = window;
 
 if (!Function.prototype.bind) {
@@ -1343,10 +1352,7 @@ Strophe.Request.prototype = {
 			// Hack for node.
 			var _div = document.createElement("div");
 			_div.innerHTML = this.xhr.responseText;
-			//_div.innerHTML = "<span class='elephant'>Jumbo</span>";
 			node = _div._childNodes[0];
-
-			console.log("node:", _div); /* XX */
 
             Strophe.error("invalid response received");
             Strophe.error("responseText: " + this.xhr.responseText);
