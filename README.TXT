@@ -114,4 +114,8 @@ The project itself is divided into 4 main components as of now.
 
     * strophe.js 
 
+[I] Running tests:
 
+    * cd tests
+    * node basic.js [params] # To check basic working
+    * node send_recv.js [params] # To check message sending/stress testing
