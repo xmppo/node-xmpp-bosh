@@ -51,10 +51,10 @@
  * 3. Use jsdom for the document object - since it supports DOM functions.
  * 4. Replace all calls to childNodes with _childNodes (since the former doesn't
  *    seem to work on jsdom).
- * 5. While getting the response from XMLHttpRequest, manually convery the text
+ * 5. While getting the response from XMLHttpRequest, manually convert the text
  *    data to XML.
  * 6. All calls to nodeName should replaced by nodeName.toLowerCase() since jsdom
- *    seems to always uppercase node names.
+ *    seems to always convert node names to upper case.
  *
  */
 var XMLHttpRequest = require('./XMLHttpRequest.js').XMLHttpRequest;

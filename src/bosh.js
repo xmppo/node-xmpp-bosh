@@ -71,7 +71,7 @@ function is_session_creation_packet(node) {
 	// Coded according to the rules mentioned here:
 	// http://xmpp.org/extensions/xep-0124.html#session-request
 	var ia = inflated_attrs(node);
-	return node.attrs.to && node.attrs['xml:lang'] &&
+	return node.attrs.to &&
 		node.attrs.ver && node.attrs.wait &&
 		node.attrs.hold && !node.attrs.sid && 
 		ia["urn:xmpp:xbosh:version"];
@@ -84,8 +84,7 @@ function is_stream_restart_packet(node) {
 	// http://xmpp.org/extensions/xep-0206.html#preconditions-sasl
 	var ia = inflated_attrs(node);
 	return ia["urn:xmpp:xbosh:restart"] == "true" && 
-		node.attrs['to'] && 
-		node.attrs['xml:lang'];
+		node.attrs['to'];
 }
 
 function is_stream_add_request(node) {
@@ -94,7 +93,6 @@ function is_stream_add_request(node) {
 	return node.attrs.to && 
 		node.attrs.sid && 
 		node.attrs.rid && 
-		node.attrs['xml:lang'] &&
 		!node.attrs.ver && !node.attrs.hold && !node.attrs.wait;
 }
 
@@ -315,7 +313,7 @@ exports.createServer = function(options) {
 				send_no_requeue(ro, state, new ltx.Element('body', {
 					xmlns: 'http://jabber.org/protocol/httpbind'
 				}));
-			}, state.wait/6 /* For testing */ * 1000)
+			}, state.wait * 1000)
 		};
 		state.res.push(ro);
 

@@ -161,8 +161,12 @@ dutil.extend(XMPPProxy.prototype, {
 			.forEach(function(stanza) {
 				try {
 					stanza.parent = null;
+
+					// TODO: Fetch these attribs from the actual response 
+					// rather than hard-coding them.
 					stanza.attrs["xmlns:stream"] = 'http://etherx.jabber.org/streams';
-					stanza.attrs["xmlns"] = 'jabber:client';
+					stanza.attrs["xmlns"]        = 'jabber:client';
+					stanza.attrs["version"]      = "1.0";
 					console.log("XMPP Proxy::Emiting stanza:", stanza);
 					self._on_stanza(stanza);
 				}
