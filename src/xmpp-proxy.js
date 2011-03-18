@@ -16,6 +16,7 @@ function XMPPProxy(xmpp_host, lookup_service, void_star) {
 
 	this._buff = '';
 	this._first = true;
+	this._in_error = false;
 
 	return this;
 }
@@ -105,7 +106,16 @@ dutil.extend(XMPPProxy.prototype, {
 	},
 
 	send: function(data) {
-		this._sock.write(data);
+		if (!this._in_error) {
+			try {
+				this._sock.write(data);
+			}
+			catch (ex) {
+				this._in_error = true;
+				this._on_error(ex);
+			}
+		}
+
 	}, 
 
 	_on_connect: function() {
@@ -179,9 +189,12 @@ dutil.extend(XMPPProxy.prototype, {
 		catch (ex) {
 			console.log("incomplete packet");
 		}
+		// For debugging
+		// this._sock.destroy();
 	}, 
 
 	_on_error: function(ex) {
+		console.error("\nERROR event triggered on XMPPProxy");
 		this.emit('error', ex, this._void_star);
 	}
 });
