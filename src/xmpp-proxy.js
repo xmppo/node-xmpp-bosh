@@ -93,7 +93,7 @@ dutil.extend(XMPPProxy.prototype, {
 	restart: function() {
 		this._buff = '';
 		this._first = true;
-		this._sock.write(this._stream_start_xml);
+		this.send(this._stream_start_xml);
 	},
 
 	terminate: function() {
@@ -101,7 +101,7 @@ dutil.extend(XMPPProxy.prototype, {
 		this._sock.removeAllListeners('data');
 
 		// Write the stream termination tag
-		this._sock.write("</stream:stream>");
+		this.send("</stream:stream>");
 		this._sock.destroy();
 	},
 
@@ -122,7 +122,7 @@ dutil.extend(XMPPProxy.prototype, {
 		console.log('connected', arguments);
 
 		// Always, we connect on behalf of the real client.
-		this._sock.write(this._stream_start_xml);
+		this.send(this._stream_start_xml);
 	}, 
 
 	_on_data: function(d) {
