@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011 Dhruv Matani
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
 var xp     = require('./xmpp-proxy.js');
 var us     = require('./underscore.js');
 var dutil  = require('./dutil.js');
@@ -18,7 +41,7 @@ function XMPPProxyConnector(bosh_server) {
 	//     sstate: sstate, 
 	//     proxy: The XMPP proxy object for this stream, 
 	//     activity: The timestamp of the last activity on this stream (from the BOSH end)
-	//     pending: [ An array of pending outgoing stanzas ] // TODO: This needs to be populated
+	//     pending: [ An array of pending outgoing stanzas ]
 	//   }
 	// }
 	//
@@ -99,6 +122,11 @@ XMPPProxyConnector.prototype = {
 
 		this._update_activity(ss);
 
+		// TODO:
+		// Ideally, we should maintain our own _is_connected flag or some
+		// such thing, but for now, we just use the Proxy's internal and
+		// supposedly private member _is_connected to quickly make the check
+		// that we want to.
 		if (ss.proxy._is_connected) {
 			// Send only if connected.
 			ss.proxy.send(stanza.toString());
