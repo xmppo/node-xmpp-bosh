@@ -516,6 +516,16 @@ exports.createServer = function(options) {
 
 	var bee = new BoshEventEmitter();
 
+	// When the Connector is able to add the stream, we too do the same and 
+	// respond to the client accordingly.
+	bee.addListener('stream-added', function(sstate) {
+		console.log("bosh server::stream-added:", sstate.stream);
+		// Send only if this is the 2nd (or more) stream on this BOSH session.
+		if (sstate.streams.length > 1) {
+			send_stream_add_response(sstate);
+		}
+	});
+
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
 	bee.addListener('response', function(connector_response, sstate) {
@@ -724,8 +734,8 @@ exports.createServer = function(options) {
 					console.log("Stream Add");
 					sstate = stream_add(state, node);
 
-					// Respond to the client
-					send_stream_add_response(sstate);
+					// Don't yet respond to the client. Wait for the 'stream-added' event
+					// from the Connector.
 
 					bee.emit('stream-add', sstate);
 				}

@@ -14,9 +14,9 @@ function XMPPProxy(xmpp_host, lookup_service, void_star) {
 	this._void_star = void_star;
 	this._lookup_service = lookup_service;
 
-	this._buff = '';
-	this._first = true;
-	this._in_error = false;
+	this._buff         = '';
+	this._first        = true;
+	this._is_connected = false;
 
 	return this;
 }
@@ -106,12 +106,12 @@ dutil.extend(XMPPProxy.prototype, {
 	},
 
 	send: function(data) {
-		if (!this._in_error) {
+		if (this._is_connected) {
 			try {
 				this._sock.write(data);
 			}
 			catch (ex) {
-				this._in_error = true;
+				this._is_connected = false;
 				this._on_error(ex);
 			}
 		}
@@ -120,6 +120,8 @@ dutil.extend(XMPPProxy.prototype, {
 
 	_on_connect: function() {
 		console.log('connected', arguments);
+
+		this._is_connected = true;
 
 		// Always, we connect on behalf of the real client.
 		this.send(this._stream_start_xml);

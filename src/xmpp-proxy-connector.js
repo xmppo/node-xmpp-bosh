@@ -24,6 +24,8 @@ function XMPPProxyConnector(bosh_server) {
 	//
 	this.streams = { };
 
+
+	// Fired when an 'error' event is raised by the XMPP Proxy.
 	this._on_xmpp_proxy_error = dutil.hitch(this, function(ex, sstate) {
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[sstate.name];
@@ -35,10 +37,31 @@ function XMPPProxyConnector(bosh_server) {
 		this.bosh_server.emit('terminate', sstate);
 	});
 
+	// Fired every time the XMPP proxy fires the 'stanza' event.
 	this._on_stanza_received = dutil.hitch(this, function(stanza, sstate) {
 		console.log("Connector received stanza");
 		this.bosh_server.emit('response', stanza, sstate);
 	});
+
+	// Fired every time the XMPP proxy fires the 'connect' event.
+	this._on_xmpp_proxy_connected = dutil.hitch(this, function(sstate) {
+		console.log("Connector received 'connect' event");
+		this.bosh_server.emit('stream-added', sstate);
+
+		// Flush out any pending packets.
+		var ss = this.streams[sstate.name];
+		if (!ss) {
+			return;
+		}
+
+		ss.pending.forEach(function(ps /* Pending Stanza */) {
+			ss.proxy.send(ps.toString());
+		});
+
+		ss.pending = [ ];
+	});
+
+
 
 	var self = this;
 
@@ -75,7 +98,16 @@ XMPPProxyConnector.prototype = {
 		}
 
 		this._update_activity(ss);
-		ss.proxy.send(stanza.toString());
+
+		if (ss.proxy._is_connected) {
+			// Send only if connected.
+			ss.proxy.send(stanza.toString());
+		}
+		else {
+			// Buffer the packet.
+			ss.pending.push(stanza);
+		}
+
 	}, 
 
 	stream_add: function(sstate) {
@@ -97,8 +129,10 @@ XMPPProxyConnector.prototype = {
 		};
 		this.streams[sstate.name] = stream;
 
-		proxy.on('stanza', this._on_stanza_received);
-		proxy.on('error',  this._on_xmpp_proxy_error);
+
+		proxy.on('connect', this._on_xmpp_proxy_connected);
+		proxy.on('stanza',  this._on_stanza_received);
+		proxy.on('error',   this._on_xmpp_proxy_error);
 
 		proxy.connect();
 	}, 
