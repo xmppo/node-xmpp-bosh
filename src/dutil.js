@@ -108,12 +108,7 @@ function rev_hash(o) {
 	return r;
 }
 
-function xml_parse(xml) {
-	var ltx = null;
-	if (!ltx) {
-		ltx = require('ltx');
-	}
-
+function _real_xml_parse(xml, ltx) {
 	var node = null;
 	xml = xml.trim();
 	if (!xml) {
@@ -130,6 +125,18 @@ function xml_parse(xml) {
 	return node;
 }
 
+function _xml_parse() {
+	var ltx = null;
+
+	return function(xml) {
+		if (!ltx) {
+			ltx = require('ltx');
+		}
+		return _real_xml_parse(xml, ltx);
+	};
+}
+
+
 
 exports.extend = extend;
 exports.repeat = repeat;
@@ -141,4 +148,4 @@ exports.hitch = hitch;
 exports.not    = not;
 exports.get_keys = get_keys;
 exports.rev_hash = rev_hash
-exports.xml_parse = xml_parse;
+exports.xml_parse = _xml_parse();
