@@ -20,23 +20,6 @@ var MAX_BOSH_CONNECTIONS = 3;
 var WINDOW_SIZE = 2;
 
 
-function xml_parse(xml) {
-	var node = null;
-	xml = xml.trim();
-	if (!xml) {
-		return node;
-	}
-
-	try {
-		node = ltx.parse(xml);
-	}
-	catch (ex) {
-		console.error("Error parsing XML:", ex);
-		console.error(ex.stack);
-	}
-	return node;
-}
-
 function inflated_attrs(node) {
 	var xmlns = { };
 	var attrs = { };
@@ -593,7 +576,7 @@ exports.createServer = function(options) {
 			data.push(_d);
 		})
 		.on('end', function() {
-			var node = xml_parse(data.join(""));
+			var node = dutil.xml_parse(data.join(""));
 			data = [];
 
 			if (!node || !node.is('body')) {
@@ -754,6 +737,9 @@ exports.createServer = function(options) {
 						}
 						stream_terminate(sstate, state)
 						bee.emit('stream-terminate', sstate);
+
+						// TODO: Send stream termination response
+						// http://xmpp.org/extensions/xep-0124.html#terminate
 					});
 
 

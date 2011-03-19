@@ -108,6 +108,28 @@ function rev_hash(o) {
 	return r;
 }
 
+function xml_parse(xml) {
+	var ltx = null;
+	if (!ltx) {
+		ltx = require('ltx');
+	}
+
+	var node = null;
+	xml = xml.trim();
+	if (!xml) {
+		return node;
+	}
+
+	try {
+		node = ltx.parse(xml);
+	}
+	catch (ex) {
+		console.error("Error parsing XML:", ex);
+		console.error(ex.stack);
+	}
+	return node;
+}
+
 
 exports.extend = extend;
 exports.repeat = repeat;
@@ -119,3 +141,4 @@ exports.hitch = hitch;
 exports.not    = not;
 exports.get_keys = get_keys;
 exports.rev_hash = rev_hash
+exports.xml_parse = xml_parse;

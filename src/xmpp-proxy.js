@@ -17,6 +17,7 @@ function XMPPProxy(xmpp_host, lookup_service, void_star) {
 	this._buff         = '';
 	this._first        = true;
 	this._is_connected = false;
+	this._stream_attrs = { };
 
 	return this;
 }
@@ -140,8 +141,17 @@ dutil.extend(XMPPProxy.prototype, {
 				var gt_pos = this._buff.search(">");
 				if (gt_pos != -1) {
 					console.log("Got stream packet");
-					var _ss_stanza = this._buff.substring(0, gt_pos) + "</:stream:stream>";
-					// TODO: Parse _ss_stanza and extract the attributes.
+					var _ss_stanza = this._buff.substring(0, gt_pos + 1) + "</stream:stream>";
+					console.log("_ss_stanza:", _ss_stanza);
+
+					// Parse _ss_stanza and extract the attributes.
+					var _ss_node = dutil.xml_parse(_ss_stanza);
+					if (_ss_node) {
+						this._stream_attrs = { };
+						if (_ss_node.attrs["xmlns:stream"]) this._stream_attrs = _ss_node.attrs["xmlns:stream"];
+						if (_ss_node.attrs["xmlns"]) this._stream_attrs = _ss_node.attrs["xmlns"];
+						if (_ss_node.attrs["version"]) this._stream_attrs = _ss_node.attrs["version"];
+					}
 
 					this._buff = this._buff.substring(gt_pos+1);
 				}
@@ -174,11 +184,15 @@ dutil.extend(XMPPProxy.prototype, {
 				try {
 					stanza.parent = null;
 
-					// TODO: Fetch these attribs from the actual response 
-					// rather than hard-coding them.
-					stanza.attrs["xmlns:stream"] = 'http://etherx.jabber.org/streams';
-					stanza.attrs["xmlns"]        = 'jabber:client';
-					stanza.attrs["version"]      = "1.0";
+					// Populate the attributes of this packet from those of the 
+					// stream:stream stanza.
+					dutil.extend(stanza.attrs, this._stream_attrs);
+
+					// TODO: Remove if all is well.
+					// stanza.attrs["xmlns:stream"] = 'http://etherx.jabber.org/streams';
+					// stanza.attrs["xmlns"]        = 'jabber:client';
+					// stanza.attrs["version"]      = "1.0";
+
 					console.log("XMPP Proxy::Emiting stanza:", stanza);
 					self._on_stanza(stanza);
 				}
