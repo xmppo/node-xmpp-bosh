@@ -31,6 +31,12 @@ var _30_MINUTES_IN_SEC = 30 * 60;
 var _60_MINUTES_IN_SEC = 60 * 60;
 
 
+// Note: The way we calculate inactivity is not from the BOSH layer, but 
+// from the XMPP layer. If the client is making BOSH connections but sending
+// or receiving empty packets (no XMPP XML stanzas), then his last 
+// activity timestamp shall NOT be updated, and after sufficient amount of 
+// time, the client shall be disconnected.
+
 
 function XMPPProxyConnector(bosh_server) {
 	this.Proxy = xp.Proxy;

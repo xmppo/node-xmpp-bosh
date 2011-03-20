@@ -42,6 +42,10 @@ var MAX_BOSH_CONNECTIONS = 3;
 // that we are willing to accept.
 var WINDOW_SIZE = 2;
 
+// How much time should we hold a response object before sending
+// and empty response to it?
+var DEFAULT_INACTIVITY_SEC = 70;
+
 
 function inflated_attrs(node) {
 	var xmlns = { };
@@ -172,8 +176,7 @@ exports.createServer = function(options) {
 		// responded to by us.
 		options.max_rid_sent = options.rid - 1;
 
-		// TODO: How much inactivity can we tolerate (in sec)?
-		options.inactivity = 120;
+		options.inactivity = DEFAULT_INACTIVITY_SEC;
 
 		options.window = WINDOW_SIZE;
 		add_held_http_connection(options, options.rid, res);
@@ -265,7 +268,9 @@ exports.createServer = function(options) {
 
 		// From streams, remove all entries that are 
 		// null or undefined, and log this condition.
-		console.error(dutil.sprintf("get_streams_to_terminate::%s streams are in error:", sie.length));
+		if (sie.length > 0) {
+			console.error(dutil.sprintf("get_streams_to_terminate::%s streams are in error", sie.length));
+		}
 
 		return stt;
 	}
@@ -394,8 +399,8 @@ exports.createServer = function(options) {
 			sid:        state.sid, 
 			wait:       state.wait, 
 			ver:        state.ver, 
-			polling:    20, 
-			inactivity: 60, 
+			polling:    state.inactivity / 2, 
+			inactivity: state.inactivity, 
 			requests:   WINDOW_SIZE, 
 			hold:       state.hold, 
 			from:       sstate.to, 
