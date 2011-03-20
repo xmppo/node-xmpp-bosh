@@ -21,7 +21,7 @@
  *
  */
 
-function extend(dest, src, restrict) {
+function copy(dest, src, restrict) {
 	for (var k in src) {
 		if (restrict) {
 			if (restrict.indexOf(k) != -1) {
@@ -29,6 +29,15 @@ function extend(dest, src, restrict) {
 			}
 		}
 		else {
+			dest[k] = src[k];
+		}
+	}
+	return dest;
+}
+
+function extend(dest, src) {
+	for (var k in src) {
+		if (!(k in dest)) {
 			dest[k] = src[k];
 		}
 	}
@@ -176,6 +185,7 @@ function isTruthy(x) {
 }
 
 
+exports.copy = copy;
 exports.extend = extend;
 exports.repeat = repeat;
 exports.alternator = alternator;

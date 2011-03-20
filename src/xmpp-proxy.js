@@ -52,7 +52,7 @@ XMPPProxy.prototype = new _ee.EventEmitter();
 
 exports.Proxy = XMPPProxy;
 
-dutil.extend(XMPPProxy.prototype, {
+dutil.copy(XMPPProxy.prototype, {
 	_detach_handlers: function() {
 		this._sock.removeAllListeners('connect');
 		this._sock.removeAllListeners('data');
@@ -175,7 +175,7 @@ dutil.extend(XMPPProxy.prototype, {
 					var _ss_node = dutil.xml_parse(_ss_stanza);
 					if (_ss_node) {
 						this._stream_attrs = { };
-						dutil.extend(this._stream_attrs, _ss_node.attrs, [
+						dutil.copy(this._stream_attrs, _ss_node.attrs, [
 							"xmlns:stream", "xmlns", "version"
 						]);
 
@@ -218,7 +218,7 @@ dutil.extend(XMPPProxy.prototype, {
 
 					// Populate the attributes of this packet from those of the 
 					// stream:stream stanza.
-					dutil.extend(stanza.attrs, self._stream_attrs);
+					dutil.copy(stanza.attrs, self._stream_attrs);
 
 					// console.log("self._stream_attrs:", self._stream_attrs);
 

@@ -1,6 +1,6 @@
 { "name": "node-xmpp-bosh"
 ,"version": "0.0.1"
-,"main": "./src/run-server"
+,"main": "./src/main"
 ,"description": "An XMPP BOSH server written for node.js in javascript"
 ,"author": "Dhruv Matani"
 ,"dependencies": {"node-expat": ">=1.2.0"
@@ -9,11 +9,6 @@
 		 ,"tav": ">= 0.1.0"
 		 ,"jsdom": ">= 0.2.0"
 		 }
-,"directories": {"src": "./src"
-		,"images": "./images"
-		,"tests": "./tests"
-		,"strophe": "./strophe"
-		}
 ,"repositories": [{"type": "svn"
 		  ,"path": "http://node-xmpp-bosh.googlecode.com/svn/trunk/"
 		  }]

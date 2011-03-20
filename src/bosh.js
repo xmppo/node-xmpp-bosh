@@ -631,7 +631,16 @@ exports.createServer = function(options) {
 	var _ee = require('events').EventEmitter();
 	BoshEventEmitter.prototype = new _ee.EventEmitter();
 
+	dutil.copy(BoshEventEmitter.prototype, {
+		stop: function() {
+			// console.log("stop::", http_server);
+			return http_server.close();
+		}
+	});
+
 	var bee = new BoshEventEmitter();
+
+	// console.log("bee::proto:", bee.prototype, bee.__proto__);
 
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
