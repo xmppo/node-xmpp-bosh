@@ -1,5 +1,5 @@
 // var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind'
-var BOSH_HOST = 'http://localhost:8081';
+var BOSH_HOST = 'http://localhost:5280';
 var BOSH_ENDPOINT = '/http-bind/';
 var BOSH_SERVICE = BOSH_HOST + BOSH_ENDPOINT;
 
