@@ -159,6 +159,13 @@ function _xml_parse() {
 	};
 }
 
+function isFalsy(x) {
+	return !x;
+}
+
+function isTruthy(x) {
+	return !isFalsy(x);
+}
 
 
 exports.extend = extend;
@@ -172,3 +179,5 @@ exports.not    = not;
 exports.get_keys = get_keys;
 exports.rev_hash = rev_hash
 exports.xml_parse = _xml_parse();
+exports.isFalsy = isFalsy;
+exports.isTruthy = isTruthy;

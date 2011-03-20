@@ -120,6 +120,9 @@ exports.createServer = function(options) {
 	var path = options.path;
 	var port = options.port;
 
+	// TODO: Stefan mentioned that "hold" is NOT being respected, which is correct.
+	// Fix it.
+
 	// This encapsulates the state for the BOSH session
 	//
 	// Format: {
@@ -250,13 +253,20 @@ exports.createServer = function(options) {
 			streams = [ node.attrs.stream ];
 		}
 
-		return streams.map(function(x) {
+		var stt = streams.map(function(x) {
 			return sn_state[x];
-		}).filter(dutil.not(us.isUndefined))
-		.filter(dutil.not(us.isNull));
+		}).filter(dutil.isTruthy);
 
-		// TODO: From streams, remove all entries that are 
+		// Streams in error
+		var sie = streams.map(function(x) {
+			return sn_state[x];
+		}).filter(dutil.isFalsy);
+
+		// From streams, remove all entries that are 
 		// null or undefined, and log this condition.
+		console.error(dutil.sprintf("get_streams_to_terminate::%s streams are in error:", sie.length));
+
+		return stt;
 	}
 
 	function stream_terminate(stream, state) {
@@ -338,6 +348,8 @@ exports.createServer = function(options) {
 		return ro;
 	}
 
+
+	/* Begin Response Sending Functions */
 	function send_session_creation_response(sstate) {
 		var state = sstate.state;
 		var ro    = get_response_object(sstate);
@@ -382,6 +394,32 @@ exports.createServer = function(options) {
 
 		send_or_queue(ro, response, sstate);
 	}
+
+	function send_stream_terminate_response(sstate) {
+		var state = sstate.state;
+		var ro    = get_response_object(sstate);
+
+		var response = new ltx.Element('body', {
+			xmlns:      'http://jabber.org/protocol/httpbind', 
+			type:       'terminate'
+		});
+
+		send_or_queue(ro, response, sstate);
+	}
+
+
+	function send_session_terminate(ro, state, condition) {
+		var attrs = {
+			xmlns:      'http://jabber.org/protocol/httpbind', 
+			sid:        state.sid, 
+			type:       'terminate', 
+			condition:  condition
+		};
+		var response = new ltx.Element('body', attrs);
+
+		send_no_requeue(ro, state, response);
+	}
+	/* End Response Sending Functions */
 
 
 	function emit_stanzas_event(stanzas, state, sstate) {
@@ -498,17 +536,6 @@ exports.createServer = function(options) {
 		}
 	}
 
-	function send_session_terminate(ro, state, condition) {
-		var attrs = {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
-			sid:        state.sid, 
-			type:       'terminate', 
-			condition:  condition
-		};
-		var response = new ltx.Element('body', attrs);
-
-		send_no_requeue(ro, state, response);
-	}
 
 
 	// The BOSH event emitter. People outside will subscribe to
@@ -758,11 +785,13 @@ exports.createServer = function(options) {
 						if (stanzas.length > 0) {
 							emit_stanzas_event(stanzas, state, sstate);
 						}
+
+						// Send stream termination response
+						// http://xmpp.org/extensions/xep-0124.html#terminate
+						send_stream_terminate_response(sstate);
+
 						stream_terminate(sstate, state)
 						bee.emit('stream-terminate', sstate);
-
-						// TODO: Send stream termination response
-						// http://xmpp.org/extensions/xep-0124.html#terminate
 					});
 
 
@@ -808,5 +837,3 @@ exports.createServer = function(options) {
 // TODO: Handle error conditions comprehensively
 // http://xmpp.org/extensions/xep-0124.html#schema
 
-// TODO: Terminate the connection with the XMPP server after X units of time.
-// However, this logic will go inside the Connector, not anywhere else.
