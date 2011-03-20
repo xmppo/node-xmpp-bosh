@@ -550,11 +550,12 @@ exports.createServer = function(options) {
 
 		console.log("Writing response:", response);
 
-		// TODO: Allow X-Domain access
+		// Allow Cross-Domain access
 		// https://developer.mozilla.org/En/HTTP_access_control
-
 		ro.res.writeHead(200, {
-			"Content-Type": "text/xml"
+			"Content-Type": "text/xml", 
+			'Access-Control-Allow-Origin': '*', 
+			'Access-Control-Allow-Headers', 'Content-Type'
 		});
 
 		// If the client has enabled ACKs, then acknowledge the highest request
@@ -692,6 +693,24 @@ exports.createServer = function(options) {
 
 		console.log("Someone connected. u:", u);
 
+		var ppos = u.pathname.search(path);
+
+		if (req.method == "OPTIONS") {
+			res.writeHead(200, {
+				'Access-Control-Allow-Methods': 'POST, OPTIONS', 
+				'Access-Control-Max-Age': '14400'
+			};
+			res.end();
+			return;
+		}
+
+		if (req.method != "POST" || ppos == -1) {
+			console.error("Invalid request");
+			res.destory();
+			return;
+		}
+
+
 		var data = [];
 		var data_len = 0;
 
@@ -721,13 +740,6 @@ exports.createServer = function(options) {
 			}
 
 			var state = get_state(node);
-			var ppos = u.pathname.search(path);
-
-			if (req.method != "POST" || ppos == -1) {
-				console.error("Invalid request");
-				res.destory();
-				return;
-			}
 
 			console.log("Processing request");
 
