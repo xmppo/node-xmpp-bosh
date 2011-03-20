@@ -555,7 +555,7 @@ exports.createServer = function(options) {
 		ro.res.writeHead(200, {
 			"Content-Type": "text/xml", 
 			'Access-Control-Allow-Origin': '*', 
-			'Access-Control-Allow-Headers', 'Content-Type'
+			'Access-Control-Allow-Headers': 'Content-Type'
 		});
 
 		// If the client has enabled ACKs, then acknowledge the highest request
@@ -699,7 +699,7 @@ exports.createServer = function(options) {
 			res.writeHead(200, {
 				'Access-Control-Allow-Methods': 'POST, OPTIONS', 
 				'Access-Control-Max-Age': '14400'
-			};
+			});
 			res.end();
 			return;
 		}
