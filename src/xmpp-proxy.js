@@ -160,7 +160,7 @@ dutil.extend(XMPPProxy.prototype, {
 		this._buff += d.toString();
 
 		if (this._first) {
-			// TODO: Parse and save attribites from the first response
+			// Parse and save attribites from the first response
 			// so that we may replay them in all subsequent responses.
 			var ss_pos = this._buff.search("<stream:stream");
 			if (ss_pos != -1) {
@@ -175,9 +175,12 @@ dutil.extend(XMPPProxy.prototype, {
 					var _ss_node = dutil.xml_parse(_ss_stanza);
 					if (_ss_node) {
 						this._stream_attrs = { };
-						if (_ss_node.attrs["xmlns:stream"]) this._stream_attrs = _ss_node.attrs["xmlns:stream"];
-						if (_ss_node.attrs["xmlns"]) this._stream_attrs = _ss_node.attrs["xmlns"];
-						if (_ss_node.attrs["version"]) this._stream_attrs = _ss_node.attrs["version"];
+						dutil.extend(this._stream_attrs, _ss_node.attrs, [
+							"xmlns:stream", "xmlns", "version"
+						]);
+
+						// console.log("_ss_node:", _ss_node);
+						// console.log("stream:stream attrs:", this._stream_attrs);
 					}
 
 					this._buff = this._buff.substring(gt_pos+1);
@@ -209,16 +212,15 @@ dutil.extend(XMPPProxy.prototype, {
 			.filter(dutil.not(us.isString))
 			.forEach(function(stanza) {
 				try {
+					// NULL out the parent otherwise ltx will go crazy when we
+					// assign 'stanza' as the child node of some other parent.
 					stanza.parent = null;
 
 					// Populate the attributes of this packet from those of the 
 					// stream:stream stanza.
-					dutil.extend(stanza.attrs, this._stream_attrs);
+					dutil.extend(stanza.attrs, self._stream_attrs);
 
-					// TODO: Remove if all is well.
-					// stanza.attrs["xmlns:stream"] = 'http://etherx.jabber.org/streams';
-					// stanza.attrs["xmlns"]        = 'jabber:client';
-					// stanza.attrs["version"]      = "1.0";
+					// console.log("self._stream_attrs:", self._stream_attrs);
 
 					console.log("XMPP Proxy::Emiting stanza:", stanza);
 					self._on_stanza(stanza);

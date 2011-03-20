@@ -21,12 +21,20 @@
  *
  */
 
-function extend(dest, src) {
+function extend(dest, src, restrict) {
 	for (var k in src) {
-		dest[k] = src[k];
+		if (restrict) {
+			if (restrict.indexOf(k) != -1) {
+				dest[k] = src[k];
+			}
+		}
+		else {
+			dest[k] = src[k];
+		}
 	}
 	return dest;
 }
+
 
 function repeat(item, n) {
 	/* Return an array that contains 'item' 'n' times */
