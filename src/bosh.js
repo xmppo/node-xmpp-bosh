@@ -120,9 +120,6 @@ exports.createServer = function(options) {
 	var path = options.path;
 	var port = options.port;
 
-	// TODO: Stefan mentioned that "hold" is NOT being respected, which is correct.
-	// Fix it.
-
 	// This encapsulates the state for the BOSH session
 	//
 	// Format: {
@@ -216,14 +213,18 @@ exports.createServer = function(options) {
 			console.error("Terminating potentially non-empty BOSH session with SID: " + state.sid);
 		}
 
-		state.res.forEach(function(res) {
+		// We use get_response_object() since it also calls clearTimeout, etc...
+		// for us for free.
+		var ro = get_response_object(state);
+		while (ro) {
 			try {
 				res.res.destroy();
 			}
 			catch (ex) {
 				console.error("session_terminate::Caught exception '" + ex + "' while destroying socket");
 			}
-		});
+			ro = get_response_object(state);
+		}
 
 		state.res = [ ];
 		delete sid_state[state.sid];
@@ -293,6 +294,10 @@ exports.createServer = function(options) {
 	}
 
 	function get_state(node) {
+		/* Fetches a BOSH session state object given a BOSH stanza
+		 * (<body> tag)
+		 *
+		 */
 		var sid = node.attrs.sid;
 		var state = sid ? sid_state[sid] : null;
 		return state;
@@ -300,6 +305,11 @@ exports.createServer = function(options) {
 
 
 	function add_held_http_connection(state, rid, res) {
+		/* Adds the response object 'res' to the list of held response
+		 * objects for the BOSH sessions represented by 'state'. Also 
+		 * sets the associated 'rid' of the response object 'res' to 'rid'
+		 *
+		 */
 		// If a client makes more connections than allowed, trim them.
 		// http://xmpp.org/extensions/xep-0124.html#overactive
 
@@ -335,6 +345,23 @@ exports.createServer = function(options) {
 
 		return state;
 	}
+
+	function respond_to_extra_held_response_objects(state) {
+		/* If the client has made more than "hold" connections 
+		 * to us, then we relinquish the rest of the rest of the 
+		 * connections
+		 *
+		 */
+		while (state.res.length > state.hold) {
+			var ro = get_response_object(state);
+			var response = new ltx.Element('body', {
+				xmlns:      'http://jabber.org/protocol/httpbind'
+			});
+			send_no_requeue(ro, state, response);
+		}
+
+	}
+
 
 	// Fetches a "held" HTTP response object that we can potentially
 	// send responses to.
@@ -395,26 +422,51 @@ exports.createServer = function(options) {
 		send_or_queue(ro, response, sstate);
 	}
 
-	function send_stream_terminate_response(sstate) {
+	function send_stream_terminate_response(sstate, condition) {
+		/* Terminates an open stream.
+		 * 
+		 * sstate: The stream state object
+		 * condition: (optional) A string which specifies the condition to 
+		 *     send to the client as to why the stream was closed.
+		 *
+		 */
 		var state = sstate.state;
 		var ro    = get_response_object(sstate);
 
-		var response = new ltx.Element('body', {
+		var attrs = {
 			xmlns:      'http://jabber.org/protocol/httpbind', 
 			type:       'terminate'
-		});
+		};
+		if (condition) {
+			attrs.condition = condition;
+		}
 
+		var response = new ltx.Element('body', attrs);
 		send_or_queue(ro, response, sstate);
 	}
 
+	// TODO: Figure out why the signature of send_session_terminate() as 'ro' whereas
+	// that of send_stream_terminate_response() doesn't.
+
 
 	function send_session_terminate(ro, state, condition) {
+		/* Terminates an open BOSH session.
+		 * 
+		 * ro: The response object to use
+		 * state: The stream state object
+		 * condition: (optional) A string which specifies the condition to 
+		 *     send to the client as to why the session was closed.
+		 *
+		 */
 		var attrs = {
 			xmlns:      'http://jabber.org/protocol/httpbind', 
 			sid:        state.sid, 
-			type:       'terminate', 
-			condition:  condition
+			type:       'terminate'
 		};
+		if (condition) {
+			attrs.condition = condition;
+		}
+
 		var response = new ltx.Element('body', attrs);
 
 		send_no_requeue(ro, state, response);
@@ -466,7 +518,11 @@ exports.createServer = function(options) {
 
 	function send_no_requeue(ro, state, response) {
 		/* Send a response, but do NOT requeue if it fails */
-		console.log("send_no_requeue()");
+		console.log("send_no_requeue(", dutil.isTruthy(ro), ")");
+		if (dutil.isFalsy(ro)) {
+			return;
+		}
+
 		ro.res.on('error', function() { });
 
 		console.log("Writing response:", response);
@@ -594,8 +650,11 @@ exports.createServer = function(options) {
 		stream_terminate(sstate, state);
 		send_or_queue(ro, response, sstate);
 
+		send_stream_terminate(sstate, "remote-connection-failed");
+
 		// Should we terminate the BOSH session as well?
 		if (state.streams.length == 0) {
+			send_session_terminate(get_response_object(state), state);
 			session_terminate(state);
 		}
 	});
@@ -751,6 +810,7 @@ exports.createServer = function(options) {
 				// Process pending (queued) responses (if any)
 				send_pending_responses(state);
 
+
 				// Check if this is a stream restart packet.
 				if (is_stream_restart_packet(node)) {
 					console.log("Stream Restart");
@@ -798,6 +858,10 @@ exports.createServer = function(options) {
 					// Terminate the session if all streams in this session have
 					// been terminated.
 					if (state.streams.length == 0) {
+						// Send the session termination response to the client.
+						send_session_terminate(get_response_object(state), state);
+
+						// And terminate the rest of the held response objects.
 						session_terminate(state);
 					}
 					
@@ -813,7 +877,11 @@ exports.createServer = function(options) {
 			if (stanzas.length > 0) {
 				emit_stanzas_event(stanzas, state, sstate);
 			}
-			
+
+			// Respond to any extra "held" response objects that we actually 
+			// should not be holding on to (Thanks Stefan);
+			respond_to_extra_held_response_objects(state);
+
 
 		}) // on('end')
 
