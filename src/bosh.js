@@ -46,6 +46,8 @@ var WINDOW_SIZE = 2;
 // and empty response to it?
 var DEFAULT_INACTIVITY_SEC = 70;
 
+var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
+
 
 function inflated_attrs(node) {
 	var xmlns = { };
@@ -179,11 +181,27 @@ exports.createServer = function(options) {
 		options.inactivity = DEFAULT_INACTIVITY_SEC;
 
 		options.window = WINDOW_SIZE;
+
+		if (options.route) {
+			options.route = route_parse(options.route);
+		}
+
 		add_held_http_connection(options, options.rid, res);
 
 		return options;
 	}
 
+	function route_parse(route) {
+		var m = route.match(/^(\S+):(\S+):([0-9]+)$/);
+		if (m && m.length == 4) {
+			return {
+				protocol: m[1], host: m[2], port: parseInt(m[3])
+			};
+		}
+		else {
+			return null;
+		}
+	}
 
 	// Begin session handlers
 	function session_create(node, res) {
@@ -342,7 +360,7 @@ exports.createServer = function(options) {
 				state.res.splice(pos, 1);
 				// Send back an empty body element.
 				send_no_requeue(ro, state, new ltx.Element('body', {
-					xmlns: 'http://jabber.org/protocol/httpbind'
+					xmlns: BOSH_XMLNS
 				}));
 			}, state.wait * 1000)
 		};
@@ -360,7 +378,7 @@ exports.createServer = function(options) {
 		while (state.res.length > state.hold) {
 			var ro = get_response_object(state);
 			var response = new ltx.Element('body', {
-				xmlns:      'http://jabber.org/protocol/httpbind'
+				xmlns: BOSH_XMLNS
 			});
 			send_no_requeue(ro, state, response);
 		}
@@ -394,7 +412,7 @@ exports.createServer = function(options) {
 		}
 
 		var response = new ltx.Element('body', {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
+			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
 			sid:        state.sid, 
 			wait:       state.wait, 
@@ -419,7 +437,7 @@ exports.createServer = function(options) {
 		var ro    = get_response_object(sstate);
 
 		var response = new ltx.Element('body', {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
+			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
 			from:       sstate.to
 		});
@@ -439,7 +457,7 @@ exports.createServer = function(options) {
 		var ro    = get_response_object(sstate);
 
 		var attrs = {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
+			xmlns:      BOSH_XMLNS, 
 			type:       'terminate'
 		};
 		if (condition) {
@@ -464,7 +482,7 @@ exports.createServer = function(options) {
 		 *
 		 */
 		var attrs = {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
+			xmlns:      BOSH_XMLNS, 
 			sid:        state.sid, 
 			type:       'terminate'
 		};
@@ -531,6 +549,10 @@ exports.createServer = function(options) {
 		ro.res.on('error', function() { });
 
 		console.log("Writing response:", response);
+
+		// TODO: Allow X-Domain access
+		// https://developer.mozilla.org/En/HTTP_access_control
+
 		ro.res.writeHead(200, {
 			"Content-Type": "text/xml"
 		});
@@ -629,7 +651,7 @@ exports.createServer = function(options) {
 		// console.log("ro:", ro);
 
 		var response = new ltx.Element('body', {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
+			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
 			sid:        sstate.state.sid
 		}).cnode(connector_response).tree();
@@ -644,7 +666,7 @@ exports.createServer = function(options) {
 		// We send a terminate response to the client.
 		var ro = get_response_object(sstate);
 		var attrs = {
-			xmlns:      'http://jabber.org/protocol/httpbind', 
+			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
 			sid:        sstate.state.sid, 
 			type:       'terminate'
@@ -802,7 +824,7 @@ exports.createServer = function(options) {
 							state.pending = new ltx.Element('body', {
 								report: node.attrs.ack + 1, 
 								time: new Date() - _ts, 
-								xmlns: 'http://jabber.org/protocol/httpbind'
+								xmlns: BOSH_XMLNS
 							});
 					}
 

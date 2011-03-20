@@ -3,7 +3,7 @@ var SRV = require('./srv.js');
 /* The XMPPLookupService tries to resolve the host name to connect to
  * in various ways. The order in which it tries is as follows:
  *
- * 1. Try to directly connect to a host if the server_name parameter is passed
+ * 1. Try to directly connect to a host if the route parameter is passed
  *
  * 2. Try to connect using rules for the chat.pw chat service. This means
  * connecting to DOMAIN_NAME.chat.pw
@@ -11,15 +11,14 @@ var SRV = require('./srv.js');
  * 3. Try to do an SRV record lookup for _xmpp-client._tcp record on the 
  * target domain passed in as domain_name.
  *
- * The port is always 5222 - there is no way to override this as of now.
- *
  * A 'connect' event is raised on the passed 'socket' if connection succeeds.
  * If all attempts fail, an 'error' event is raised on the 'socket'.
  *
  */
-function XMPPLookupService(domain_name, server_name) {
+function XMPPLookupService(domain_name, port, route) {
 	this._domain_name = domain_name;
-	this._server_name = server_name;
+	this._port = port;
+	this._route = route
 
 	var _special = {
 		"gmail.com": "talk.google.com", 
@@ -27,7 +26,14 @@ function XMPPLookupService(domain_name, server_name) {
 	};
 
 	if (domain_name in _special) {
-		this._server_name = _special[domain_name];
+		if (!this._route) {
+			this.route = {
+				protocol: "xmpp", 
+				host: _special[domain_name], 
+				port: this._port
+			};
+		}
+
 	}
 }
 
@@ -42,7 +48,7 @@ XMPPLookupService.prototype = {
 
 
 		var cstates = [
-			try_connect_server_name, 
+			try_connect_route, 
 			try_connect_chatpw, 
 			try_connect_SRV_lookup, 
 			give_up_trying_to_connect
@@ -83,13 +89,13 @@ XMPPLookupService.prototype = {
 		socket.on('error', _on_socket_error);
 		socket.on('connect', _on_socket_connect);
 
-		function try_connect_server_name() {
-			// First just connect to the server if this._server_name is defined.
-			if (self._server_name) {
-				console.log("Trying to connect to: ", self._server_name);
+		function try_connect_route() {
+			// First just connect to the server if this._route is defined.
+			if (self._route) {
+				console.log("Trying to connect to: ", self._route.host);
 
 				socket.setTimeout(10);
-				socket.connect(5222, self._server_name);
+				socket.connect(self._route.port, self._route.host);
 			}
 			else {
 				// Trigger the 'error' event.
@@ -100,7 +106,7 @@ XMPPLookupService.prototype = {
 		function try_connect_SRV_lookup() {
 			// Then try a normal SRV lookup.
 			var attempt = SRV.connect(socket, ['_xmpp-client._tcp'], 
-				self._domain_name, 5222);
+				self._domain_name, self._port);
 
 			var _e_triggered = false;
 			attempt.on('error', function(e) {
@@ -117,7 +123,7 @@ XMPPLookupService.prototype = {
 
 		function try_connect_chatpw() {
 			// Do chat.pw related custom stuff.
-			socket.connect(5222, self._domain_name + ".chat.pw");
+			socket.connect(self._port, self._domain_name + ".chat.pw");
 		}
 
 		function give_up_trying_to_connect(e) {

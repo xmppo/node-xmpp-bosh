@@ -30,6 +30,8 @@ var lookup = require('./lookup-service.js');
 var _30_MINUTES_IN_SEC = 30 * 60;
 var _60_MINUTES_IN_SEC = 60 * 60;
 
+var DEFAULT_XMPP_PORT = 5222;
+
 
 // Note: The way we calculate inactivity is not from the BOSH layer, but 
 // from the XMPP layer. If the client is making BOSH connections but sending
@@ -152,7 +154,7 @@ XMPPProxyConnector.prototype = {
 
 		// Create a new stream.
 		var proxy = new this.Proxy(sstate.to, 
-			new lookup.LookupService(sstate.to), 
+			new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.state.route), 
 			sstate);
 
 		var stream = {
