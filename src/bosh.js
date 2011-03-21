@@ -192,6 +192,13 @@ exports.createServer = function(options) {
 	}
 
 	function route_parse(route) {
+		/* Parse the 'route' attribute, which is expected to be of the
+		 * form: xmpp:domain:port.
+		 *
+		 * Returns null or a hash of the form:
+		 * { protocol: <PROTOCOL>, host: <HOST NAME>, port: <PORT> }
+		 *
+		 */
 		var m = route.match(/^(\S+):(\S+):([0-9]+)$/);
 		if (m && m.length == 4) {
 			return {
@@ -256,6 +263,12 @@ exports.createServer = function(options) {
 
 
 	// Begin stream handlers
+	//
+	// These functions don't communicate with either the Client
+	// or the Connector. That is someone else's job. They just
+	// update internal state for the operations being performed.
+	//
+
 	function stream_add(state, node) {
 		var sname = uuid();
 		var sstate = {
@@ -307,6 +320,10 @@ exports.createServer = function(options) {
 
 
 	function is_valid_packet(node, state) {
+		/* Check the validity of the packet 'node' wrt the 
+		 * state of the BOSH session 'state'. This mainly checks
+		 * the 'sid' and 'rid' attributes.
+		 */
 		dutil.log_it("DEBUG", "is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
 
 		// Allow variance of "window" rids on either side. This is in violation
@@ -387,12 +404,14 @@ exports.createServer = function(options) {
 
 
 	// Fetches a "held" HTTP response object that we can potentially
-	// send responses to.
+	// send responses to. This function accepts either a BOSH session
+	// object OR a stream object.
+	//
 	function get_response_object(sstate /* or state */) {
 		var res = sstate.name ? sstate.state.res : sstate.res;
 		var ro = res ? (res.length > 0 ? res.shift() : null) : null;
 		if (ro) {
-			clearTimeout(ro.to);
+			clearTimeout(ro.timeout);
 		}
 		dutil.log_it("DEBUG", "Holding", res.length, "response objects");
 		return ro;
@@ -400,6 +419,8 @@ exports.createServer = function(options) {
 
 
 	/* Begin Response Sending Functions */
+	// These functions actually send responses to the client
+	//
 	function send_session_creation_response(sstate) {
 		var state = sstate.state;
 		var ro    = get_response_object(sstate);
@@ -425,7 +446,9 @@ exports.createServer = function(options) {
 			content:    state.content, 
 			// secure:     'false', 
 			// 'ack' is set by the client. If the client sets 'ack', then we also
-			// do acknowledged request/response.
+			// do acknowledged request/response. The 'ack' attribute is set
+			// by the send_no_requeue function since it is the last one to 
+			// touch responses before they go out on the wire.
 			"window":   WINDOW_SIZE // Handle window size mismatches
 		});
 
@@ -521,7 +544,7 @@ exports.createServer = function(options) {
 		// for this jid is detected, it will clear all pending
 		// timeouts and send all the packets.
 		var _po = {
-			to: null, 
+			timeout: null, 
 			response: response, 
 			sstate: sstate
 		};
@@ -530,13 +553,13 @@ exports.createServer = function(options) {
 
 		// If no one picks up this packet within state.inactivity second, 
 		// we should report back to the connector.
-		var to = setTimeout(function() {
+		var timeout = setTimeout(function() {
 			var _index = state.pending.indexOf(_po);
 			state.pending.splice(_index, 1);
 			bee.emit('no-client', response);
 		}, state.inactivity * 1000);
 
-		_po.to = to;
+		_po.timeout = timeout;
 	}
 
 	function send_no_requeue(ro, state, response) {
