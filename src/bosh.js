@@ -697,7 +697,201 @@ exports.createServer = function(options) {
 	});
 
 
-	var http_server = http.createServer(function(req, res) {
+	function _on_data_end(res, data) {
+		/* Called when the 'end' event for the request is fired by 
+		 * the HTTP request handler
+		 */
+		var node = dutil.xml_parse(data);
+
+		if (!node || !node.is('body')) {
+			res.destroy();
+			return;
+		}
+
+		var state = get_state(node);
+
+		dutil.log_it("DEBUG", "Processing request", node.toString());
+
+		// Get the array of XML stanzas.
+		var stanzas = node.children;
+
+		// Handle the stanza that the client sent us.
+
+		// Check if this is a session start packet.
+		if (is_session_creation_packet(node)) {
+			dutil.log_it("DEBUG", "Session creation");
+			var state  = session_create(node, res);
+			var sstate = stream_add(state, node);
+
+			// Respond to the client.
+			send_session_creation_response(sstate);
+
+			bee.emit('stream-add', sstate);
+		}
+		else {
+			var sname = node.attrs.stream;
+			var sid   = node.attrs.sid;
+			var sstate = null;
+
+			if (sname) {
+				// The stream name is included in the BOSH request.
+				sstate = sn_state[sname];
+
+				// If the stream name is present, but the stream is not valid, we
+				// blow up.
+				if (!sstate) {
+					res.destroy();
+					return;
+				}
+			}
+
+
+			if (!sid) {
+				// No stream ID in BOSH request. Not phare enuph.
+				res.destroy();
+				return;
+			}
+
+			var state = sid_state[sid];
+
+			// Are we the only stream for this BOSH session?
+			if (state && state.streams.length == 1) {
+				// Yes, we are. Let's pretend that the stream name came along
+				// with this request. This is mentioned in the XEP.
+				sstate = sn_state[state.streams[0]];
+			}
+
+			// Check the validity of the packet and the BOSH session
+			if (!state || !is_valid_packet(node, state)) {
+				dutil.log_it("WARN", "NOT a Valid packet");
+				res.destroy();
+				return;
+			}
+
+			// Set the current rid to the max. RID we have received till now.
+			state.rid = Math.max(state.rid, node.attrs.rid);
+
+			// Has the client enabled ACKs?
+			if (state.ack) {
+				/* Begin ACK handling */
+
+				var _uar_keys = dutil.get_keys(state.unacked_responses);
+				if (_uar_keys.length > WINDOW_SIZE * 4 /* We are fairly generous */) {
+					// The client seems to be buggy. It has not ACKed the
+					// last WINDOW_SIZE * 4 requests. We turn off ACKs.
+					delete state.ack;
+					state.unacked_responses = { };
+				}
+
+				if (node.attrs.ack) {
+					// If the request from the client includes an ACK, we delete all
+					// packets with an 'rid' less than or equal to this value since
+					// the client has seen all those packets.
+					_uar_keys.forEach(function(rid) {
+						if (rid <= node.attrs.ack) {
+							delete state.unacked_responses[rid];
+						}
+					});
+				}
+
+				// And has not acknowledged the receipt of the last message we sent it.
+				if (node.attrs.ack 
+					&& node.attrs.ack < state.max_rid_sent 
+					&& state.unacked_responses[node.attrs.ack]) {
+						var _ts = state.unacked_responses[node.attrs.ack];
+
+						// We inject a response packet into the pending queue to 
+						// notify the client that it _may_ have missed something.
+						state.pending = new ltx.Element('body', {
+							report: node.attrs.ack + 1, 
+							time: new Date() - _ts, 
+							xmlns: BOSH_XMLNS
+						});
+				}
+
+				/* End ACK handling */
+			}
+
+			// Add to held response objects for this BOSH session
+			add_held_http_connection(state, node.attrs.rid, res);
+
+			// Process pending (queued) responses (if any)
+			send_pending_responses(state);
+
+
+			// Check if this is a stream restart packet.
+			if (is_stream_restart_packet(node)) {
+				dutil.log_it("DEBUG", "Stream Restart");
+				bee.emit('stream-restart', sstate);
+
+				// According to http://xmpp.org/extensions/xep-0206.html
+				// the XML stanzas in a restart request should be ignored.
+				// Hence, we comply.
+				stanzas = [ ];
+			}
+
+			// Check if this is a new stream start packet (multiple streams)
+			else if (is_stream_add_request(node)) {
+				dutil.log_it("DEBUG", "Stream Add");
+				sstate = stream_add(state, node);
+
+				// Don't yet respond to the client. Wait for the 'stream-added' event
+				// from the Connector.
+
+				bee.emit('stream-add', sstate);
+			}
+
+			// Check for stream terminate
+			else if (is_stream_terminate_request(node)) {
+				dutil.log_it("DEBUG", "Stream Terminate");
+				// We may be required to terminate one stream, or all
+				// the open streams on this BOSH session.
+
+				var streams_to_terminate = get_streams_to_terminate(node, state);
+
+				streams_to_terminate.forEach(function(sstate) {
+					if (stanzas.length > 0) {
+						emit_stanzas_event(stanzas, state, sstate);
+					}
+
+					// Send stream termination response
+					// http://xmpp.org/extensions/xep-0124.html#terminate
+					send_stream_terminate_response(sstate);
+
+					stream_terminate(sstate, state)
+					bee.emit('stream-terminate', sstate);
+				});
+
+
+				// Terminate the session if all streams in this session have
+				// been terminated.
+				if (state.streams.length == 0) {
+					// Send the session termination response to the client.
+					send_session_terminate(get_response_object(state), state);
+
+					// And terminate the rest of the held response objects.
+					session_terminate(state);
+				}
+				
+				// Once a stream is terminated, there is no point sending 
+				// stanzas. Which is why we did the needful before sending
+				// the terminate event.
+				stanzas = [ ];
+			}
+
+		} // else (not session start)
+
+		// In any case, we should process the XML stanzas.
+		if (stanzas.length > 0) {
+			emit_stanzas_event(stanzas, state, sstate);
+		}
+
+		// Respond to any extra "held" response objects that we actually 
+		// should not be holding on to (Thanks Stefan);
+		respond_to_extra_held_response_objects(state);
+	}
+
+	function http_request_handler(req, res) {
 		var u = url.parse(req.url);
 
 		dutil.log_it("DEBUG", "Someone connected");
@@ -726,7 +920,7 @@ exports.createServer = function(options) {
 		req.on('data', function(d) {
 			// dutil.log_it("DEBUG", "onData:", d.toString());
 			var _d = d.toString();
-			data_len += d.length;
+			data_len += _d.length;
 
 			// Prevent attacks. If data (in its entirety) gets too big, 
 			// terminate the connection.
@@ -739,207 +933,19 @@ exports.createServer = function(options) {
 
 			data.push(_d);
 		})
+
 		.on('end', function() {
-			var node = dutil.xml_parse(data.join(""));
-			data = [];
-
-			if (!node || !node.is('body')) {
-				res.destroy();
-				return;
-			}
-
-			var state = get_state(node);
-
-			dutil.log_it("DEBUG", "Processing request", node.toString());
-
-			// Get the array of XML stanzas.
-			var stanzas = node.children;
-
-			// Handle
-
-			// Check if this is a session start packet.
-			if (is_session_creation_packet(node)) {
-				dutil.log_it("DEBUG", "Session creation");
-				var state  = session_create(node, res);
-				var sstate = stream_add(state, node);
-
-				// Respond to the client.
-				send_session_creation_response(sstate);
-
-				bee.emit('stream-add', sstate);
-			}
-			else {
-				var sname = node.attrs.stream;
-				var sid   = node.attrs.sid;
-				var sstate = null;
-
-				if (sname) {
-					// The stream name is included in the BOSH request.
-					sstate = sn_state[sname];
-
-					// If the stream name is present, but the stream is not valid, we
-					// blow up.
-					if (!sstate) {
-						res.destroy();
-						return;
-					}
-				}
-
-
-				if (!sid) {
-					// No stream ID in BOSH request. Not phare enuph.
-					res.destroy();
-					return;
-				}
-
-				var state = sid_state[sid];
-
-				// Are we the only stream for this BOSH session?
-				if (state && state.streams.length == 1) {
-					// Yes, we are. Let's pretend that the stream name came along
-					// with this request.
-					sstate = sn_state[state.streams[0]];
-				}
-
-				// Check the validity of the packet and the BOSH session
-				if (!state || !is_valid_packet(node, state)) {
-					dutil.log_it("WARN", "NOT a Valid packet");
-					res.destroy();
-					return;
-				}
-
-				// Set the current rid to the max. RID we have received till now.
-				state.rid = Math.max(state.rid, node.attrs.rid);
-
-				// Has the client enabled ACKs?
-				if (state.ack) {
-					/* Begin ACK handling */
-
-					var _uar_keys = dutil.get_keys(state.unacked_responses);
-					if (_uar_keys.length > WINDOW_SIZE * 4 /* We are fairly generous */) {
-						// The client seems to be buggy. It has not ACKed the
-						// last WINDOW_SIZE * 4 requests. We turn off ACKs.
-						delete state.ack;
-						state.unacked_responses = { };
-					}
-
-					if (node.attrs.ack) {
-						// If the request from the client includes an ACK, we delete all
-						// packets with an 'rid' less than or equal to this value since
-						// the client has seen all those packets.
-						_uar_keys.forEach(function(rid) {
-							if (rid <= node.attrs.ack) {
-								delete state.unacked_responses[rid];
-							}
-						});
-					}
-
-					// And has not acknowledged the receipt of the last message we sent it.
-					if (node.attrs.ack 
-						&& node.attrs.ack < state.max_rid_sent 
-						&& state.unacked_responses[node.attrs.ack]) {
-							var _ts = state.unacked_responses[node.attrs.ack];
-
-							// We inject a response packet into the pending queue to 
-							// notify the client that it _may_ have missed something.
-							state.pending = new ltx.Element('body', {
-								report: node.attrs.ack + 1, 
-								time: new Date() - _ts, 
-								xmlns: BOSH_XMLNS
-							});
-					}
-
-					/* End ACK handling */
-				}
-
-				// Add to held response objects for this BOSH session
-				add_held_http_connection(state, node.attrs.rid, res);
-
-				// Process pending (queued) responses (if any)
-				send_pending_responses(state);
-
-
-				// Check if this is a stream restart packet.
-				if (is_stream_restart_packet(node)) {
-					dutil.log_it("DEBUG", "Stream Restart");
-					bee.emit('stream-restart', sstate);
-
-					// According to http://xmpp.org/extensions/xep-0206.html
-					// the XML stanzas in a restart request should be ignored.
-					// Hence, we comply.
-					stanzas = [ ];
-				}
-
-				// Check if this is a new stream start packet (multiple streams)
-				else if (is_stream_add_request(node)) {
-					dutil.log_it("DEBUG", "Stream Add");
-					sstate = stream_add(state, node);
-
-					// Don't yet respond to the client. Wait for the 'stream-added' event
-					// from the Connector.
-
-					bee.emit('stream-add', sstate);
-				}
-
-				// Check for stream terminate
-				else if (is_stream_terminate_request(node)) {
-					dutil.log_it("DEBUG", "Stream Terminate");
-					// We may be required to terminate one stream, or all
-					// the open streams on this BOSH session.
-
-					var streams_to_terminate = get_streams_to_terminate(node, state);
-
-					streams_to_terminate.forEach(function(sstate) {
-						if (stanzas.length > 0) {
-							emit_stanzas_event(stanzas, state, sstate);
-						}
-
-						// Send stream termination response
-						// http://xmpp.org/extensions/xep-0124.html#terminate
-						send_stream_terminate_response(sstate);
-
-						stream_terminate(sstate, state)
-						bee.emit('stream-terminate', sstate);
-					});
-
-
-					// Terminate the session if all streams in this session have
-					// been terminated.
-					if (state.streams.length == 0) {
-						// Send the session termination response to the client.
-						send_session_terminate(get_response_object(state), state);
-
-						// And terminate the rest of the held response objects.
-						session_terminate(state);
-					}
-					
-					// Once a stream is terminated, there is no point sending 
-					// stanzas. Which is why we did the needful before sending
-					// the terminate event.
-					stanzas = [ ];
-				}
-
-			} // else (not session start)
-
-			// In any case, we should process the XML stanzas.
-			if (stanzas.length > 0) {
-				emit_stanzas_event(stanzas, state, sstate);
-			}
-
-			// Respond to any extra "held" response objects that we actually 
-			// should not be holding on to (Thanks Stefan);
-			respond_to_extra_held_response_objects(state);
-
-
-		}) // on('end')
+			_on_data_end(res, data.join(""));
+		})
 
 		.on('error', function(ex) {
-			console.error("Exception while processing request: " + ex);
-			console.error(ex.stack);
+			dutil.log_it("WARN", "Exception while processing request: " + ex);
+			dutil.log_it("WARN", ex.stack);
 		});
 
-	});
+	}
 
+	var http_server = http.createServer(http_request_handler);
 	http_server.listen(options.port);
 
 	http_server.on('error', function(ex) {

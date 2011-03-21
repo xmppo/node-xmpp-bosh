@@ -22,6 +22,10 @@
  */
 
 function copy(dest, src, restrict) {
+	/* Copy keys from the hash 'src' to the hash 'dest'.
+	 * If restrict is truthy, then it should be an array
+	 * that contains the keys to be copied.
+	 */
 	for (var k in src) {
 		if (restrict) {
 			if (restrict.indexOf(k) != -1) {
@@ -36,6 +40,10 @@ function copy(dest, src, restrict) {
 }
 
 function extend(dest, src) {
+	/* Extend the hash 'dest' with keys & values from the 
+	 * hash 'src'. If a key is already present in 'dest', 
+	 * don't overrite it with one from 'src'.
+	 */
 	for (var k in src) {
 		if (!(k in dest)) {
 			dest[k] = src[k];
@@ -46,7 +54,12 @@ function extend(dest, src) {
 
 
 function repeat(item, n) {
-	/* Return an array that contains 'item' 'n' times */
+	/* Return an array that contains 'item' 'n' times.
+	 * Note: 'item' is not deep copied, only the reference
+	 * is assigned 'n' times. Modifying it via member 
+	 * functions will result in all elements of the returned
+	 * array being modified.
+	 */
 	var ret = [];
 	for (var i = 0; i < n; ++i) {
 		ret.push(item);
@@ -113,7 +126,7 @@ function sprintf(fmt_str) {
 	// log_it('debug', "fs_parts, args:", fs_parts, args);
 
 	if (fs_parts.length != args.length + 1) {
-		console.warn(sprintf("The number of arguments in your format string (%s)[%s] " + 
+		log_it("WARN", sprintf("The number of arguments in your format string (%s)[%s] " + 
 			"does NOT match the number of arguments passed [%s]", 
 			fmt_str, fs_parts.length-1, args.length));
 	}
@@ -159,8 +172,8 @@ function _real_xml_parse(xml, ltx) {
 		node = ltx.parse(xml);
 	}
 	catch (ex) {
-		console.error("Error parsing XML:", ex);
-		console.error(ex.stack);
+		log_it("WARN", "Error parsing XML:", ex);
+		log_it("WARN", ex.stack);
 	}
 	return node;
 }
