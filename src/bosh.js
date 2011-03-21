@@ -173,6 +173,8 @@ exports.createServer = function(options) {
 		// Format: { rid: new Date() }
 		options.unacked_responses = { };
 
+		options.queued_requests = { };
+
 		// The Max value of the 'rid' (request ID) that has been 
 		// sent by BOSH to the client. i.e. The highest request ID
 		// responded to by us.
@@ -720,23 +722,11 @@ exports.createServer = function(options) {
 	});
 
 
-	function _on_data_end(res, data) {
-		/* Called when the 'end' event for the request is fired by 
-		 * the HTTP request handler
-		 */
-		var node = dutil.xml_parse(data);
-
-		if (!node || !node.is('body')) {
-			res.destroy();
-			return;
-		}
-
+	function _handle_incoming_request(res, node) {
 		var state = get_state(node);
 
-		dutil.log_it("DEBUG", "Processing request", node.toString());
-
-		// Get the array of XML stanzas.
-		var stanzas = node.children;
+		// This will eventually contain all the stanzas to be processed.
+		var stanzas = [ ];
 
 		// Handle the stanza that the client sent us.
 
@@ -755,6 +745,8 @@ exports.createServer = function(options) {
 			var sname = node.attrs.stream;
 			var sid   = node.attrs.sid;
 			var sstate = null;
+
+			dutil.log_it("DEBUG", "RID, state.RID:", node.attrs.rid, state.rid);
 
 			if (sname) {
 				// The stream name is included in the BOSH request.
@@ -792,7 +784,26 @@ exports.createServer = function(options) {
 			}
 
 			// Set the current rid to the max. RID we have received till now.
-			state.rid = Math.max(state.rid, node.attrs.rid);
+			// state.rid = Math.max(state.rid, node.attrs.rid);
+
+			state.queued_requests[node.attrs.rid] = node;
+
+			// Process all queued requests
+			var _queued_request_keys = dutil.get_keys(state.queued_requests);
+			_queued_request_keys.sort();
+
+			_queued_request_keys.forEach(function(rid) {
+				if (rid == state.rid + 1) {
+					// This is the next logical packet to be processed.
+					stanzas = stanzas.concat(state.queued_requests[rid].children);
+					delete state.queued_requests[rid];
+
+					// Increment the 'rid'
+					state.rid += 1;
+					dutil.log_it("DEBUG", "Updated RID to:", state.rid);
+				}
+			});
+
 
 			// Has the client enabled ACKs?
 			if (state.ack) {
@@ -836,10 +847,21 @@ exports.createServer = function(options) {
 			}
 
 			// Add to held response objects for this BOSH session
-			add_held_http_connection(state, node.attrs.rid, res);
+			if (res) {
+				add_held_http_connection(state, node.attrs.rid, res);
+			}
+
 
 			// Process pending (queued) responses (if any)
 			send_pending_responses(state);
+
+
+			// Should we process this packet?
+			if (state.rid < node.attrs.rid) {
+				// Not really...
+				dutil.log_it("INFO", "Not processing packet:", node);
+				return;
+			}
 
 
 			// Check if this is a stream restart packet.
@@ -912,6 +934,23 @@ exports.createServer = function(options) {
 		// Respond to any extra "held" response objects that we actually 
 		// should not be holding on to (Thanks Stefan);
 		respond_to_extra_held_response_objects(state);
+	}
+
+
+	function _on_data_end(res, data) {
+		/* Called when the 'end' event for the request is fired by 
+		 * the HTTP request handler
+		 */
+		var node = dutil.xml_parse(data);
+
+		if (!node || !node.is('body')) {
+			res.destroy();
+			return;
+		}
+
+		dutil.log_it("DEBUG", "Processing request", node.toString());
+
+		_handle_incoming_request(res, node);
 	}
 
 	function http_request_handler(req, res) {
