@@ -9,14 +9,19 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
 
 [A] Quick Start:
 
-To run, type:
-$ node 
-> var nxb    = require("node-xmpp-bosh");
-> var server = nxb.start();
-> 
-> // To stop, type:
-> // server.stop();
->
+    [1] To run, type:
+    $ node bosh-server
+
+    [2] For running from within a node application, type:
+    $ node
+    > var nxb    = require("node-xmpp-bosh");
+    > var server = nxb.start();
+    > 
+    > // To stop, type:
+    > // server.stop();
+    >
+
+    [3] For a more complex setup, see the file main.js
 
 
 The BOSH is now available at: http://localhost:5280/http-bind/
