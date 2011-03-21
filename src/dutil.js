@@ -185,6 +185,46 @@ function isTruthy(x) {
 }
 
 
+var _log_level = 1;
+var _log_levels = {
+	"NONE": 0, 
+	"INFO": 1, 
+	"WARN": 2, 
+	"DEBUG": 3,
+	"ERROR": 4,
+	"FATAL": 5
+};
+
+
+function get_numeric_log_level(level) {
+	level = level.toUpperCase();
+	var nll = 6;
+
+	if (level in _log_levels) {
+		nll = _log_levels[level];
+	}
+
+	return nll;
+}
+	
+function set_log_level(level) {
+	_log_level = get_numeric_log_level(level);
+}
+
+function log_it(level) {
+	level = level.toUpperCase();
+	var args = arguments_to_array(arguments).slice(1);
+	args.unshift(level, new Date());
+	var numeric_level = get_numeric_log_level(level);
+
+
+	if (numeric_level > 0 && numeric_level <= _log_level) {
+		console.log.apply(console, args);
+	}
+}
+
+
+
 exports.copy = copy;
 exports.extend = extend;
 exports.repeat = repeat;
@@ -199,3 +239,5 @@ exports.rev_hash = rev_hash
 exports.xml_parse = _xml_parse();
 exports.isFalsy = isFalsy;
 exports.isTruthy = isTruthy;
+exports.set_log_level = set_log_level;
+exports.log_it = log_it;

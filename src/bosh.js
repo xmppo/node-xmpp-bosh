@@ -307,7 +307,7 @@ exports.createServer = function(options) {
 
 
 	function is_valid_packet(node, state) {
-		console.log("is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
+		dutil.log_it("DEBUG", "is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
 
 		// Allow variance of "window" rids on either side. This is in violation
 		// of the XEP though.
@@ -394,7 +394,7 @@ exports.createServer = function(options) {
 		if (ro) {
 			clearTimeout(ro.to);
 		}
-		console.warn("Holding ", res.length, " response objects");
+		dutil.log_it("DEBUG", "Holding", res.length, "response objects");
 		return ro;
 	}
 
@@ -541,14 +541,14 @@ exports.createServer = function(options) {
 
 	function send_no_requeue(ro, state, response) {
 		/* Send a response, but do NOT requeue if it fails */
-		console.log("send_no_requeue(", dutil.isTruthy(ro), ")");
+		dutil.log_it("DEBUG", "send_no_requeue(", dutil.isTruthy(ro), ")");
 		if (dutil.isFalsy(ro)) {
 			return;
 		}
 
 		ro.res.on('error', function() { });
 
-		console.log("Writing response:", response);
+		dutil.log_it("DEBUG", "Writing response:", response);
 
 		// Allow Cross-Domain access
 		// https://developer.mozilla.org/En/HTTP_access_control
@@ -571,7 +571,7 @@ exports.createServer = function(options) {
 
 	function send_or_queue(ro, response, sstate) {
 		/* Send a response and requeue if the sending fails */
-		console.log("send_or_queue::ro:", ro != null);
+		dutil.log_it("DEBUG", "send_or_queue::ro:", ro != null);
 		if (ro) {
 			// On error, try the next one or start the timer if there
 			// is nothing left to try.
@@ -611,7 +611,7 @@ exports.createServer = function(options) {
 		// problems with the 'rid' parameter though).
 		//
 
-		console.log("send pending responses:", state.pending.length);
+		dutil.log_it("DEBUG", "send_pending_responses:", state.pending.length);
 
 		if (state.pending.length > 0) {
 			var ro = get_response_object(state);
@@ -645,7 +645,7 @@ exports.createServer = function(options) {
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
 	bee.addListener('stream-added', function(sstate) {
-		console.log("bosh server::stream-added:", sstate.stream);
+		dutil.log_it("DEBUG", "bosh server::stream-added:", sstate.stream);
 		// Send only if this is the 2nd (or more) stream on this BOSH session.
 		if (sstate.streams.length > 1) {
 			send_stream_add_response(sstate);
@@ -655,7 +655,7 @@ exports.createServer = function(options) {
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
 	bee.addListener('response', function(connector_response, sstate) {
-		console.log("bosh server::response:", connector_response);
+		dutil.log_it("DEBUG", "bosh server::response:", connector_response);
 
 		var ro = get_response_object(sstate);
 		// console.log("ro:", ro);
@@ -700,7 +700,7 @@ exports.createServer = function(options) {
 	var http_server = http.createServer(function(req, res) {
 		var u = url.parse(req.url);
 
-		console.log("Someone connected. u:", u);
+		dutil.log_it("DEBUG", "Someone connected");
 
 		var ppos = u.pathname.search(path);
 
@@ -724,7 +724,7 @@ exports.createServer = function(options) {
 		var data_len = 0;
 
 		req.on('data', function(d) {
-			console.log("onData:", d.toString());
+			// dutil.log_it("DEBUG", "onData:", d.toString());
 			var _d = d.toString();
 			data_len += d.length;
 
@@ -750,7 +750,7 @@ exports.createServer = function(options) {
 
 			var state = get_state(node);
 
-			console.log("Processing request");
+			dutil.log_it("DEBUG", "Processing request", node.toString());
 
 			// Get the array of XML stanzas.
 			var stanzas = node.children;
@@ -759,7 +759,7 @@ exports.createServer = function(options) {
 
 			// Check if this is a session start packet.
 			if (is_session_creation_packet(node)) {
-				console.log("Session creation");
+				dutil.log_it("DEBUG", "Session creation");
 				var state  = session_create(node, res);
 				var sstate = stream_add(state, node);
 
@@ -803,7 +803,7 @@ exports.createServer = function(options) {
 
 				// Check the validity of the packet and the BOSH session
 				if (!state || !is_valid_packet(node, state)) {
-					console.error("NOT a Valid packet");
+					dutil.log_it("WARN", "NOT a Valid packet");
 					res.destroy();
 					return;
 				}
@@ -861,7 +861,7 @@ exports.createServer = function(options) {
 
 				// Check if this is a stream restart packet.
 				if (is_stream_restart_packet(node)) {
-					console.log("Stream Restart");
+					dutil.log_it("DEBUG", "Stream Restart");
 					bee.emit('stream-restart', sstate);
 
 					// According to http://xmpp.org/extensions/xep-0206.html
@@ -872,7 +872,7 @@ exports.createServer = function(options) {
 
 				// Check if this is a new stream start packet (multiple streams)
 				else if (is_stream_add_request(node)) {
-					console.log("Stream Add");
+					dutil.log_it("DEBUG", "Stream Add");
 					sstate = stream_add(state, node);
 
 					// Don't yet respond to the client. Wait for the 'stream-added' event
@@ -883,7 +883,7 @@ exports.createServer = function(options) {
 
 				// Check for stream terminate
 				else if (is_stream_terminate_request(node)) {
-					console.log("Stream Terminate");
+					dutil.log_it("DEBUG", "Stream Terminate");
 					// We may be required to terminate one stream, or all
 					// the open streams on this BOSH session.
 

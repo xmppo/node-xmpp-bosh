@@ -39,6 +39,11 @@ var DEFAULT_XMPP_PORT = 5222;
 // activity timestamp shall NOT be updated, and after sufficient amount of 
 // time, the client shall be disconnected.
 
+// TODO: Possibly fix the above behaviour to consider HTTP connections absent 
+// instead of XMPP activity.
+
+
+
 
 function XMPPProxyConnector(bosh_server) {
 	this.Proxy = xp.Proxy;
@@ -70,13 +75,13 @@ function XMPPProxyConnector(bosh_server) {
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
 	this._on_stanza_received = dutil.hitch(this, function(stanza, sstate) {
-		console.log("Connector received stanza");
+		dutil.log_it("DEBUG", "Connector received stanza");
 		this.bosh_server.emit('response', stanza, sstate);
 	});
 
 	// Fired every time the XMPP proxy fires the 'connect' event.
 	this._on_xmpp_proxy_connected = dutil.hitch(this, function(sstate) {
-		console.log("Connector received 'connect' event");
+		dutil.log_it("DEBUG", "Connector received 'connect' event");
 		this.bosh_server.emit('stream-added', sstate);
 
 		// Flush out any pending packets.
@@ -99,7 +104,9 @@ function XMPPProxyConnector(bosh_server) {
 	// Setup a BOSH stream garbage collector that terminates 
 	// XMPP streams after a certain period of inactivity.
 	this._gc_interval = setInterval(function() {
-		var skeys = dutil.get_keys(self.strrams);
+		var skeys = dutil.get_keys(self.streams);
+		dutil.log_it("DEBUG", "GC timeout::skeys:", skeys);
+
 		var _cts = new Date();
 
 		skeys.forEach(function(k) {
@@ -108,6 +115,8 @@ function XMPPProxyConnector(bosh_server) {
 				// 1. From the XMPP end
 				self.stream_terminate(self.streams[k]);
 				// TODO: 2. From the BOSH end.
+
+				dutil.log_it("DEBUG", "Removing stream:", k);
 
 				// 3. Delete this stream from our set of held streams.
 				delete self.streams[k];
@@ -198,7 +207,7 @@ XMPPProxyConnector.prototype = {
 
 	no_client: function(response) {
 		// What to do with this response??
-		console.log("No Client for this response:", response);
+		dutil.log_it("WARN", "No Client for this response:", response);
 	}
 
 };

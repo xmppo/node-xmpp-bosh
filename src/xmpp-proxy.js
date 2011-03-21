@@ -85,17 +85,17 @@ dutil.copy(XMPPProxy.prototype, {
 		// Check if this is a STARTTLS request or response.
 		// TODO: Check for valid Namespaces too.
 
-		// console.log("Is stream:features?", stanza.is('features'));
-		// console.log("logging starttls:", stanza.getChild('starttls'));
+		// dutil.log_it("DEBUG", "Is stream:features?", stanza.is('features'));
+		// dutil.log_it("DEBUG", "logging starttls:", stanza.getChild('starttls'));
 		if (stanza.is('features') &&
 			stanza.getChild('starttls')) {
 			/* Signal willingness to perform TLS handshake */
-			console.log("STARTTLS requested");
+			dutil.log_it("DEBUG", "STARTTLS requested");
 			var _starttls_request = 
 				new ltx.Element('starttls', {
 					xmlns: NS_XMPP_TLS
 				}).toString();
-			console.log("Writing out STARTTLS request:", _starttls_request);
+			dutil.log_it("DEBUG", "Writing out STARTTLS request:", _starttls_request);
 			this.send(_starttls_request);
 		} else if (stanza.is('proceed')) {
 	        /* Server is waiting for TLS handshake */
@@ -147,7 +147,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_connect: function() {
-		console.log('connected', arguments);
+		dutil.log_it('DEBUG', 'connected', arguments);
 
 		this._is_connected = true;
 
@@ -156,7 +156,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_data: function(d) {
-		console.log("received:", d.toString());
+		dutil.log_it("DEBUG", "received:", d.toString());
 		this._buff += d.toString();
 
 		if (this._first) {
@@ -167,9 +167,9 @@ dutil.copy(XMPPProxy.prototype, {
 				this._buff = this._buff.substring(ss_pos);
 				var gt_pos = this._buff.search(">");
 				if (gt_pos != -1) {
-					console.log("Got stream packet");
+					dutil.log_it("DEBUG", "Got stream packet");
 					var _ss_stanza = this._buff.substring(0, gt_pos + 1) + "</stream:stream>";
-					console.log("_ss_stanza:", _ss_stanza);
+					dutil.log_it("DEBUG", "_ss_stanza:", _ss_stanza);
 
 					// Parse _ss_stanza and extract the attributes.
 					var _ss_node = dutil.xml_parse(_ss_stanza);
@@ -222,24 +222,24 @@ dutil.copy(XMPPProxy.prototype, {
 
 					// console.log("self._stream_attrs:", self._stream_attrs);
 
-					console.log("XMPP Proxy::Emiting stanza:", stanza);
+					dutil.log_it("DEBUG", "XMPP Proxy::Emiting stanza:", stanza);
 					self._on_stanza(stanza);
 				}
 				catch (ex) {
-					// Eat the exception.
-					console.log(ex.stack);
+					dutil.log_it("WARN", "Incomplete packet:", stanza.toString(), ex.stack);
 				}
 			});
 		}
 		catch (ex) {
-			console.log("incomplete packet");
+			// Eat the exception.
+			dutil.log_it("ERROR", "Incomplete packet parsed in XMPPProxy::_on_data");
 		}
 		// For debugging
 		// this._sock.destroy();
 	}, 
 
 	_on_error: function(ex) {
-		console.error("\nERROR event triggered on XMPPProxy");
+		dutil.log_it("WARN", "ERROR event triggered on XMPPProxy");
 		this.emit('error', ex, this._void_star);
 	}
 });

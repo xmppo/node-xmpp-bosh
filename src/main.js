@@ -38,13 +38,16 @@ exports.start     = function(options) {
 	options = options || { };
 	options = dutil.extend(options, {
 		path: /^\/http-bind\/$/, 
-		port: 5280
+		port: 5280, 
+		logging: "INFO"
 	});
+
+	dutil.set_log_level(options.logging);
 
 	// Instantiate a bosh server with the connector as a parameter.
 	var bosh_server = bosh.createServer(options);
 
-	console.log("bosh_server:", bosh_server);
+	dutil.log_it("DEBUG", "bosh_server:", bosh_server);
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
@@ -52,8 +55,8 @@ exports.start     = function(options) {
 
 
 
-	bosh_server.on('error', function() {
-		console.log("Error creating the BOSH server:", arguments);
+	bosh_server.on('error', function(e) {
+		dutil.log_it("ERROR", "Could not create the BOSH server:", e);
 	});
 
 	bosh_server.on('stanzas', function(stanzas, sstate) {
