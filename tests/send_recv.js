@@ -29,9 +29,9 @@ function disconnect(conn) {
 }
 
 
-function connect(username, password, onStanza, onConnect) {
+function connect(username, password, route, onStanza, onConnect) {
     var conn = new Strophe.Connection(BOSH_SERVICE);
-	conn.connect(username, password, onConnect);
+	conn.connect(username, password, onConnect, null, null, route);
 	conn.xmlInput = onStanza;
 	return conn;
 }
@@ -41,9 +41,14 @@ function start_test() {
 	XMPP_USERS.forEach(function(user_info) {
 		var jid      = user_info.jid;
 		var password = user_info.password;
+		var route    = user_info.route;
 
 		function onStanza(stanza) {
 			console.log("Received:", stanza.nodeName);
+			var s = stanza._childNodes[0];
+			if (stanza._childNodes.length > 0 && s.nodeName == "MESSAGE" && s._childNodes.length > 0) {
+				console.log("Got:", s._childNodes[0].innerHTML);
+			}
 		}
 
 		function onConnect(status) {
@@ -63,20 +68,22 @@ function start_test() {
 			}
 			else if (status == Strophe.Status.CONNECTED) {
 				// Send packets to all other users.
-				us(XMPP_USERS).chain()
-					.filter(function(x) { return x.jid != jid; })
-					.each(function(uinfo2) {
-						conn.send($msg({
-							type: "chat", 
-							to: uinfo2.jid
-						})
-						.c("body")
-						.t("A message to be sent"));
-				});
+				setTimeout(function() {
+					us(XMPP_USERS).chain()
+						.filter(function(x) { return x.jid != jid; })
+						.each(function(uinfo2, i) {
+							conn.send($msg({
+								type: "chat", 
+								to: uinfo2.jid
+							})
+							.c("body")
+							.t("A message to be sent from: " + jid));
+					});
+				}, i * 100 + Math.random() * 1000);
 			}
 		}
 
-		var conn = connect(jid, password, onStanza, onConnect);
+		var conn = connect(jid, password, route, onStanza, onConnect);
 	});
 }
 

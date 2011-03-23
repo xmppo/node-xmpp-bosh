@@ -4,6 +4,7 @@ var BOSH_ENDPOINT = '/http-bind/';
 var BOSH_SERVICE = BOSH_HOST + BOSH_ENDPOINT;
 var XMPP_USERNAME = "user@example.com";
 var XMPP_PASSWORD = "password";
+var XMPP_ROUTE = '';
 
 var conn = null;
 
@@ -26,7 +27,7 @@ function connect() {
     conn = new Strophe.Connection(BOSH_SERVICE);
     conn.rawInput = rawInput;
     conn.rawOutput = rawOutput;
-	conn.connect(XMPP_USERNAME, XMPP_PASSWORD, onConnect);
+	conn.connect(XMPP_USERNAME, XMPP_PASSWORD, onConnect, null, null, XMPP_ROUTE);
 }
 
 function onConnect(status)
@@ -68,10 +69,15 @@ function main() {
 		BOSH_ENDPOINT = opts.endpoint;
 	}
 
+	if (opts.route) {
+		XMPP_ROUTE = opts.route;
+	}
+
 	if (XMPP_USERNAME == "user@example.com") {
 		// The user probably forgot to pass params.
 		console.log("Usage: node basic.js --username='user@example.com' " +
-			"--password='password' --host='http://localhost:5280' --endpoint='/http-bind/'");
+			"--password='password' --host='http://localhost:5280' " + 
+			"--endpoint='/http-bind/' --route='xmpp:domain:port'");
 		process.exit(2);
 	}
 

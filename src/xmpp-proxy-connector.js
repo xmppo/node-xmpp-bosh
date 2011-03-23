@@ -25,6 +25,7 @@ var xp     = require('./xmpp-proxy.js');
 var us     = require('./underscore.js');
 var dutil  = require('./dutil.js');
 var lookup = require('./lookup-service.js');
+var util   = require('util');
 
 
 var _30_MINUTES_IN_SEC = 30 * 60;
@@ -75,13 +76,13 @@ function XMPPProxyConnector(bosh_server) {
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
 	this._on_stanza_received = dutil.hitch(this, function(stanza, sstate) {
-		dutil.log_it("DEBUG", "Connector received stanza");
+		dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Connector received stanza");
 		this.bosh_server.emit('response', stanza, sstate);
 	});
 
 	// Fired every time the XMPP proxy fires the 'connect' event.
 	this._on_xmpp_proxy_connected = dutil.hitch(this, function(sstate) {
-		dutil.log_it("DEBUG", "Connector received 'connect' event");
+		dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Received 'connect' event");
 		this.bosh_server.emit('stream-added', sstate);
 
 		// Flush out any pending packets.
@@ -105,7 +106,7 @@ function XMPPProxyConnector(bosh_server) {
 	// XMPP streams after a certain period of inactivity.
 	this._gc_interval = setInterval(function() {
 		var skeys = dutil.get_keys(self.streams);
-		dutil.log_it("DEBUG", "GC timeout::skeys:", skeys);
+		// dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::GC timeout::skeys:", skeys);
 
 		var _cts = new Date();
 
@@ -116,7 +117,7 @@ function XMPPProxyConnector(bosh_server) {
 				self.stream_terminate(self.streams[k]);
 				// TODO: 2. From the BOSH end.
 
-				dutil.log_it("DEBUG", "Removing stream:", k);
+				dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Removing stream:", k);
 
 				// 3. Delete this stream from our set of held streams.
 				delete self.streams[k];
@@ -207,7 +208,9 @@ XMPPProxyConnector.prototype = {
 
 	no_client: function(response) {
 		// What to do with this response??
-		dutil.log_it("WARN", "No Client for this response:", response);
+		dutil.log_it("WARN", function() {
+			return [ "XMPP PROXY CONNECTOR::No Client for this response:", response.toString() ];
+		});
 	}
 
 };

@@ -180,6 +180,9 @@ exports.XMLHttpRequest = function() {
 		// Use the proper protocol
 		var doRequest = ssl ? https.request : http.request;
 
+		// Increase the number of simultaneous sockets to 512.
+		(ssl ? https : http).getAgent(host, port).maxSockets = 512;
+
 		var options = {
 			host: host,
 			port: port,
@@ -213,12 +216,14 @@ exports.XMLHttpRequest = function() {
 		}).on('error', function(error) {
 			self.handleError(error);
 		});
-		
+
+		req.setHeader("Connection", "Close");
+
 		// Node 0.4 and later won't accept empty data. Make sure it's needed.
 		if (data) {
 			req.write(data);
 		}
-		
+
 		req.end();
 	};
 

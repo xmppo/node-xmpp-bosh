@@ -1,4 +1,5 @@
-var SRV = require('./srv.js');
+var SRV   = require('./srv.js');
+var dutil = require('./dutil.js');
 
 /* The XMPPLookupService tries to resolve the host name to connect to
  * in various ways. The order in which it tries is as follows:
@@ -92,9 +93,9 @@ XMPPLookupService.prototype = {
 		function try_connect_route() {
 			// First just connect to the server if this._route is defined.
 			if (self._route) {
-				console.log("Trying to connect to: ", self._route.host);
+				dutil.log_it("DEBUG", "try_connect_route::", self._route.host, self._route.port);
 
-				socket.setTimeout(10);
+				// socket.setTimeout(10000);
 				socket.connect(self._route.port, self._route.host);
 			}
 			else {
@@ -104,6 +105,8 @@ XMPPLookupService.prototype = {
 		}
 
 		function try_connect_SRV_lookup() {
+			dutil.log_it("DEBUG", "try_connect_SRV_lookup");
+			
 			// Then try a normal SRV lookup.
 			var attempt = SRV.connect(socket, ['_xmpp-client._tcp'], 
 				self._domain_name, self._port);
@@ -122,6 +125,8 @@ XMPPLookupService.prototype = {
 		}
 
 		function try_connect_chatpw() {
+			dutil.log_it("DEBUG", "try_connect_chatpw");
+
 			// Do chat.pw related custom stuff.
 			socket.connect(self._port, self._domain_name + ".chat.pw");
 		}

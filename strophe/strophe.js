@@ -1607,7 +1607,7 @@ Strophe.Connection.prototype = {
      *      number of connections the server will hold at one time.  This
      *      should almost always be set to 1 (the default).
      */
-    connect: function (jid, pass, callback, wait, hold)
+    connect: function (jid, pass, callback, wait, hold, route)
     {
         this.jid = jid;
         this.pass = pass;
@@ -1624,7 +1624,7 @@ Strophe.Connection.prototype = {
         this.domain = Strophe.getDomainFromJid(this.jid);
 
         // build the body tag
-        var body = this._buildBody().attrs({
+		var body_attrs = {
             to: this.domain,
             "xml:lang": "en",
             wait: this.wait,
@@ -1633,7 +1633,12 @@ Strophe.Connection.prototype = {
             ver: "1.6",
             "xmpp:version": "1.0",
             "xmlns:xmpp": Strophe.NS.BOSH
-        });
+        };
+		if (route) {
+			body_attrs.route = route;
+		}
+
+        var body = this._buildBody().attrs(body_attrs);
 
         this._changeConnectStatus(Strophe.Status.CONNECTING, null);
 

@@ -82,9 +82,12 @@ function inflated_attrs(node) {
 function is_session_creation_packet(node) {
 	// Coded according to the rules mentioned here:
 	// http://xmpp.org/extensions/xep-0124.html#session-request
+	// Even though it says SHOULD for everything we expect, we
+	// violate the XEP.
+	//
 	var ia = inflated_attrs(node);
 	return node.attrs.to &&
-		node.attrs.ver && node.attrs.wait &&
+		node.attrs.wait &&
 		node.attrs.hold && !node.attrs.sid && 
 		ia["urn:xmpp:xbosh:version"];
 }
@@ -95,8 +98,7 @@ function is_stream_restart_packet(node) {
 	// http://xmpp.org/extensions/xep-0206.html#create and
 	// http://xmpp.org/extensions/xep-0206.html#preconditions-sasl
 	var ia = inflated_attrs(node);
-	return ia["urn:xmpp:xbosh:restart"] == "true" && 
-		node.attrs['to'];
+	return ia["urn:xmpp:xbosh:restart"] == "true";
 }
 
 function is_stream_add_request(node) {
@@ -202,6 +204,7 @@ exports.createServer = function(options) {
 		 *
 		 */
 		var m = route.match(/^(\S+):(\S+):([0-9]+)$/);
+		dutil.log_it("DEBUG", "BOSH::route_parse:", m);
 		if (m && m.length == 4) {
 			return {
 				protocol: m[1], host: m[2], port: parseInt(m[3])
@@ -233,6 +236,10 @@ exports.createServer = function(options) {
 			opt.ack = 1;
 		}
 
+		if (node.attrs.route) {
+			opt.route = node.attrs.route;
+		}
+
 		var state = new_state_object(opt, res);
 		sid_state[sid] = state;
 		return state;
@@ -248,7 +255,7 @@ exports.createServer = function(options) {
 		var ro = get_response_object(state);
 		while (ro) {
 			try {
-				res.res.destroy();
+				res.res.end();
 			}
 			catch (ex) {
 				console.error("session_terminate::Caught exception '" + ex + "' while destroying socket");
@@ -326,7 +333,7 @@ exports.createServer = function(options) {
 		 * state of the BOSH session 'state'. This mainly checks
 		 * the 'sid' and 'rid' attributes.
 		 */
-		dutil.log_it("DEBUG", "is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
+		dutil.log_it("DEBUG", "BOSH::is_valid_packet::node.attrs.rid, state.rid:", node.attrs.rid, state.rid);
 
 		// Allow variance of "window" rids on either side. This is in violation
 		// of the XEP though.
@@ -415,7 +422,7 @@ exports.createServer = function(options) {
 		if (ro) {
 			clearTimeout(ro.timeout);
 		}
-		dutil.log_it("DEBUG", "Holding", res.length, "response objects");
+		dutil.log_it("DEBUG", "BOSH::Holding", res.length, "response objects");
 		return ro;
 	}
 
@@ -566,14 +573,12 @@ exports.createServer = function(options) {
 
 	function send_no_requeue(ro, state, response) {
 		/* Send a response, but do NOT requeue if it fails */
-		dutil.log_it("DEBUG", "send_no_requeue(", dutil.isTruthy(ro), ")");
+		dutil.log_it("DEBUG", "BOSH::send_no_requeue, ro:", dutil.isTruthy(ro));
 		if (dutil.isFalsy(ro)) {
 			return;
 		}
 
 		ro.res.on('error', function() { });
-
-		dutil.log_it("DEBUG", "Writing response:", response);
 
 		// Allow Cross-Domain access
 		// https://developer.mozilla.org/En/HTTP_access_control
@@ -591,12 +596,15 @@ exports.createServer = function(options) {
 			state.max_rid_sent = Math.max(state.max_rid_sent, ro.rid);
 		}
 
-		ro.res.end(response.toString());
+		var res_str = response.toString();
+		dutil.log_it("DEBUG", "BOSH::send_no_requeue:writing response:", res_str);
+
+		ro.res.end(res_str);
 	}
 
 	function send_or_queue(ro, response, sstate) {
 		/* Send a response and requeue if the sending fails */
-		dutil.log_it("DEBUG", "send_or_queue::ro:", ro != null);
+		dutil.log_it("DEBUG", "BOSH::send_or_queue::ro:", ro != null);
 		if (ro) {
 			// On error, try the next one or start the timer if there
 			// is nothing left to try.
@@ -636,7 +644,7 @@ exports.createServer = function(options) {
 		// problems with the 'rid' parameter though).
 		//
 
-		dutil.log_it("DEBUG", "send_pending_responses:", state.pending.length);
+		dutil.log_it("DEBUG", "BOSH::send_pending_responses::state.pending.length:", state.pending.length);
 
 		if (state.pending.length > 0) {
 			var ro = get_response_object(state);
@@ -670,7 +678,7 @@ exports.createServer = function(options) {
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
 	bee.addListener('stream-added', function(sstate) {
-		dutil.log_it("DEBUG", "bosh server::stream-added:", sstate.stream);
+		dutil.log_it("DEBUG", "BOSH::stream-added:", sstate.stream);
 		// Send only if this is the 2nd (or more) stream on this BOSH session.
 		if (sstate.streams.length > 1) {
 			send_stream_add_response(sstate);
@@ -680,7 +688,11 @@ exports.createServer = function(options) {
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
 	bee.addListener('response', function(connector_response, sstate) {
-		dutil.log_it("DEBUG", "bosh server::response:", connector_response);
+		dutil.log_it("DEBUG", function() {
+			// We use this trick to avoid the runtime overhead of
+			// calling toString() if we never log anything.
+			return [ "BOSH::response:", connector_response.toString() ];
+		});
 
 		var ro = get_response_object(sstate);
 		// console.log("ro:", ro);
@@ -712,7 +724,7 @@ exports.createServer = function(options) {
 		stream_terminate(sstate, state);
 		send_or_queue(ro, response, sstate);
 
-		send_stream_terminate(sstate, "remote-connection-failed");
+		send_stream_terminate_response(sstate, "remote-connection-failed");
 
 		// Should we terminate the BOSH session as well?
 		if (state.streams.length == 0) {
@@ -732,7 +744,7 @@ exports.createServer = function(options) {
 
 		// Check if this is a session start packet.
 		if (is_session_creation_packet(node)) {
-			dutil.log_it("DEBUG", "Session creation");
+			dutil.log_it("DEBUG", "BOSH::Session creation");
 			var state  = session_create(node, res);
 			var sstate = stream_add(state, node);
 
@@ -746,7 +758,13 @@ exports.createServer = function(options) {
 			var sid   = node.attrs.sid;
 			var sstate = null;
 
-			dutil.log_it("DEBUG", "RID, state.RID:", node.attrs.rid, state.rid);
+			try  {
+				// This is enclosed in a try/catch block since invalid requests
+				// at this point MAY not have these attributes
+				dutil.log_it("DEBUG", "BOSH::RID, state.RID:", node.attrs.rid, state.rid);				
+			}
+			catch (ex) { }
+
 
 			if (sname) {
 				// The stream name is included in the BOSH request.
@@ -755,7 +773,8 @@ exports.createServer = function(options) {
 				// If the stream name is present, but the stream is not valid, we
 				// blow up.
 				if (!sstate) {
-					res.destroy();
+					res.writeHead(404);
+					res.end();
 					return;
 				}
 			}
@@ -763,7 +782,8 @@ exports.createServer = function(options) {
 
 			if (!sid) {
 				// No stream ID in BOSH request. Not phare enuph.
-				res.destroy();
+				res.writeHead(404);
+				res.end();
 				return;
 			}
 
@@ -778,8 +798,9 @@ exports.createServer = function(options) {
 
 			// Check the validity of the packet and the BOSH session
 			if (!state || !is_valid_packet(node, state)) {
-				dutil.log_it("WARN", "NOT a Valid packet");
-				res.destroy();
+				dutil.log_it("WARN", "BOSH::NOT a Valid packet");
+				res.writeHead(404);
+				res.end();
 				return;
 			}
 
@@ -800,9 +821,13 @@ exports.createServer = function(options) {
 
 					// Increment the 'rid'
 					state.rid += 1;
-					dutil.log_it("DEBUG", "Updated RID to:", state.rid);
+					dutil.log_it("DEBUG", "BOSH::Updated RID to:", state.rid);
 				}
 			});
+
+			// Alternatively, we can also call ourselves recursively to process
+			// the pending queue. That way, we won't need to sort() the pending 
+			// queue. Think about it...
 
 
 			// Has the client enabled ACKs?
@@ -859,14 +884,14 @@ exports.createServer = function(options) {
 			// Should we process this packet?
 			if (state.rid < node.attrs.rid) {
 				// Not really...
-				dutil.log_it("INFO", "Not processing packet:", node);
+				dutil.log_it("INFO", "BOSH::Not processing packet:", node);
 				return;
 			}
 
 
 			// Check if this is a stream restart packet.
 			if (is_stream_restart_packet(node)) {
-				dutil.log_it("DEBUG", "Stream Restart");
+				dutil.log_it("DEBUG", "BOSH::Stream Restart");
 				bee.emit('stream-restart', sstate);
 
 				// According to http://xmpp.org/extensions/xep-0206.html
@@ -877,7 +902,7 @@ exports.createServer = function(options) {
 
 			// Check if this is a new stream start packet (multiple streams)
 			else if (is_stream_add_request(node)) {
-				dutil.log_it("DEBUG", "Stream Add");
+				dutil.log_it("DEBUG", "BOSH::Stream Add");
 				sstate = stream_add(state, node);
 
 				// Don't yet respond to the client. Wait for the 'stream-added' event
@@ -888,7 +913,7 @@ exports.createServer = function(options) {
 
 			// Check for stream terminate
 			else if (is_stream_terminate_request(node)) {
-				dutil.log_it("DEBUG", "Stream Terminate");
+				dutil.log_it("DEBUG", "BOSH::Stream Terminate");
 				// We may be required to terminate one stream, or all
 				// the open streams on this BOSH session.
 
@@ -944,11 +969,14 @@ exports.createServer = function(options) {
 		var node = dutil.xml_parse(data);
 
 		if (!node || !node.is('body')) {
-			res.destroy();
+			res.writeHead(404);
+			res.end();
 			return;
 		}
 
-		dutil.log_it("DEBUG", "Processing request", node.toString());
+		dutil.log_it("DEBUG", function() {
+			return [ "BOSH::Processing request", node.toString() ];
+		});
 
 		_handle_incoming_request(res, node);
 	}
@@ -956,7 +984,7 @@ exports.createServer = function(options) {
 	function http_request_handler(req, res) {
 		var u = url.parse(req.url);
 
-		dutil.log_it("DEBUG", "Someone connected");
+		dutil.log_it("DEBUG", "BOSH::Someone connected");
 
 		var ppos = u.pathname.search(path);
 
@@ -971,7 +999,8 @@ exports.createServer = function(options) {
 
 		if (req.method != "POST" || ppos == -1) {
 			console.error("Invalid request");
-			res.destory();
+			res.writeHead(404);
+			res.end();
 			return;
 		}
 
@@ -980,7 +1009,7 @@ exports.createServer = function(options) {
 		var data_len = 0;
 
 		req.on('data', function(d) {
-			// dutil.log_it("DEBUG", "onData:", d.toString());
+			// dutil.log_it("DEBUG", "BOSH::onData:", d.toString());
 			var _d = d.toString();
 			data_len += _d.length;
 
@@ -1001,8 +1030,8 @@ exports.createServer = function(options) {
 		})
 
 		.on('error', function(ex) {
-			dutil.log_it("WARN", "Exception while processing request: " + ex);
-			dutil.log_it("WARN", ex.stack);
+			dutil.log_it("WARN", "BOSH::Exception while processing request: " + ex);
+			dutil.log_it("WARN", "BOSH::", ex.stack);
 		});
 
 	}
@@ -1014,10 +1043,19 @@ exports.createServer = function(options) {
 		bee.emit('error', ex);
 	});
 
+/*
+	setInterval(function() {
+		dutil.get_keys(sid_state).forEach(function(sid) {
+			console.log("sid:", sid, "pending:", sid_state[sid].pending.length, "responses:", sid_state[sid].res.length);
+		})
+	}, 20000);
+*/
+
 	return bee;
 
 };
 
 // TODO: Handle error conditions comprehensively
 // http://xmpp.org/extensions/xep-0124.html#schema
-
+// Instead of sending back a 404, try to send back something
+// sensible in the BOSH world.

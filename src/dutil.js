@@ -225,13 +225,28 @@ function set_log_level(level) {
 }
 
 function log_it(level) {
+	/* Logs stuff (2nd parameter onwards) according to the logging level
+	 * set using the set_log_level() function. The default logging level
+	 * is INFO logging only. The order of logging is as follows:
+	 * NONE < INFO < WARN < DEBUG < ERROR < FATAL < anything else
+	 *
+	 * If the 2nd paramater is the only other parameter and it is a 
+	 * function, then it is evaluated and the result is expected to be
+	 * an array, which contains the elements to be logged.
+	 *
+	 */
 	level = level.toUpperCase();
-	var args = arguments_to_array(arguments).slice(1);
-	args.unshift(level, new Date());
 	var numeric_level = get_numeric_log_level(level);
 
-
 	if (numeric_level > 0 && numeric_level <= _log_level) {
+		var args = arguments_to_array(arguments).slice(1);
+		if (args.length == 1 && typeof args[0] == "function") {
+			// Lazy evaluation.
+			args = args[0]();
+		}
+
+		args.unshift(level, new Date());
+
 		console.log.apply(console, args);
 	}
 }
