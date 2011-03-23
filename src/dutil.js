@@ -172,7 +172,7 @@ function _real_xml_parse(xml, ltx) {
 		node = ltx.parse(xml);
 	}
 	catch (ex) {
-		log_it("WARN", "Error parsing XML:", ex);
+		log_it("WARN", "_real_xml_parse::Error parsing XML:", xml, ex.toString());
 		log_it("WARN", ex.stack);
 	}
 	return node;

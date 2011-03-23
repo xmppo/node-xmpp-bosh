@@ -884,7 +884,9 @@ exports.createServer = function(options) {
 			// Should we process this packet?
 			if (state.rid < node.attrs.rid) {
 				// Not really...
-				dutil.log_it("INFO", "BOSH::Not processing packet:", node);
+				dutil.log_it("INFO", function() {
+					return [ "BOSH::Not processing packet:", node.toString() ];
+				});
 				return;
 			}
 
@@ -1059,3 +1061,5 @@ exports.createServer = function(options) {
 // http://xmpp.org/extensions/xep-0124.html#schema
 // Instead of sending back a 404, try to send back something
 // sensible in the BOSH world.
+
+// TODO: Figure out if req.destroy() is valid.
