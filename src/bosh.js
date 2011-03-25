@@ -361,6 +361,8 @@ exports.createServer = function(options) {
 		 */
 		// If a client makes more connections than allowed, trim them.
 		// http://xmpp.org/extensions/xep-0124.html#overactive
+		//
+		// This is currently not being enforced. See comment #001
 
 		if (state.res.length >= MAX_BOSH_CONNECTIONS) {
 			// Just send the termination message and destroy the socket.
@@ -958,8 +960,17 @@ exports.createServer = function(options) {
 			emit_stanzas_event(stanzas, state, sstate);
 		}
 
+		// Comment #001
+		//
 		// Respond to any extra "held" response objects that we actually 
-		// should not be holding on to (Thanks Stefan);
+		// should not be holding on to (Thanks Stefan)
+		//
+		// This is in disagreement with the XEP
+		// http://xmpp.org/extensions/xep-0124.html#overactive
+		//
+		// However, we do it since many flaky clients and network 
+		// configurations exist in the wild.
+		//
 		respond_to_extra_held_response_objects(state);
 	}
 
