@@ -430,6 +430,7 @@ exports.createServer = function(options) {
 
 
 	/* Begin Response Sending Functions */
+	// 
 	// These functions actually send responses to the client
 	//
 	function send_session_creation_response(sstate) {
@@ -455,7 +456,7 @@ exports.createServer = function(options) {
 			hold:       state.hold, 
 			from:       sstate.to, 
 			content:    state.content, 
-			// secure:     'false', 
+			// secure:     'false', // TODO
 			// 'ack' is set by the client. If the client sets 'ack', then we also
 			// do acknowledged request/response. The 'ack' attribute is set
 			// by the send_no_requeue function since it is the last one to 

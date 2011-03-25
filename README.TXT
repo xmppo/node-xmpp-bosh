@@ -133,3 +133,7 @@ The project itself is divided into 4 main components as of now.
     * cd tests
     * node basic.js [params] # To check basic working
     * node send_recv.js [params] # To check message sending/stress testing
+
+[J] Releases:
+    * v0.0.1 == SVN Commit #39
+    * v0.0.2 == SVN Commit #50
