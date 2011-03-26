@@ -119,10 +119,17 @@ The project itself is divided into 4 main components as of now.
 
 [G] Tested with:
 
-    * jabber.org
-    * gmail.com
-    * facebook.com
-    * Pappu 
+    * Servers:
+        * jabber.org
+        * gmail.com
+        * facebook.com
+        * Pappu 
+
+    * Clients
+        * strophe.js (http://github.com/metajack/strophejs)
+        * JSJaC (https://github.com/sstrigler/JSJaC)
+        * dojox.xmpp (http://dojoapi-mirror.devs.nu/jsdoc/dojox/1.2/dojox.xmpp) 
+          (modified since node-xmpp-bosh doesn't support the authid attribute)
 
 [H] Tested using:
 

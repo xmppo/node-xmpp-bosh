@@ -172,7 +172,7 @@ exports.createServer = function(options) {
 
 		// A set of responses that have been sent by the BOSH server, but
 		// not yet ACKed by the client.
-		// Format: { rid: new Date() }
+		// Format: { rid: { response: [Response Object with <body> wrapper>, ts: new Date() } }
 		options.unacked_responses = { };
 
 		options.queued_requests = { };
@@ -225,6 +225,11 @@ exports.createServer = function(options) {
 			hold: parseInt(node.attrs.hold),
 			content: "text/xml; charset=utf-8"
 		};
+
+		if (!opt.hold) {
+			// Sanitize hold
+			opt.hold = 1;
+		}
 
 		if (node.attrs.content) {
 			// If the client included a content attribute, we mimic it.
@@ -595,7 +600,10 @@ exports.createServer = function(options) {
 		// that we have received till now -- if it is not the current request.
 		if (state.ack && ro.rid < state.rid) {
 			response.attrs.ack = state.rid;
-			state.unacked_responses[ro.rid] = new Date();
+			state.unacked_responses[ro.rid] = {
+				response: response, 
+				ts: new Date()
+			};
 			state.max_rid_sent = Math.max(state.max_rid_sent, ro.rid);
 		}
 
@@ -800,6 +808,9 @@ exports.createServer = function(options) {
 			}
 
 			// Check the validity of the packet and the BOSH session
+			//
+			// is_valid_packet() handles the rid range checking
+			//
 			if (!state || !is_valid_packet(node, state)) {
 				dutil.log_it("WARN", "BOSH::NOT a Valid packet");
 				res.writeHead(404);
@@ -860,32 +871,59 @@ exports.createServer = function(options) {
 				if (node.attrs.ack 
 					&& node.attrs.ack < state.max_rid_sent 
 					&& state.unacked_responses[node.attrs.ack]) {
-						var _ts = state.unacked_responses[node.attrs.ack];
+						var _ts = state.unacked_responses[node.attrs.ack].ts;
 
 						// We inject a response packet into the pending queue to 
 						// notify the client that it _may_ have missed something.
-						state.pending = new ltx.Element('body', {
+						state.pending.push(new ltx.Element('body', {
 							report: node.attrs.ack + 1, 
 							time: new Date() - _ts, 
 							xmlns: BOSH_XMLNS
-						});
+						}));
 				}
+
+				// 
+				// TODO: Handle the condition of broken connections
+				// http://xmpp.org/extensions/xep-0124.html#rids-broken
+				// 
+				// We only handle broken connections for streams which have
+				// acknowledgements enabled.
+				//
+				_queued_request_keys = dutil.get_keys(state.queued_requests);
+				_queued_request_keys.sort();
+
+				_queued_request_keys.forEach(function(rid) {
+					if (rid < state.rid + 1) {
+						if (rid in state.unacked_responses) {
+							// Send back the original response
+							state.pending.push(state.unacked_responses[rid].response);
+						}
+						else {
+							// Terminate this session. We make the rest of the code believe
+							// that the client asked for termination.
+							node.attrs = {
+								type: 'terminate', 
+								condition: 'item-not-found', 
+								xmlns: 'http://jabber.org/protocol/httpbind'
+							};
+						}
+					}
+				});
 
 				/* End ACK handling */
 			}
+
 
 			// Add to held response objects for this BOSH session
 			if (res) {
 				add_held_http_connection(state, node.attrs.rid, res);
 			}
 
-
 			// Process pending (queued) responses (if any)
 			send_pending_responses(state);
 
-
 			// Should we process this packet?
-			if (state.rid < node.attrs.rid) {
+			if (node.attrs.rid > state.rid) {
 				// Not really...
 				dutil.log_it("INFO", function() {
 					return [ "BOSH::Not processing packet:", node.toString() ];
@@ -941,8 +979,12 @@ exports.createServer = function(options) {
 				// Terminate the session if all streams in this session have
 				// been terminated.
 				if (state.streams.length == 0) {
+					//
 					// Send the session termination response to the client.
-					send_session_terminate(get_response_object(state), state);
+					// Copy the condition if mentioned.
+					//
+					var condition = node.attrs.condition;
+					send_session_terminate(get_response_object(state), state, condition);
 
 					// And terminate the rest of the held response objects.
 					session_terminate(state);
