@@ -166,6 +166,8 @@ exports.createServer = function(options) {
 	// content: 
 	// The stream name is independent of the state
 	function new_state_object(options, res) {
+
+		// TODO: Figure if res needs to be sorted in 'rid' order.
 		options.res = [ ];
 		options.pending = [ ];
 		options.streams = [ ];
@@ -537,6 +539,15 @@ exports.createServer = function(options) {
 	/* End Response Sending Functions */
 
 
+	function send_termination_stanza(res, condition) {
+		res.write(new ltx.Element('body', {
+			type: 'terminate', 
+			condition: condition, 
+			xmlns: BOSH_XMLNS
+		}).toString());
+		res.end();
+	}
+
 	function emit_stanzas_event(stanzas, state, sstate) {
 		if (!sstate) {
 			// No stream name specified. This packet needs to be
@@ -784,8 +795,7 @@ exports.createServer = function(options) {
 				// If the stream name is present, but the stream is not valid, we
 				// blow up.
 				if (!sstate) {
-					res.writeHead(404);
-					res.end();
+					send_termination_stanza(res, 'bad-request');
 					return;
 				}
 			}
@@ -793,8 +803,7 @@ exports.createServer = function(options) {
 
 			if (!sid) {
 				// No stream ID in BOSH request. Not phare enuph.
-				res.writeHead(404);
-				res.end();
+				send_termination_stanza(res, 'bad-request');
 				return;
 			}
 
@@ -813,8 +822,7 @@ exports.createServer = function(options) {
 			//
 			if (!state || !is_valid_packet(node, state)) {
 				dutil.log_it("WARN", "BOSH::NOT a Valid packet");
-				res.writeHead(404);
-				res.end();
+				send_termination_stanza(res, 'bad-request');
 				return;
 			}
 
@@ -883,11 +891,16 @@ exports.createServer = function(options) {
 				}
 
 				// 
-				// TODO: Handle the condition of broken connections
+				// Handle the condition of broken connections
 				// http://xmpp.org/extensions/xep-0124.html#rids-broken
 				// 
 				// We only handle broken connections for streams which have
 				// acknowledgements enabled.
+				// 
+				// TODO: Figure if we need to reply on the same connection or
+				// a connection with the lowest 'rid' or the earliest 
+				// connection in time. Currently, we have a FIFO for response
+				// objects.
 				//
 				_queued_request_keys = dutil.get_keys(state.queued_requests);
 				_queued_request_keys.sort();
@@ -904,7 +917,7 @@ exports.createServer = function(options) {
 							node.attrs = {
 								type: 'terminate', 
 								condition: 'item-not-found', 
-								xmlns: 'http://jabber.org/protocol/httpbind'
+								xmlns: BOSH_XMLNS
 							};
 						}
 					}
@@ -1111,9 +1124,10 @@ exports.createServer = function(options) {
 
 };
 
-// TODO: Handle error conditions comprehensively
+// Handle error conditions comprehensively
 // http://xmpp.org/extensions/xep-0124.html#schema
 // Instead of sending back a 404, try to send back something
-// sensible in the BOSH world.
+// sensible in the BOSH world - done for as many requests
+// that I humanly could.
 
 // TODO: Figure out if req.destroy() is valid.
