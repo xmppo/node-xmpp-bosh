@@ -25,8 +25,8 @@
 
 var net    = require('net');
 var ltx    = require('ltx');
-var us     = require('./underscore.js');
 var dutil  = require('./dutil.js');
+var us     = require('underscore');
 
 
 var NS_XMPP_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';

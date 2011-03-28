@@ -144,3 +144,4 @@ The project itself is divided into 4 main components as of now.
 [J] Releases:
     * v0.0.1 == SVN Commit #39
     * v0.0.2 == SVN Commit #50
+    * v0.0.3 == SVN Commit #56

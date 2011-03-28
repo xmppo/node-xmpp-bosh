@@ -23,11 +23,12 @@
 
 
 var bosh  = require('./bosh.js');
-var us    = require('./underscore.js');
 var dutil = require('./dutil.js');
 var xpc   = require('./xmpp-proxy-connector.js');
 var xp    = require('./xmpp-proxy.js');
 var ls    = require('./lookup-service.js');
+var us    = require('underscore');
+
 
 exports.bosh      = bosh;
 exports.connector = xpc;

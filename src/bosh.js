@@ -26,7 +26,7 @@ var url   = require('url');
 var ltx   = require('ltx');
 var uuid  = require('node-uuid');
 var dutil = require('./dutil.js');
-var us    = require('./underscore.js');
+var us    = require('underscore');
 
 
 

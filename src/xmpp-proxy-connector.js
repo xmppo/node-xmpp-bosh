@@ -22,10 +22,11 @@
  */
 
 var xp     = require('./xmpp-proxy.js');
-var us     = require('./underscore.js');
 var dutil  = require('./dutil.js');
 var lookup = require('./lookup-service.js');
 var util   = require('util');
+var us     = require('underscore');
+
 
 
 var DEFAULT_XMPP_PORT = 5222;
