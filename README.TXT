@@ -115,6 +115,7 @@ The project itself is divided into 4 main components as of now.
     * ltx
     * node-uuid 
     * tav
+    * underscore.js
     * jsdom (for tests)
 
 [G] Tested with:
