@@ -82,5 +82,14 @@ exports.start     = function(options) {
 		conn.no_client(response);
 	});
 
+	bosh_server.on('response-acknowledged', function(response) {
+		conn.response_acknowledged(response);
+	});
+
+	bosh_server.on('response', function(response, sstate) {
+		// Raised when the XMPP server sends the BOSH server a response to
+		// send back to the client.
+	});
+
 	return bosh_server;
 };

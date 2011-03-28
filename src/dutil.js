@@ -162,6 +162,13 @@ function rev_hash(o) {
 }
 
 function _real_xml_parse(xml, ltx) {
+	/* This function parses the XML stanza passed to it
+	 * as a string. 'ltx' is the ltx module object. It is used
+	 * to do the actual XML parsing. null is returned if the 
+	 * string passed is NOT valid XML.
+	 *
+	 * Note: The string 'xml' is trimmed before parsing.
+	 */
 	var node = null;
 	xml = xml.trim();
 	if (!xml) {
@@ -179,6 +186,9 @@ function _real_xml_parse(xml, ltx) {
 }
 
 function _xml_parse() {
+	/* Returns a function that parses the XML stanza passed to it
+	 * as a string.
+	 */
 	var ltx = null;
 
 	return function(xml) {
@@ -253,19 +263,19 @@ function log_it(level) {
 
 
 
-exports.copy = copy;
-exports.extend = extend;
-exports.repeat = repeat;
-exports.alternator = alternator;
+exports.copy               = copy;
+exports.extend             = extend;
+exports.repeat             = repeat;
+exports.alternator         = alternator;
 exports.arguments_to_array = arguments_to_array;
-exports.map = map;
-exports.sprintf = sprintf;
-exports.hitch = hitch;
-exports.not    = not;
-exports.get_keys = get_keys;
-exports.rev_hash = rev_hash
-exports.xml_parse = _xml_parse();
-exports.isFalsy = isFalsy;
-exports.isTruthy = isTruthy;
-exports.set_log_level = set_log_level;
-exports.log_it = log_it;
+exports.map                = map;
+exports.sprintf            = sprintf;
+exports.hitch              = hitch;
+exports.not                = not;
+exports.get_keys           = get_keys;
+exports.rev_hash           = rev_hash
+exports.xml_parse          = _xml_parse();
+exports.isFalsy            = isFalsy;
+exports.isTruthy           = isTruthy;
+exports.set_log_level      = set_log_level;
+exports.log_it             = log_it;

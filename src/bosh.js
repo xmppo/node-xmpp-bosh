@@ -174,9 +174,11 @@ exports.createServer = function(options) {
 
 		// A set of responses that have been sent by the BOSH server, but
 		// not yet ACKed by the client.
-		// Format: { rid: { response: [Response Object with <body> wrapper>, ts: new Date() } }
+		// Format: { rid: { response: [Response Object with <body> wrapper], ts: new Date() } }
 		options.unacked_responses = { };
 
+		// A set of queued requests that will become complete when "holes" in the
+		// request queue are filled in by packets with the right 'rids'
 		options.queued_requests = { };
 
 		// The Max value of the 'rid' (request ID) that has been 
@@ -185,8 +187,8 @@ exports.createServer = function(options) {
 		options.max_rid_sent = options.rid - 1;
 
 		options.inactivity = DEFAULT_INACTIVITY_SEC;
-
 		options.window = WINDOW_SIZE;
+		options.timeout = null;
 
 		if (options.route) {
 			options.route = route_parse(options.route);
@@ -271,6 +273,10 @@ exports.createServer = function(options) {
 		}
 
 		state.res = [ ];
+
+		// Unset the inactivity timeout
+		unset_session_inactivity_timeout(state);
+
 		delete sid_state[state.sid];
 	}
 
@@ -402,6 +408,33 @@ exports.createServer = function(options) {
 		state.res.push(ro);
 
 		return state;
+	}
+
+	function unset_session_inactivity_timeout(state) {
+		if (state.timeout) {
+			clearTimeout(state.timeout);
+			state.timeout = null;
+		}
+	}
+
+	function reset_session_inactivity_timeout(state) {
+		if (state.timeout) {
+			clearTimeout(state.timeout);
+		}
+
+		state.timeout = setTimeout(function() {
+			// Raise a no-client event on pending as well as unacked responses.
+			var all = state.pending.concat(dutil.get_keys(state.unacked_responses).map(function(rid) {
+				return state.unacked_responses[rid];
+			}));
+			all.forEach(function(response) {
+				bee.emit('no-client', response);
+			});
+
+			// Pretend as if the client asked to terminate the stream
+			unset_session_inactivity_timeout(state);
+			handle_client_stream_terminate_request({ attrs: { } }, state, [ ]);
+		}, (state.inactivity + 10 /* 10 sec grace period */) * 1000);
 	}
 
 	function respond_to_extra_held_response_objects(state) {
@@ -540,6 +573,9 @@ exports.createServer = function(options) {
 
 
 	function send_termination_stanza(res, condition) {
+		/* Send a stream termination response to a response object.
+		 * This method is generally used to terminate rogue connections.
+		 */
 		res.write(new ltx.Element('body', {
 			type: 'terminate', 
 			condition: condition, 
@@ -557,7 +593,6 @@ exports.createServer = function(options) {
 				if (ss) {
 					bee.emit('stanzas', stanzas, ss);
 				}
-
 			});
 		}
 		else {
@@ -567,27 +602,16 @@ exports.createServer = function(options) {
 
 
 	function on_no_client_found(response, sstate) {
-		// We create a timeout for 'wait' second, and add it to the
-		// list of pending responses. If and when a new HTTP request
-		// for this jid is detected, it will clear all pending
-		// timeouts and send all the packets.
+		// We add this response to the list of pending responses. 
+		// If and when a new HTTP request on this BOSH session is detected, 
+		// it will clear the pending response and send the packet 
+		// (in FIFO order).
 		var _po = {
-			timeout: null, 
 			response: response, 
 			sstate: sstate
 		};
 		var state = sstate.state;
 		state.pending.push(_po);
-
-		// If no one picks up this packet within state.inactivity second, 
-		// we should report back to the connector.
-		var timeout = setTimeout(function() {
-			var _index = state.pending.indexOf(_po);
-			state.pending.splice(_index, 1);
-			bee.emit('no-client', response);
-		}, state.inactivity * 1000);
-
-		_po.timeout = timeout;
 	}
 
 	function send_no_requeue(ro, state, response) {
@@ -613,7 +637,8 @@ exports.createServer = function(options) {
 			response.attrs.ack = state.rid;
 			state.unacked_responses[ro.rid] = {
 				response: response, 
-				ts: new Date()
+				ts: new Date(), 
+				rid: rid
 			};
 			state.max_rid_sent = Math.max(state.max_rid_sent, ro.rid);
 		}
@@ -647,6 +672,41 @@ exports.createServer = function(options) {
 		else {
 			// No HTTP connection for sending the response exists.
 			on_no_client_found(response, sstate);
+		}
+	}
+
+	function handle_client_stream_terminate_request(node, state, stanzas) {
+		// This function handles a stream terminate request from the client.
+		// It assumes that the client sent a stream terminate request.
+
+		var streams_to_terminate = get_streams_to_terminate(node, state);
+
+		streams_to_terminate.forEach(function(sstate) {
+			if (stanzas.length > 0) {
+				emit_stanzas_event(stanzas, state, sstate);
+			}
+
+			// Send stream termination response
+			// http://xmpp.org/extensions/xep-0124.html#terminate
+			send_stream_terminate_response(sstate);
+
+			stream_terminate(sstate, state)
+			bee.emit('stream-terminate', sstate);
+		});
+
+
+		// Terminate the session if all streams in this session have
+		// been terminated.
+		if (state.streams.length == 0) {
+			//
+			// Send the session termination response to the client.
+			// Copy the condition if mentioned.
+			//
+			var condition = node.attrs.condition;
+			send_session_terminate(get_response_object(state), state, condition);
+
+			// And terminate the rest of the held response objects.
+			session_terminate(state);
 		}
 	}
 
@@ -762,6 +822,9 @@ exports.createServer = function(options) {
 		// This will eventually contain all the stanzas to be processed.
 		var stanzas = [ ];
 
+		// Reset the BOSH session timeout
+		reset_session_inactivity_timeout(state);
+
 		// Handle the stanza that the client sent us.
 
 		// Check if this is a session start packet.
@@ -861,6 +924,7 @@ exports.createServer = function(options) {
 					// The client seems to be buggy. It has not ACKed the
 					// last WINDOW_SIZE * 4 requests. We turn off ACKs.
 					delete state.ack;
+
 					state.unacked_responses = { };
 				}
 
@@ -870,6 +934,8 @@ exports.createServer = function(options) {
 					// the client has seen all those packets.
 					_uar_keys.forEach(function(rid) {
 						if (rid <= node.attrs.ack) {
+							// Raise the 'response-acknowledged' event.
+							bee.emit('response-acknowledged', state.unacked_responses[rid]);
 							delete state.unacked_responses[rid];
 						}
 					});
@@ -973,36 +1039,8 @@ exports.createServer = function(options) {
 				// We may be required to terminate one stream, or all
 				// the open streams on this BOSH session.
 
-				var streams_to_terminate = get_streams_to_terminate(node, state);
+				handle_client_stream_terminate_request(node, state, stanzas);
 
-				streams_to_terminate.forEach(function(sstate) {
-					if (stanzas.length > 0) {
-						emit_stanzas_event(stanzas, state, sstate);
-					}
-
-					// Send stream termination response
-					// http://xmpp.org/extensions/xep-0124.html#terminate
-					send_stream_terminate_response(sstate);
-
-					stream_terminate(sstate, state)
-					bee.emit('stream-terminate', sstate);
-				});
-
-
-				// Terminate the session if all streams in this session have
-				// been terminated.
-				if (state.streams.length == 0) {
-					//
-					// Send the session termination response to the client.
-					// Copy the condition if mentioned.
-					//
-					var condition = node.attrs.condition;
-					send_session_terminate(get_response_object(state), state, condition);
-
-					// And terminate the rest of the held response objects.
-					session_terminate(state);
-				}
-				
 				// Once a stream is terminated, there is no point sending 
 				// stanzas. Which is why we did the needful before sending
 				// the terminate event.
@@ -1131,3 +1169,5 @@ exports.createServer = function(options) {
 // that I humanly could.
 
 // TODO: Figure out if req.destroy() is valid.
+
+// TODO: Have only 1 inactivity timer for the whole BOSH session.

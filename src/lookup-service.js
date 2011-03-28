@@ -93,7 +93,7 @@ XMPPLookupService.prototype = {
 		function try_connect_route() {
 			// First just connect to the server if this._route is defined.
 			if (self._route) {
-				dutil.log_it("DEBUG", "try_connect_route::", self._route.host, self._route.port);
+				dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_route::", self._route.host, self._route.port);
 
 				// socket.setTimeout(10000);
 				socket.connect(self._route.port, self._route.host);
@@ -105,7 +105,7 @@ XMPPLookupService.prototype = {
 		}
 
 		function try_connect_SRV_lookup() {
-			dutil.log_it("DEBUG", "try_connect_SRV_lookup");
+			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_SRV_lookup");
 			
 			// Then try a normal SRV lookup.
 			var attempt = SRV.connect(socket, ['_xmpp-client._tcp'], 
@@ -125,7 +125,7 @@ XMPPLookupService.prototype = {
 		}
 
 		function try_connect_chatpw() {
-			dutil.log_it("DEBUG", "try_connect_chatpw");
+			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_chatpw");
 
 			// Do chat.pw related custom stuff.
 			socket.connect(self._port, self._domain_name + ".chat.pw");

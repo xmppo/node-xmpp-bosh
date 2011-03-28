@@ -28,20 +28,7 @@ var lookup = require('./lookup-service.js');
 var util   = require('util');
 
 
-var _30_MINUTES_IN_SEC = 30 * 60;
-var _60_MINUTES_IN_SEC = 60 * 60;
-
 var DEFAULT_XMPP_PORT = 5222;
-
-
-// Note: The way we calculate inactivity is not from the BOSH layer, but 
-// from the XMPP layer. If the client is making BOSH connections but sending
-// or receiving empty packets (no XMPP XML stanzas), then his last 
-// activity timestamp shall NOT be updated, and after sufficient amount of 
-// time, the client shall be disconnected.
-
-// TODO: Possibly fix the above behaviour to consider HTTP connections absent 
-// instead of XMPP activity.
 
 
 
@@ -54,7 +41,6 @@ function XMPPProxyConnector(bosh_server) {
 	//   stream_name: {
 	//     sstate: sstate, 
 	//     proxy: The XMPP proxy object for this stream, 
-	//     activity: The timestamp of the last activity on this stream (from the BOSH end)
 	//     pending: [ An array of pending outgoing stanzas ]
 	//   }
 	// }
@@ -98,47 +84,15 @@ function XMPPProxyConnector(bosh_server) {
 		ss.pending = [ ];
 	});
 
-
-
-	var self = this;
-
-	// Setup a BOSH stream garbage collector that terminates 
-	// XMPP streams after a certain period of inactivity.
-	this._gc_interval = setInterval(function() {
-		var skeys = dutil.get_keys(self.streams);
-		// dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::GC timeout::skeys:", skeys);
-
-		var _cts = new Date();
-
-		skeys.forEach(function(k) {
-			if (_cts - self.streams[k].activity > _60_MINUTES_IN_SEC * 1000) {
-				// Terminate this stream.
-				// 1. From the XMPP end
-				self.stream_terminate(self.streams[k]);
-				// TODO: 2. From the BOSH end.
-
-				dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Removing stream:", k);
-
-				// 3. Delete this stream from our set of held streams.
-				delete self.streams[k];
-			}
-		});
-	}, _30_MINUTES_IN_SEC * 1000);
-
 }
 
 XMPPProxyConnector.prototype = {
-	_update_activity: function(sstate) {
-		sstate.activity = new Date();
-	},
 
 	stanza: function(stanza, sstate) {
 		var ss = this.streams[sstate.name];
 		if (!ss) {
 			return;
 		}
-
-		this._update_activity(ss);
 
 		// TODO:
 		// Ideally, we should maintain our own _is_connected flag or some
@@ -170,7 +124,6 @@ XMPPProxyConnector.prototype = {
 		var stream = {
 			sstate: sstate, 
 			proxy: proxy, 
-			activity: new Date(), 
 			pending: [ ]
 		};
 		this.streams[sstate.name] = stream;
@@ -190,7 +143,6 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
-		this._update_activity(ss);
 		ss.proxy.restart();
 	}, 
 
@@ -201,7 +153,6 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
-		this._update_activity(ss);
 		ss.proxy.terminate();
 		delete this.streams[sstate.name];
 	}, 
@@ -210,6 +161,13 @@ XMPPProxyConnector.prototype = {
 		// What to do with this response??
 		dutil.log_it("WARN", function() {
 			return [ "XMPP PROXY CONNECTOR::No Client for this response:", response.toString() ];
+		});
+	}, 
+	
+	response_acknowledged: function(response) {
+		// What to do with this response??
+		dutil.log_it("WARN", function() {
+			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", response.toString() ];
 		});
 	}
 
