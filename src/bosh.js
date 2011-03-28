@@ -843,7 +843,9 @@ exports.createServer = function(options) {
 		var stanzas = [ ];
 
 		// Reset the BOSH session timeout
-		reset_session_inactivity_timeout(state);
+		if (state) {
+			reset_session_inactivity_timeout(state);
+		}
 
 		// Handle the stanza that the client sent us.
 
