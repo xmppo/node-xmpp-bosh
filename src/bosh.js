@@ -444,9 +444,14 @@ exports.createServer = function(options) {
 
 		state.timeout = setTimeout(function() {
 			// Raise a no-client event on pending as well as unacked responses.
-			var all = state.pending.concat(dutil.get_keys(state.unacked_responses).map(function(rid) {
-				return state.unacked_responses[rid];
+			var _p = state.pending.map(function(po) {
+				return po.response;
+			});
+			var _uar = dutil.get_keys(state.unacked_responses).map(function(rid) {
+				return state.unacked_responses[rid].response;
 			}));
+
+			var all = _p.concat(_uar);
 			all.forEach(function(response) {
 				bee.emit('no-client', response);
 			});
