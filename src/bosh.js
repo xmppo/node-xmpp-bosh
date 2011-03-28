@@ -46,6 +46,9 @@ var WINDOW_SIZE = 2;
 // and empty response to it?
 var DEFAULT_INACTIVITY_SEC = 70;
 
+var MAX_INACTIVITY_SEC = 7200;
+
+
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
 
@@ -186,7 +189,19 @@ exports.createServer = function(options) {
 		// responded to by us.
 		options.max_rid_sent = options.rid - 1;
 
-		options.inactivity = DEFAULT_INACTIVITY_SEC;
+		if (options.inactivity) {
+			options.inactivity = parseInt(options.inactivity);
+			options.inactivity = options.inactivity < MAX_INACTIVITY_SEC 
+				? options.inactivity 
+				: MAX_INACTIVITY_SEC;
+			options.inactivity = options.inactivity < DEFAULT_INACTIVITY_SEC 
+				? options.inactivity 
+				: DEFAULT_INACTIVITY_SEC;
+		}
+		else {
+			options.inactivity = DEFAULT_INACTIVITY_SEC;
+		}
+
 		options.window = WINDOW_SIZE;
 		options.timeout = null;
 
@@ -247,6 +262,11 @@ exports.createServer = function(options) {
 
 		if (node.attrs.route) {
 			opt.route = node.attrs.route;
+		}
+
+		if (node.attrs.ua) {
+			// The user-agent
+			opt.ua = node.attrs.ua;
 		}
 
 		var state = new_state_object(opt, res);
