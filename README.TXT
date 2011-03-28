@@ -25,7 +25,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
 
 
 The BOSH is now available at: http://localhost:5280/http-bind/
-(don't forget the trailing shash).
+(don't forget the trailing slash).
 
 
 [B] Features
