@@ -24,6 +24,7 @@
 var http  = require('http');
 var url   = require('url');
 var ltx   = require('ltx');
+var util  = require('util');
 var uuid  = require('node-uuid');
 var dutil = require('./dutil.js');
 var us    = require('underscore');
@@ -172,6 +173,11 @@ exports.createServer = function(options) {
 
 		// TODO: Figure if res needs to be sorted in 'rid' order.
 		options.res = [ ];
+
+		//
+		// Contains objects of the form:
+		// { response: <The body element>, sstate: <The stream state object> }
+		//
 		options.pending = [ ];
 		options.streams = [ ];
 
@@ -447,9 +453,11 @@ exports.createServer = function(options) {
 			var _p = state.pending.map(function(po) {
 				return po.response;
 			});
-			var _uar = dutil.get_keys(state.unacked_responses).map(function(rid) {
+
+			var _uar = dutil.get_keys(state.unacked_responses)
+			.map(function(rid) {
 				return state.unacked_responses[rid].response;
-			}));
+			});
 
 			var all = _p.concat(_uar);
 			all.forEach(function(response) {
@@ -674,9 +682,49 @@ exports.createServer = function(options) {
 		ro.res.end(res_str);
 	}
 
+
+	function can_merge(response, pending) {
+		var lidx = pending.length - 1;
+		var k1 = dutil.get_keys(response.attrs);
+		var k2 = dutil.get_keys(pending[lidx].response.attrs);
+
+		return k1.length == k2.length && 
+			response.attrs.stream == pending[lidx].response.attrs.stream;
+	}
+
+
+	function merge_or_push_response(response, sstate) {
+		var state = sstate.state;
+		if (can_merge(response, state.pending)) {
+			// Yes, it is the same stream. Merge the responses.
+			var lidx = state.pending.length - 1;
+			var _presp = state.pending[lidx].response;
+
+			response.children.forEach(function(child) {
+				child.parent = _presp;
+				_presp.children.push(child);
+			});
+		}
+		else {
+			state.pending.push({
+				response: response, 
+				sstate: sstate
+			});
+		}
+	}
+
 	function send_or_queue(ro, response, sstate) {
-		/* Send a response and requeue if the sending fails */
+		/* Send or queue a response. Requeue if the sending fails */
 		dutil.log_it("DEBUG", "BOSH::send_or_queue::ro:", ro != null);
+
+		var state = sstate.state;
+		if (state.pending.length > 0) {
+			merge_or_push_response(response, sstate);
+			var _p = state.pending.shift();
+			response = _p.response;
+			sstate   = _p.sstate;
+		}
+
 		if (ro) {
 			// On error, try the next one or start the timer if there
 			// is nothing left to try.
