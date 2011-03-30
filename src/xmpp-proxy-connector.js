@@ -165,10 +165,10 @@ XMPPProxyConnector.prototype = {
 		});
 	}, 
 	
-	response_acknowledged: function(response) {
+	response_acknowledged: function(wrapped_response) {
 		// What to do with this response??
 		dutil.log_it("WARN", function() {
-			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", response.toString() ];
+			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", wrapped_response.rid ];
 		});
 	}
 

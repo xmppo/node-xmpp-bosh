@@ -425,7 +425,10 @@ exports.createServer = function(options) {
 				}
 				// Remove self from list of held connections.
 				state.res.splice(pos, 1);
+				//
 				// Send back an empty body element.
+				// We don't add this to unacked_responses since it's wasteful.
+				//
 				send_no_requeue(ro, state, new ltx.Element('body', {
 					xmlns: BOSH_XMLNS
 				}));
@@ -448,7 +451,11 @@ exports.createServer = function(options) {
 			clearTimeout(state.timeout);
 		}
 
+		// console.log("Setting a timeout of", state.inactivity + 10, "second");
+
 		state.timeout = setTimeout(function() {
+			dutil.log_it("DEBUG", "Terminating BOSH session", state.sid, "due to inactivity");
+
 			// Raise a no-client event on pending as well as unacked responses.
 			var _p = state.pending.map(function(po) {
 				return po.response;
@@ -529,6 +536,8 @@ exports.createServer = function(options) {
 			hold:       state.hold, 
 			from:       sstate.to, 
 			content:    state.content, 
+			"xmpp:restartlogic": "true", 
+			"xmlns:xmpp": 'urn:xmpp:xbosh', 
 			// secure:     'false', // TODO
 			// 'ack' is set by the client. If the client sets 'ack', then we also
 			// do acknowledged request/response. The 'ack' attribute is set
@@ -666,14 +675,17 @@ exports.createServer = function(options) {
 
 		// If the client has enabled ACKs, then acknowledge the highest request
 		// that we have received till now -- if it is not the current request.
-		if (state.ack && ro.rid < state.rid) {
-			response.attrs.ack = state.rid;
+		if (state.ack) {
 			state.unacked_responses[ro.rid] = {
 				response: response, 
 				ts: new Date(), 
 				rid: ro.rid
 			};
 			state.max_rid_sent = Math.max(state.max_rid_sent, ro.rid);
+
+			if (ro.rid < state.rid) {
+				response.attrs.ack = state.rid;
+			}
 		}
 
 		var res_str = response.toString();
@@ -1000,13 +1012,14 @@ exports.createServer = function(options) {
 					// last WINDOW_SIZE * 4 requests. We turn off ACKs.
 					delete state.ack;
 
+					dutil.log_it("WARN", "Disabling ACKs for sid:", state.sid);
 					state.unacked_responses = { };
 				}
 
 				if (!node.attrs.ack) {
 					// Assume that all requests up to rid-1 have been responded to
 					// http://xmpp.org/extensions/xep-0124.html#rids-broken
-					node.attrs.ack = node.attrs.rid - 1;
+					node.attrs.ack = state.rid - 1;
 				}
 
 				if (node.attrs.ack) {

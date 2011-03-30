@@ -83,8 +83,8 @@ exports.start     = function(options) {
 		conn.no_client(response);
 	});
 
-	bosh_server.on('response-acknowledged', function(response) {
-		conn.response_acknowledged(response);
+	bosh_server.on('response-acknowledged', function(wrapped_response) {
+		conn.response_acknowledged(wrapped_response);
 	});
 
 	bosh_server.on('response', function(response, sstate) {
