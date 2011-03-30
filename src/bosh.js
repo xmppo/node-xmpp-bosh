@@ -1196,6 +1196,24 @@ exports.createServer = function(options) {
 		var data = [];
 		var data_len = 0;
 
+		var _on_end_callback = dutil.once(function(timed_out) {
+			if (timed_out) {
+				dutil.log_it("WARN", "Timing out connection from '" + req.socket.remoteAddress + "'");
+				req.destroy();
+			}
+			else {
+				_on_data_end(res, data.join(""));
+				clearTimeout(end_timeout);
+			}
+		});
+
+		// Timeout the request of we don't get an 'end' event within
+		// 10 sec of the request being made.
+		var end_timeout = setTimeout(function() {
+			_on_end_callback(true);
+		}, 10 * 1000);
+
+
 		req.on('data', function(d) {
 			// dutil.log_it("DEBUG", "BOSH::onData:", d.toString());
 			var _d = d.toString();
@@ -1214,7 +1232,7 @@ exports.createServer = function(options) {
 		})
 
 		.on('end', function() {
-			_on_data_end(res, data.join(""));
+			_on_end_callback(false);
 		})
 
 		.on('error', function(ex) {

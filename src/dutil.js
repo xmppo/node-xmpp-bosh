@@ -133,6 +133,22 @@ function sprintf(fmt_str) {
 	return alternator(fs_parts, args).join("");
 }
 
+function once(proc) {
+	/* Ensure that 'proc' is called only once, irrespective of how many 
+	* times the wrapping (outer) procedure is called.
+	*/
+	var _fired = false;
+	var _ret = null;
+
+	return function() {
+		if (!_fired) {
+			_fired = true;
+			_ret = proc.apply(null, arguments);
+		}
+		return _ret;
+	};
+}
+
 function hitch(obj, proc) {
 	return function() {
 		return proc.apply(obj, arguments);
@@ -279,3 +295,4 @@ exports.isFalsy            = isFalsy;
 exports.isTruthy           = isTruthy;
 exports.set_log_level      = set_log_level;
 exports.log_it             = log_it;
+exports.once               = once;
