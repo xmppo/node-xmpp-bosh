@@ -1221,10 +1221,10 @@ exports.createServer = function(options) {
 		});
 
 		// Timeout the request of we don't get an 'end' event within
-		// 10 sec of the request being made.
+		// 20 sec of the request being made.
 		var end_timeout = setTimeout(function() {
 			_on_end_callback(true);
-		}, 10 * 1000);
+		}, 20 * 1000);
 
 
 		req.on('data', function(d) {
