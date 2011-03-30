@@ -671,7 +671,7 @@ exports.createServer = function(options) {
 			state.unacked_responses[ro.rid] = {
 				response: response, 
 				ts: new Date(), 
-				rid: rid
+				rid: ro.rid
 			};
 			state.max_rid_sent = Math.max(state.max_rid_sent, ro.rid);
 		}
@@ -1001,6 +1001,12 @@ exports.createServer = function(options) {
 					delete state.ack;
 
 					state.unacked_responses = { };
+				}
+
+				if (!node.attrs.ack) {
+					// Assume that all requests up to rid-1 have been responded to
+					// http://xmpp.org/extensions/xep-0124.html#rids-broken
+					node.attrs.ack = node.attrs.rid - 1;
 				}
 
 				if (node.attrs.ack) {

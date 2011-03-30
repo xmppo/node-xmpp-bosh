@@ -42,6 +42,7 @@ function XMPPProxy(xmpp_host, lookup_service, void_star) {
 	this._buff         = '';
 	this._first        = true;
 	this._is_connected = false;
+	this._terminate_on_connect = false;
 	this._stream_attrs = { };
 
 	return this;
@@ -125,12 +126,17 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	terminate: function() {
-		// Detach the data handler so that we don't get any more events.
-		this._sock.removeAllListeners('data');
+		if (this._is_connected) {
+			// Detach the data handler so that we don't get any more events.
+			this._sock.removeAllListeners('data');
 
-		// Write the stream termination tag
-		this.send("</stream:stream>");
-		this._sock.destroy();
+			// Write the stream termination tag
+			this.send("</stream:stream>");
+			this._sock.destroy();
+		}
+		else {
+			this._terminate_on_connect = true;
+		}
 	},
 
 	send: function(data) {
@@ -153,6 +159,10 @@ dutil.copy(XMPPProxy.prototype, {
 
 		// Always, we connect on behalf of the real client.
 		this.send(this._stream_start_xml);
+
+		if (this._terminate_on_connect) {
+			this.terminate();
+		}
 	}, 
 
 	_on_data: function(d) {

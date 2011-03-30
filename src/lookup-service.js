@@ -125,7 +125,7 @@ XMPPLookupService.prototype = {
 		}
 
 		function try_connect_chatpw() {
-			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_chatpw");
+			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_chatpw:", self._domain_name + ".chat.pw");
 
 			// Do chat.pw related custom stuff.
 			socket.connect(self._port, self._domain_name + ".chat.pw");
