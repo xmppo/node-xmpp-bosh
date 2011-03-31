@@ -49,6 +49,20 @@ var DEFAULT_INACTIVITY_SEC = 70;
 
 var MAX_INACTIVITY_SEC = 7200;
 
+var HTTP_POST_RESPONSE_HEADERS = {
+	'Content-Type': 'text/xml', 
+	'Access-Control-Allow-Origin': '*', 
+	'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
+	'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
+};
+
+var HTTP_POST_RESPONSE_HEADERS = {
+	'Access-Control-Allow-Origin': '*', 
+	'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
+	'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 
+	'Access-Control-Max-Age': '14400'
+};
+
 
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
@@ -407,18 +421,19 @@ exports.createServer = function(options) {
 			// Just send the termination message and destroy the socket.
 			var _ro = {
 				res: res, 
-				to: null, 
+				timeout: null, 
 				rid: rid // This is the 'rid' of the request associated with this response.
 			};
 			send_session_terminate(_ro, state, 'policy-violation');
 			session_terminate(state);
+			return;
 		}
 
 		var ro = {
 			res: res, 
 			rid: rid, // This is the 'rid' of the request associated with this response.
 			// timeout the connection if no one uses it for more than state.wait sec.
-			to: setTimeout(function() {
+			timeout: setTimeout(function() {
 				var pos = state.res.indexOf(ro);
 				if (pos == -1) {
 					return;
@@ -618,6 +633,9 @@ exports.createServer = function(options) {
 		/* Send a stream termination response to a response object.
 		 * This method is generally used to terminate rogue connections.
 		 */
+
+		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
+
 		res.write(new ltx.Element('body', {
 			type: 'terminate', 
 			condition: condition, 
@@ -667,11 +685,7 @@ exports.createServer = function(options) {
 
 		// Allow Cross-Domain access
 		// https://developer.mozilla.org/En/HTTP_access_control
-		ro.res.writeHead(200, {
-			"Content-Type": "text/xml", 
-			'Access-Control-Allow-Origin': '*', 
-			'Access-Control-Allow-Headers': 'Content-Type'
-		});
+		ro.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 
 		// If the client has enabled ACKs, then acknowledge the highest request
 		// that we have received till now -- if it is not the current request.
@@ -1190,10 +1204,7 @@ exports.createServer = function(options) {
 		var ppos = u.pathname.search(path);
 
 		if (req.method == "OPTIONS") {
-			res.writeHead(200, {
-				'Access-Control-Allow-Methods': 'POST, OPTIONS', 
-				'Access-Control-Max-Age': '14400'
-			});
+			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
 			return;
 		}
