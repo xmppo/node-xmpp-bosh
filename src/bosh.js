@@ -63,6 +63,7 @@ var HTTP_POST_RESPONSE_HEADERS = {
 	'Access-Control-Max-Age': '14400'
 };
 
+// TODO: Read off the Headers request from the request and set that in the response.
 
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
