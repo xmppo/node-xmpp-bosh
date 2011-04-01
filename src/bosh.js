@@ -443,7 +443,8 @@ exports.createServer = function(options) {
 				state.res.splice(pos, 1);
 				//
 				// Send back an empty body element.
-				// We don't add this to unacked_responses since it's wasteful.
+				// We don't add this to unacked_responses since it's wasteful. NO
+				// WE ACTUALLY DO add it to unacked_responses
 				//
 				send_no_requeue(ro, state, new ltx.Element('body', {
 					xmlns: BOSH_XMLNS
@@ -645,19 +646,19 @@ exports.createServer = function(options) {
 		res.end();
 	}
 
-	function emit_stanzas_event(stanzas, state, sstate) {
+	function emit_nodes_event(nodes, state, sstate) {
 		if (!sstate) {
 			// No stream name specified. This packet needs to be
 			// broadcast to all open streams on this BOSH session.
 			state.streams.forEach(function(sname) {
 				var ss = sn_state[sname];
 				if (ss) {
-					bee.emit('stanzas', stanzas, ss);
+					bee.emit('nodes', nodes, ss);
 				}
 			});
 		}
 		else {
-			bee.emit('stanzas', stanzas, sstate);
+			bee.emit('nodes', nodes, sstate);
 		}
 	}
 
@@ -775,15 +776,15 @@ exports.createServer = function(options) {
 		}
 	}
 
-	function handle_client_stream_terminate_request(node, state, stanzas) {
+	function handle_client_stream_terminate_request(node, state, nodes) {
 		// This function handles a stream terminate request from the client.
 		// It assumes that the client sent a stream terminate request.
 
 		var streams_to_terminate = get_streams_to_terminate(node, state);
 
 		streams_to_terminate.forEach(function(sstate) {
-			if (stanzas.length > 0) {
-				emit_stanzas_event(stanzas, state, sstate);
+			if (nodes.length > 0) {
+				emit_nodes_event(nodes, state, sstate);
 			}
 
 			// Send stream termination response
@@ -919,8 +920,8 @@ exports.createServer = function(options) {
 	function _handle_incoming_request(res, node) {
 		var state = get_state(node);
 
-		// This will eventually contain all the stanzas to be processed.
-		var stanzas = [ ];
+		// This will eventually contain all the nodes to be processed.
+		var nodes = [ ];
 
 		// Reset the BOSH session timeout
 		if (state) {
@@ -967,7 +968,7 @@ exports.createServer = function(options) {
 
 
 			if (!sid) {
-				// No stream ID in BOSH request. Not phare enuph.
+				// No session ID in BOSH request. Not phare enuph.
 				send_termination_stanza(res, 'bad-request');
 				return;
 			}
@@ -1003,7 +1004,7 @@ exports.createServer = function(options) {
 			_queued_request_keys.forEach(function(rid) {
 				if (rid == state.rid + 1) {
 					// This is the next logical packet to be processed.
-					stanzas = stanzas.concat(state.queued_requests[rid].children);
+					nodes = nodes.concat(state.queued_requests[rid].children);
 					delete state.queued_requests[rid];
 
 					// Increment the 'rid'
@@ -1126,9 +1127,9 @@ exports.createServer = function(options) {
 				bee.emit('stream-restart', sstate);
 
 				// According to http://xmpp.org/extensions/xep-0206.html
-				// the XML stanzas in a restart request should be ignored.
+				// the XML nodes in a restart request should be ignored.
 				// Hence, we comply.
-				stanzas = [ ];
+				nodes = [ ];
 			}
 
 			// Check if this is a new stream start packet (multiple streams)
@@ -1148,19 +1149,19 @@ exports.createServer = function(options) {
 				// We may be required to terminate one stream, or all
 				// the open streams on this BOSH session.
 
-				handle_client_stream_terminate_request(node, state, stanzas);
+				handle_client_stream_terminate_request(node, state, nodes);
 
 				// Once a stream is terminated, there is no point sending 
-				// stanzas. Which is why we did the needful before sending
+				// nodes. Which is why we did the needful before sending
 				// the terminate event.
-				stanzas = [ ];
+				nodes = [ ];
 			}
 
 		} // else (not session start)
 
-		// In any case, we should process the XML stanzas.
-		if (stanzas.length > 0) {
-			emit_stanzas_event(stanzas, state, sstate);
+		// In any case, we should process the XML nodes.
+		if (nodes.length > 0) {
+			emit_nodes_event(nodes, state, sstate);
 		}
 
 		// Comment #001
@@ -1200,10 +1201,26 @@ exports.createServer = function(options) {
 	function http_request_handler(req, res) {
 		var u = url.parse(req.url);
 
+		//
+		// Why not create named functions that express intent 
+		// and call them sequentially?
+		// 
+		// because that significantly complicates code and using 
+		// 'return;' in those function doesn't return from the 
+		// control from current function.
+		//
+
+
 		dutil.log_it("DEBUG", "BOSH::Someone connected");
 
 		var ppos = u.pathname.search(path);
 
+		// 
+		// Validation on HTTP requests:
+		//
+		// 1. Request MUST be either an OPTIONS on a POST request
+		// 2. The path MUST begin with the 'path' parameter
+		//
 		if (req.method == "OPTIONS") {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
@@ -1211,7 +1228,7 @@ exports.createServer = function(options) {
 		}
 
 		if (req.method != "POST" || ppos == -1) {
-			console.error("Invalid request");
+			dutil.log_it("ERROR", "Invalid request, method:", req.method, "path:", u.pathname);
 			res.writeHead(404);
 			res.end();
 			return;
@@ -1238,7 +1255,11 @@ exports.createServer = function(options) {
 			_on_end_callback(true);
 		}, 20 * 1000);
 
-
+		//
+		// Seriously consider naming all callbacks - rejected
+		// Why? because it involves 'naming' functions. Why name when
+		// you can get away with not naming them?
+		//
 		req.on('data', function(d) {
 			// dutil.log_it("DEBUG", "BOSH::onData:", d.toString());
 			var _d = d.toString();

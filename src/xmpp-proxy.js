@@ -68,6 +68,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_starttls: function() {
+		// Vishnu hates 'self'
 		var self = this;
 		this._detach_handlers();
 

@@ -15,7 +15,7 @@ exports.users = [
 
 var strophe = require("../strophe/strophe.js").Strophe;
 var dutil   = require("../src/dutil.js");
-var us      = require("../src/underscore.js");
+var us      = require("underscore");
 
 var Strophe = strophe.Strophe;
 var $iq     = strophe.$iq;
@@ -68,18 +68,20 @@ function start_test() {
 			}
 			else if (status == Strophe.Status.CONNECTED) {
 				// Send packets to all other users.
-				setTimeout(function() {
-					us(XMPP_USERS).chain()
-						.filter(function(x) { return x.jid != jid; })
-						.each(function(uinfo2, i) {
-							conn.send($msg({
-								type: "chat", 
-								to: uinfo2.jid
-							})
-							.c("body")
-							.t("A message to be sent from: " + jid));
-					});
-				}, i * 100 + Math.random() * 1000);
+				dutil.repeat(0, 500).forEach(function(v, j) {
+					setTimeout(function() {
+						us(XMPP_USERS).chain()
+							.filter(function(x) { return true; /*x.jid != jid;*/ })	
+							.each(function(uinfo2, i) {
+								conn.send($msg({
+									type: "chat", 
+									to: uinfo2.jid
+								})
+								.c("body")
+								.t("A message " + j + " to be sent from: " + jid));
+						});
+					}, j * 200);
+				});
 			}
 		}
 

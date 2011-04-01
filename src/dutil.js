@@ -133,6 +133,7 @@ function sprintf(fmt_str) {
 	return alternator(fs_parts, args).join("");
 }
 
+// TODO: Use _'s once instead
 function once(proc) {
 	/* Ensure that 'proc' is called only once, irrespective of how many 
 	* times the wrapping (outer) procedure is called.
@@ -149,6 +150,7 @@ function once(proc) {
 	};
 }
 
+// TODO: Use _'s bind instead
 function hitch(obj, proc) {
 	return function() {
 		return proc.apply(obj, arguments);
@@ -250,6 +252,7 @@ function set_log_level(level) {
 	_log_level = get_numeric_log_level(level);
 }
 
+// TODO: Log local time instead of GMT time.
 function log_it(level) {
 	/* Logs stuff (2nd parameter onwards) according to the logging level
 	 * set using the set_log_level() function. The default logging level

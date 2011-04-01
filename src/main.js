@@ -36,6 +36,8 @@ exports.proxy     = xp;
 exports.lookup    = ls;
 exports.start     = function(options) {
 
+// TODO: Try to add all functions in dutil into the _ namespace.
+
 	options = options || { };
 	options = dutil.extend(options, {
 		path: /^\/http-bind\/$/, 
@@ -60,13 +62,19 @@ exports.start     = function(options) {
 		dutil.log_it("ERROR", "Could not create the BOSH server:", e);
 	});
 
-	bosh_server.on('stanzas', function(stanzas, sstate) {
-		stanzas = stanzas.filter(dutil.not(us.isString));
-		stanzas.forEach(function(stanza) {
+	bosh_server.on('nodes', function(nodes, sstate) {
+		nodes = nodes.filter(dutil.not(us.isString));
+		nodes.forEach(function(stanza) {
 			conn.stanza(stanza, sstate);
 		});
 	});
 
+	//
+	// Export this mapping pattern into some other function
+	//
+	// Since this file serves merely as an example more than anything else, 
+	// we avoid the temptation
+	//
 	bosh_server.on('stream-add', function(sstate) {
 		conn.stream_add(sstate);
 	});
@@ -91,6 +99,9 @@ exports.start     = function(options) {
 		// Raised when the XMPP server sends the BOSH server a response to
 		// send back to the client.
 	});
+
+	// We can also hook on to events to bosh_server.
+	// bosh_server.on('response', function() { });
 
 	return bosh_server;
 };
