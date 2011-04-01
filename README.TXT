@@ -23,6 +23,14 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
 
     [3] For a more complex setup, see the file main.js
 
+    [4] For options, type:
+    $ node bosh-server --help
+
+    OR:
+
+    $ node `which bosh-server` --help
+
+
 
 The BOSH is now available at: http://localhost:5280/http-bind/
 (don't forget the trailing slash).
