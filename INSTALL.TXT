@@ -9,8 +9,8 @@ node-xmpp-bosh has been tested with node v0.4.x
 2. Install npm: https://github.com/isaacs/npm
 curl http://npmjs.org/install.sh | npm_install=rc sh
 
-3. Get the proxy:
-npm install node-xmpp-bosh -g (should get all deps.)
+3. Get the proxy (this should get all deps.):
+npm install node-xmpp-bosh -g
 
 4. If deps. installation fails, get them manually:
 npm install tav -g
