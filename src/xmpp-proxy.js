@@ -36,16 +36,23 @@ var NS_STREAM = 'http://etherx.jabber.org/streams';
 var NS_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams';
 
 
-function XMPPProxy(xmpp_host, lookup_service, void_star) {
-	this._xmpp_host = xmpp_host;
-	this._void_star = void_star;
+function XMPPProxy(xmpp_host, lookup_service, stream_attrs, void_star) {
+	this._xmpp_host      = xmpp_host;
+	this._void_star      = void_star;
 	this._lookup_service = lookup_service;
+	this._stream_attrs   = stream_attrs || { };
+
+	dutil.extend(this._stream_attrs, {
+		'xmlns:stream': 'http://etherx.jabber.org/streams', 
+		xmlns:          'jabber:client',
+		to:             this._xmpp_host, 
+		version:        '1.0'
+	});
 
 	this._buff         = '';
 	this._first        = true;
 	this._is_connected = false;
 	this._terminate_on_connect = false;
-	this._stream_attrs = { };
 
 	return this;
 }
@@ -117,9 +124,9 @@ dutil.copy(XMPPProxy.prototype, {
 		this._attach_handlers();
 		this._lookup_service.connect(this._sock);
 
-		this._stream_start_xml = 
-			dutil.sprintf("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' to='%s' version='%s'>", 
-				this._xmpp_host, "1.0");
+		this._stream_start_xml = new ltx.Element("stream:stream", this._stream_attrs)
+			.toString()
+			.replace(/\/>$/, '>');
 	},
 
 	restart: function() {

@@ -342,6 +342,10 @@ exports.createServer = function(options) {
 		};
 		state.streams.push(sname);
 
+		if (node.attrs.stream_attrs) {
+			sstate.attrs = JSON.parse(node.attrs.stream_attrs);
+		}
+
 		sn_state[sname] = sstate;
 		return sstate;
 	}

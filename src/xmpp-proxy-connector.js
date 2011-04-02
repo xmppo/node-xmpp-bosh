@@ -120,6 +120,7 @@ XMPPProxyConnector.prototype = {
 		// Create a new stream.
 		var proxy = new this.Proxy(sstate.to, 
 			new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.state.route), 
+			sstate.attrs, 
 			sstate);
 
 		var stream = {
