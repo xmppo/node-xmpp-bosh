@@ -276,7 +276,14 @@ function log_it(level) {
 
 		args.unshift(level, new Date());
 
-		console.log.apply(console, args);
+		args.forEach(function(arg, i) {
+			var astr = arg.toString();
+			// console.log(astr.length);
+			process.stdout.write(astr);
+			process.stdout.write(i < args.length - 1 ? ' ' : '');
+		});
+
+		process.stdout.write('\n');
 	}
 }
 
