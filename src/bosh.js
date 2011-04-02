@@ -622,7 +622,7 @@ exports.createServer = function(options) {
 		 */
 		var attrs = {
 			xmlns:      BOSH_XMLNS, 
-			sid:        state.sid, 
+			// sid:        state.sid, 
 			type:       'terminate'
 		};
 		if (condition) {
@@ -887,7 +887,7 @@ exports.createServer = function(options) {
 		var response = new ltx.Element('body', {
 			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
-			sid:        sstate.state.sid
+			// sid:        sstate.state.sid
 		}).cnode(connector_response).tree();
 
 		send_or_queue(ro, response, sstate);
@@ -902,7 +902,7 @@ exports.createServer = function(options) {
 		var attrs = {
 			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
-			sid:        sstate.state.sid, 
+			// sid:        sstate.state.sid, 
 			type:       'terminate'
 		};
 		var response = new ltx.Element('body', attrs);
