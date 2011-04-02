@@ -21,13 +21,14 @@
  *
  */
 
-var http  = require('http');
-var url   = require('url');
-var ltx   = require('ltx');
-var util  = require('util');
-var uuid  = require('node-uuid');
-var dutil = require('./dutil.js');
-var us    = require('underscore');
+var http   = require('http');
+var url    = require('url');
+var ltx    = require('ltx');
+var util   = require('util');
+var events = require('events');
+var uuid   = require('node-uuid');
+var dutil  = require('./dutil.js');
+var us     = require('underscore');
 
 
 
@@ -844,8 +845,7 @@ exports.createServer = function(options) {
 	function BoshEventEmitter() {
 	}
 
-	var _ee = require('events').EventEmitter();
-	BoshEventEmitter.prototype = new _ee.EventEmitter();
+	util.inherits(BoshEventEmitter, events.EventEmitter);
 
 	dutil.copy(BoshEventEmitter.prototype, {
 		stop: function() {

@@ -25,6 +25,8 @@
 
 var net    = require('net');
 var ltx    = require('ltx');
+var events = require("events");
+var util   = require('util');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 
@@ -48,8 +50,8 @@ function XMPPProxy(xmpp_host, lookup_service, void_star) {
 	return this;
 }
 
-var _ee = require('events').EventEmitter();
-XMPPProxy.prototype = new _ee.EventEmitter();
+
+util.inherits(XMPPProxy, events.EventEmitter);
 
 exports.Proxy = XMPPProxy;
 
