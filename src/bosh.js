@@ -473,7 +473,7 @@ exports.createServer = function(options) {
 			clearTimeout(state.timeout);
 		}
 
-		// console.log("Setting a timeout of", state.inactivity + 10, "second");
+		dutil.log_it("DEBUG", "Setting a timeout of", state.inactivity + 10, "second for sid:", state.sid);
 
 		state.timeout = setTimeout(function() {
 			dutil.log_it("DEBUG", "Terminating BOSH session", state.sid, "due to inactivity");
@@ -855,6 +855,14 @@ exports.createServer = function(options) {
 		stop: function() {
 			// console.log("stop::", http_server);
 			return http_server.close();
+		}, 
+		
+		get sid_state() {
+			return sid_state;
+		}, 
+
+		get sn_state() {
+			return sn_state;
 		}
 	});
 
@@ -927,11 +935,6 @@ exports.createServer = function(options) {
 		// This will eventually contain all the nodes to be processed.
 		var nodes = [ ];
 
-		// Reset the BOSH session timeout
-		if (state) {
-			reset_session_inactivity_timeout(state);
-		}
-
 		// Handle the stanza that the client sent us.
 
 		// Check if this is a session start packet.
@@ -939,6 +942,8 @@ exports.createServer = function(options) {
 			dutil.log_it("DEBUG", "BOSH::Session creation");
 			var state  = session_create(node, res);
 			var sstate = stream_add(state, node);
+
+			reset_session_inactivity_timeout(state);
 
 			// Respond to the client.
 			send_session_creation_response(sstate);
@@ -995,6 +1000,9 @@ exports.createServer = function(options) {
 				send_termination_stanza(res, 'bad-request');
 				return;
 			}
+
+			// Reset the BOSH session timeout
+			reset_session_inactivity_timeout(state);
 
 			// Set the current rid to the max. RID we have received till now.
 			// state.rid = Math.max(state.rid, node.attrs.rid);
