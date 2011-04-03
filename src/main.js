@@ -56,52 +56,35 @@ exports.start     = function(options) {
 	// We allow different types of connectors to exist.
 	var conn = new xpc.Connector(bosh_server);
 
+	//
+	// Responses we may hook on to:
+	// 1. stream-add
+	// 2. stream-terminate (when the user terminates the stream)
+	// 3. stream-restart
+	// 4. no-client
+	// 5. response-acknowledged
+	// 6. nodes (from user to server)
+	// 7. response (from server to user)
+	// 8. terminate (when the server terminates the stream)
+	// 9. error
+	//
 
 
 	bosh_server.on('error', function(e) {
 		dutil.log_it("ERROR", "Could not create the BOSH server:", e);
 	});
 
-	bosh_server.on('nodes', function(nodes, sstate) {
-		nodes = nodes.filter(dutil.not(us.isString));
-		nodes.forEach(function(stanza) {
-			conn.stanza(stanza, sstate);
-		});
-	});
-
-	//
-	// Export this mapping pattern into some other function
-	//
-	// Since this file serves merely as an example more than anything else, 
-	// we avoid the temptation
-	//
-	bosh_server.on('stream-add', function(sstate) {
-		conn.stream_add(sstate);
-	});
-
-	bosh_server.on('stream-restart', function(sstate) {
-		conn.stream_restart(sstate);
-	});
-
-	bosh_server.on('stream-terminate', function(sstate) {
-		conn.stream_terminate(sstate);
-	});
-
-	bosh_server.on('no-client', function(response) {
-		conn.no_client(response);
-	});
-
 	bosh_server.on('response-acknowledged', function(wrapped_response) {
-		conn.response_acknowledged(wrapped_response);
+		// What to do with this response??
+		dutil.log_it("WARN", function() {
+			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", wrapped_response.rid ];
+		});
 	});
 
 	bosh_server.on('response', function(response, sstate) {
 		// Raised when the XMPP server sends the BOSH server a response to
 		// send back to the client.
 	});
-
-	// We can also hook on to events to bosh_server.
-	// bosh_server.on('response', function() { });
 
 	return bosh_server;
 };

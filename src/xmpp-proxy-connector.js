@@ -85,6 +85,20 @@ function XMPPProxyConnector(bosh_server) {
 		ss.pending = [ ];
 	});
 
+	var self = this;
+
+	bosh_server.on('nodes', function(nodes, sstate) {
+		nodes = nodes.filter(dutil.not(us.isString));
+		nodes.forEach(function(stanza) {
+			self.stanza(stanza, sstate);
+		});
+	});
+
+	bosh_server.on('stream-add', dutil.hitch(this, this.stream_add));
+	bosh_server.on('stream-restart', dutil.hitch(this, this.stream_restart));
+	bosh_server.on('stream-terminate', dutil.hitch(this, this.stream_terminate));
+	bosh_server.on('no-client', dutil.hitch(this, this.no_client));
+
 }
 
 XMPPProxyConnector.prototype = {
@@ -165,13 +179,6 @@ XMPPProxyConnector.prototype = {
 			return [ "XMPP PROXY CONNECTOR::No Client for this response:", response.toString() ];
 		});
 	}, 
-	
-	response_acknowledged: function(wrapped_response) {
-		// What to do with this response??
-		dutil.log_it("WARN", function() {
-			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", wrapped_response.rid ];
-		});
-	}
 
 };
 
