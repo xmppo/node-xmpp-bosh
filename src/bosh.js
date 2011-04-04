@@ -350,10 +350,10 @@ exports.createServer = function(options) {
 		return sstate;
 	}
 
-	function get_streams_to_terminate(node, state) {
+	function get_streams_to_terminate(sstate, state) {
 		var streams = state.streams; // The streams to terminate
-		if (node.attrs.stream) {
-			streams = [ node.attrs.stream ];
+		if (sstate) {
+			streams = [ sstate.name ];
 		}
 
 		var stt = streams.map(function(x) {
@@ -368,7 +368,7 @@ exports.createServer = function(options) {
 		// From streams, remove all entries that are 
 		// null or undefined, and log this condition.
 		if (sie.length > 0) {
-			console.error(dutil.sprintf("get_streams_to_terminate::%s streams are in error", sie.length));
+			dutil.log_it("WARN", dutil.sprintf("BOSH::get_streams_to_terminate::%s streams are in error", sie.length));
 		}
 
 		return stt;
@@ -495,7 +495,7 @@ exports.createServer = function(options) {
 
 			// Pretend as if the client asked to terminate the stream
 			unset_session_inactivity_timeout(state);
-			handle_client_stream_terminate_request({ attrs: { } }, state, [ ]);
+			handle_client_stream_terminate_request(null, state, [ ]);
 		}, (state.inactivity + 10 /* 10 sec grace period */) * 1000);
 	}
 
@@ -781,11 +781,11 @@ exports.createServer = function(options) {
 		}
 	}
 
-	function handle_client_stream_terminate_request(node, state, nodes) {
+	function handle_client_stream_terminate_request(sstate, state, nodes, condition) {
 		// This function handles a stream terminate request from the client.
 		// It assumes that the client sent a stream terminate request.
 
-		var streams_to_terminate = get_streams_to_terminate(node, state);
+		var streams_to_terminate = get_streams_to_terminate(sstate, state);
 
 		streams_to_terminate.forEach(function(sstate) {
 			if (nodes.length > 0) {
@@ -808,7 +808,6 @@ exports.createServer = function(options) {
 			// Send the session termination response to the client.
 			// Copy the condition if mentioned.
 			//
-			var condition = node.attrs.condition;
 			send_session_terminate(get_response_object(state), state, condition);
 
 			// And terminate the rest of the held response objects.
@@ -1136,6 +1135,8 @@ exports.createServer = function(options) {
 			// Check if this is a stream restart packet.
 			if (is_stream_restart_packet(node)) {
 				dutil.log_it("DEBUG", "BOSH::Stream Restart");
+
+				// TODO: Check if sstate is valid
 				bee.emit('stream-restart', sstate);
 
 				// According to http://xmpp.org/extensions/xep-0206.html
@@ -1161,7 +1162,7 @@ exports.createServer = function(options) {
 				// We may be required to terminate one stream, or all
 				// the open streams on this BOSH session.
 
-				handle_client_stream_terminate_request(node, state, nodes);
+				handle_client_stream_terminate_request(sstate, state, nodes, node.attrs.condition);
 
 				// Once a stream is terminated, there is no point sending 
 				// nodes. Which is why we did the needful before sending
