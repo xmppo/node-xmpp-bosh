@@ -58,8 +58,8 @@
  *
  */
 var XMLHttpRequest = require('./XMLHttpRequest.js').XMLHttpRequest;
-var Base64         = require('./Base64.js').Base64;
-var MD5            = require('./MD5.js').MD5;
+var Base64         = require('./base64.js').Base64;
+var MD5            = require('./md5.js').MD5;
 var jsdom          = require("jsdom").jsdom;
 
 document = jsdom("<html><head></head><body></body></html>"),
