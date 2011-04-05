@@ -277,14 +277,30 @@ function log_it(level) {
 		args.unshift(level, new Date());
 
 		args.forEach(function(arg, i) {
-			var astr = arg.toString();
-			// console.log(astr.length);
-			process.stdout.write(astr);
-			process.stdout.write(i < args.length - 1 ? ' ' : '');
+			try {
+				var astr = arg.toString();
+				// console.log(astr.length);
+				process.stdout.write(astr);
+				process.stdout.write(i < args.length - 1 ? ' ' : '');
+			}
+			catch (ex) {
+				console.error("DUTIL::log_it:astr.length:", astr.length);
+				console.error("DUTIL::log_it:Exception:\n", ex.stack);
+				process.exit(3);
+			}
 		});
 
 		process.stdout.write('\n');
 	}
+}
+
+function json_parse(jstr, def) {
+	def = typeof def == "undefined" ? '' : def;
+	try {
+		def = JSON.parse(jstr);
+	}
+	catch (ex) { }
+	return def;
 }
 
 
@@ -306,3 +322,4 @@ exports.isTruthy           = isTruthy;
 exports.set_log_level      = set_log_level;
 exports.log_it             = log_it;
 exports.once               = once;
+exports.json_parse         = json_parse;

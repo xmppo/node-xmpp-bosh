@@ -159,7 +159,7 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
-		ss.proxy.restart();
+		ss.proxy.restart(sstate.stream_attrs);
 	}, 
 
 	stream_terminate: function(sstate) {

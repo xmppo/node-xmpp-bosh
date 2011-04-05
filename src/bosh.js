@@ -342,10 +342,6 @@ exports.createServer = function(options) {
 		};
 		state.streams.push(sname);
 
-		if (node.attrs.stream_attrs) {
-			sstate.attrs = JSON.parse(node.attrs.stream_attrs);
-		}
-
 		sn_state[sname] = sstate;
 		return sstate;
 	}
@@ -1136,9 +1132,19 @@ exports.createServer = function(options) {
 			if (is_stream_restart_packet(node)) {
 				dutil.log_it("DEBUG", "BOSH::Stream Restart");
 
-				// TODO: Check if sstate is valid
-				bee.emit('stream-restart', sstate);
+				if (node.attrs.stream_attrs) {
+					sstate.attrs = dutil.json_parse(node.attrs.stream_attrs, { });
+				}
 
+				// Check if sstate is valid
+				if (!sstate) {
+					// Make this a session terminate request.
+					node.attrs.type = 'terminate';
+					delete node.attrs.stream;
+				}
+				else {
+					bee.emit('stream-restart', sstate);
+				}
 				// According to http://xmpp.org/extensions/xep-0206.html
 				// the XML nodes in a restart request should be ignored.
 				// Hence, we comply.
@@ -1157,7 +1163,7 @@ exports.createServer = function(options) {
 			}
 
 			// Check for stream terminate
-			else if (is_stream_terminate_request(node)) {
+			if (is_stream_terminate_request(node)) {
 				dutil.log_it("DEBUG", "BOSH::Stream Terminate");
 				// We may be required to terminate one stream, or all
 				// the open streams on this BOSH session.

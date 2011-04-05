@@ -40,14 +40,12 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, void_star) {
 	this._xmpp_host      = xmpp_host;
 	this._void_star      = void_star;
 	this._lookup_service = lookup_service;
-	this._stream_attrs   = stream_attrs || { };
-
-	dutil.extend(this._stream_attrs, {
+	this._default_stream_attrs = {
 		'xmlns:stream': 'http://etherx.jabber.org/streams', 
 		xmlns:          'jabber:client',
 		to:             this._xmpp_host, 
 		version:        '1.0'
-	});
+	};
 
 	this._buff         = '';
 	this._first        = true;
@@ -92,6 +90,11 @@ dutil.copy(XMPPProxy.prototype, {
 		self._attach_handlers();
 	},
 
+	_get_stream_xml_open: function(stream_attrs) {
+		dutil.extend(stream_attrs, this._default_stream_attrs);
+		return new ltx.Element('stream:stream', stream_attrs).toString().replace(/\/>$/, '>');
+	}, 
+
 	_on_stanza: function(stanza) {
 		// Check if this is a STARTTLS request or response.
 		// TODO: Check for valid Namespaces too.
@@ -123,16 +126,14 @@ dutil.copy(XMPPProxy.prototype, {
 		this._sock = new net.Stream();
 		this._attach_handlers();
 		this._lookup_service.connect(this._sock);
-
-		this._stream_start_xml = new ltx.Element("stream:stream", this._stream_attrs)
-			.toString()
-			.replace(/\/>$/, '>');
 	},
 
-	restart: function() {
+	restart: function(stream_attrs) {
 		this._buff = '';
 		this._first = true;
-		this.send(this._stream_start_xml);
+		var _ss_open = this._get_stream_xml_open(stream_attrs);
+
+		this.send(_ss_open);
 	},
 
 	terminate: function() {
@@ -166,9 +167,10 @@ dutil.copy(XMPPProxy.prototype, {
 		dutil.log_it('DEBUG', 'XMPP PROXY::connected');
 
 		this._is_connected = true;
+		var _ss_open = this._get_stream_xml_open({ });
 
 		// Always, we connect on behalf of the real client.
-		this.send(this._stream_start_xml);
+		this.send(_ss_open);
 
 		if (this._terminate_on_connect) {
 			this.terminate();
