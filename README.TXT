@@ -10,7 +10,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
 [A] Quick Start:
 
     [1] To run, type:
-    $ node bosh-server
+    $ bosh-server
 
     [2] For running from within a node application, type:
     $ node
@@ -24,7 +24,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     [3] For a more complex setup, see the file main.js
 
     [4] For options, type:
-    $ node bosh-server --help
+    $ bosh-server --help
 
     OR:
 
