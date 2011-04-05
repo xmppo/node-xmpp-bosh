@@ -94,7 +94,7 @@ The project itself is divided into 4 main components as of now.
 
       [3] stream-restart: Emitted when a client requests a stream restart
 
-      [4] stanzas: Emitted when the client wants to send one or more XML
+      [4] nodes: Emitted when the client wants to send one or more XML
           stanzas to the backend server
 
       [5] no-client: Emitted when a packet to be delivered to the client
