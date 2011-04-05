@@ -112,6 +112,14 @@ The project itself is divided into 4 main components as of now.
       [2] terminate: Emitted when the backend server wants to terminate
           the client's connection (stream).
 
+    * Custom attributes on BOSH streams
+
+      [1] If a stream creation request has the 'ua' attribute, it shall be
+          included in all events that involve that session. This is useful
+	  when embedding this library
+      
+      [2] If a stream restart request has the 'stream_attrs' attribute set
+
 
 
 [E] References:

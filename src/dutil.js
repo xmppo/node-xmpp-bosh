@@ -272,6 +272,9 @@ function log_it(level) {
 		if (args.length == 1 && typeof args[0] == "function") {
 			// Lazy evaluation.
 			args = args[0]();
+			if (typeof args === "string") {
+				args = [ args ];
+			}
 		}
 
 		args.unshift(level, new Date());
