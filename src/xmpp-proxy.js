@@ -91,6 +91,7 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	_get_stream_xml_open: function(stream_attrs) {
+		stream_attrs = stream_attrs || { };
 		dutil.extend(stream_attrs, this._default_stream_attrs);
 		return new ltx.Element('stream:stream', stream_attrs).toString().replace(/\/>$/, '>');
 	}, 
