@@ -1,7 +1,7 @@
 // var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind'
 var BOSH_HOST = 'http://localhost:5280';
 var BOSH_ENDPOINT = '/http-bind/';
-var BOSH_SERVICE = BOSH_HOST + BOSH_ENDPOINT;
+var BOSH_SERVICE = '';
 var XMPP_USERNAME = "user@example.com";
 var XMPP_PASSWORD = "password";
 var XMPP_ROUTE = '';
@@ -80,6 +80,8 @@ function main() {
 			"--endpoint='/http-bind/' --route='xmpp:domain:port'");
 		process.exit(2);
 	}
+
+	BOSH_SERVICE = BOSH_HOST + BOSH_ENDPOINT;
 
 	connect();
 }
