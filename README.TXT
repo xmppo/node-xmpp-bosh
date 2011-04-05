@@ -118,8 +118,14 @@ The project itself is divided into 4 main components as of now.
           included in all events that involve that session. This is useful
 	  when embedding this library
       
-      [2] If a stream restart request has the 'stream_attrs' attribute set
-
+      [2] If a stream restart request has the 'stream_attrs' attribute set, 
+          then the value of that attribute is assumed to be a stringified
+	  JSON object which is subsequently parsed and every key/value pair
+	  is added as an attribute of the stream <stream:stream> tag 
+	  during this stream restart. If you provide attributes such as 
+	  'xmlns' that the BOSH proxy would have added by default, the 
+	  defaults are ignored and the user set attribute values are 
+	  preferred.
 
 
 [E] References:
