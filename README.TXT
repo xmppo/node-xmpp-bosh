@@ -43,6 +43,9 @@ The BOSH is now available at: http://localhost:5280/http-bind/
     * Request & Response Acknowledgements (implemented but untested)
     * Chunked responses (due to node.js)
     * STARTTLS support for connecting to the backend XMPP server (tested with google talk) 
+    * Custom stream attributes on stream restart requests
+    * Custom attributes supported during session creation (passed on to handlers)
+
 
 [C] Features not Planned:
 
@@ -156,3 +159,4 @@ The project itself is divided into 4 main components as of now.
     * v0.0.3 == SVN Commit #56
     * v0.0.4 == SVN Commit #65
     * v0.0.5 == SVN Commit #76
+
