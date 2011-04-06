@@ -1136,23 +1136,45 @@ exports.createServer = function(options) {
 				_queued_request_keys.sort();
 
 				_queued_request_keys.forEach(function(rid) {
+
 					if (rid < state.rid + 1) {
+
+						var ss = sstate || get_random_stream(state);
 						if (rid in state.unacked_responses) {
 							// Send back the original response
 							//
 							// TODO: How do we know which rid this is??
 							//
-							var ss = sstate || get_random_stream(state);
 							state.pending.push({
 								response: state.unacked_responses[rid].response, 
 								sstate: ss
 							});
 						}
+						else if (rid >= state.rid - state.window - 2)
+						{
+							//
+							// Send back an empty body since it is within the range. We assume
+							// that we didn't send anything on this rid the first time around.
+							//
+							// There is a small issue here. If a client re-sends a request for
+							// an 'rid' that it has already acknowledged, it will get an empty
+							// body the second time around. The client is to be blamed for its 
+							// stupidity and not us.
+							//
+							state.pending.push({
+								response: new ltx.Element('body', {
+									xmlns: BOSH_XMLNS
+								}), 
+								sstate: ss
+							});
+						}
 						else {
-							// TODO: Send back an empty body if it is within the range
 							//
 							// Terminate this session. We make the rest of the code believe
 							// that the client asked for termination.
+							//
+							// I don't think that control will ever reach here.
+							//
 							node.attrs = {
 								type: 'terminate', 
 								condition: 'item-not-found', 
