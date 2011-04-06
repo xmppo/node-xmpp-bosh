@@ -606,6 +606,7 @@ exports.createServer = function(options) {
 
 		var attrs = {
 			xmlns:      BOSH_XMLNS, 
+			stream:     sstate.stream, 
 			type:       'terminate'
 		};
 		if (condition) {
