@@ -645,6 +645,11 @@ exports.createServer = function(options) {
 	}
 	/* End Response Sending Functions */
 
+	function get_random_stream(state) {
+		var sstate = sn_state[state.streams];
+		return sstate;
+	}
+
 
 	function send_termination_stanza(res, condition) {
 		/* Send a stream termination response to a response object.
@@ -1101,13 +1106,18 @@ exports.createServer = function(options) {
 					&& state.unacked_responses[node.attrs.ack]) {
 						var _ts = state.unacked_responses[node.attrs.ack].ts;
 
+						var ss = sstate || get_random_stream(state);
+
 						// We inject a response packet into the pending queue to 
 						// notify the client that it _may_ have missed something.
-						state.pending.push(new ltx.Element('body', {
-							report: node.attrs.ack + 1, 
-							time: new Date() - _ts, 
-							xmlns: BOSH_XMLNS
-						}));
+						state.pending.push({
+							response: new ltx.Element('body', {
+								report: node.attrs.ack + 1, 
+								time: new Date() - _ts, 
+								xmlns: BOSH_XMLNS
+							}), 
+							sstate: ss
+						});
 				}
 
 				// 
