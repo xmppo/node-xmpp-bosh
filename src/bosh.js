@@ -1142,7 +1142,11 @@ exports.createServer = function(options) {
 							//
 							// TODO: How do we know which rid this is??
 							//
-							state.pending.push(state.unacked_responses[rid].response);
+							var ss = sstate || get_random_stream(state);
+							state.pending.push({
+								response: state.unacked_responses[rid].response, 
+								sstate: ss
+							});
 						}
 						else {
 							// TODO: Send back an empty body if it is within the range
