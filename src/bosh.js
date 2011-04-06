@@ -171,6 +171,8 @@ exports.createServer = function(options) {
 	// Format: {
 	//   stream_name: {
 	//     name: "Stream Name", 
+	//     to: "domain.tld", 
+	//     terminated: true/false, 
 	//     state: The sid_state object (as above)
 	//   }
 	// }
@@ -336,9 +338,10 @@ exports.createServer = function(options) {
 	function stream_add(state, node) {
 		var sname = uuid();
 		var sstate = {
-			name:  sname, 
-			to:    node.attrs.to, 
-			state: state
+			name:       sname, 
+			terminated: false, 
+			to:         node.attrs.to, 
+			state:      state
 		};
 		state.streams.push(sname);
 
@@ -352,6 +355,7 @@ exports.createServer = function(options) {
 			streams = [ sstate.name ];
 		}
 
+		// Streams to terminate
 		var stt = streams.map(function(x) {
 			return sn_state[x];
 		}).filter(dutil.isTruthy);
@@ -398,7 +402,7 @@ exports.createServer = function(options) {
 		// Allow variance of "window" rids on either side. This is in violation
 		// of the XEP though.
 		return state && node.attrs.sid && node.attrs.rid && 
-			node.attrs.rid > state.rid - state.window && 
+			node.attrs.rid > state.rid - state.window - 1 && 
 			node.attrs.rid < state.rid + state.window + 1;
 	}
 
@@ -613,6 +617,8 @@ exports.createServer = function(options) {
 			attrs.condition = condition;
 		}
 
+		sstate.terminated = true;
+
 		var response = new ltx.Element('body', attrs);
 		send_or_queue(ro, response, sstate);
 	}
@@ -768,6 +774,10 @@ exports.createServer = function(options) {
 
 	function send_or_queue(ro, response, sstate) {
 		/* Send or queue a response. Requeue if the sending fails */
+		if (sstate.terminated) {
+			return;
+		}
+
 		var state = sstate.state;
 
 		dutil.log_it("DEBUG", function() {
