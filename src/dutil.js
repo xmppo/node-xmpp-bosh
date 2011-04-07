@@ -231,9 +231,9 @@ var _log_levels = {
 	"NONE": 0, 
 	"INFO": 1, 
 	"WARN": 2, 
-	"DEBUG": 3,
-	"ERROR": 4,
-	"FATAL": 5
+	"ERROR": 3,
+	"FATAL": 4, 
+	"DEBUG": 5
 };
 
 

@@ -671,7 +671,13 @@ exports.createServer = function(options) {
 	/* End Response Sending Functions */
 
 	function get_random_stream(state) {
-		var sstate = sn_state[state.streams];
+		if (state.streams.length == 0) {
+			dutil.log_it("FATAL", function() {
+				return sprintf("BOSH::%s::state object has no streams", state.sid);
+			});
+			process.exit(4);
+		}
+		var sstate = sn_state[state.streams[0]];
 		return sstate;
 	}
 
@@ -1122,6 +1128,12 @@ exports.createServer = function(options) {
 						var _ts = state.unacked_responses[node.attrs.ack].ts;
 
 						var ss = sstate || get_random_stream(state);
+						if (!ss) {
+							dutil.log_it("FATAL", function() {
+								return sutil.sprintf("BOSH::%s::ss is invalid", state.sid);
+							});
+							process.exit(3);
+						}
 
 						// We inject a response packet into the pending queue to 
 						// notify the client that it _may_ have missed something.
