@@ -563,6 +563,9 @@ exports.createServer = function(options) {
 		var ro = res ? (res.length > 0 ? res.shift() : null) : null;
 		if (ro) {
 			clearTimeout(ro.timeout);
+			dutil.log_it("DEBUG", function() {
+				return dutil.sprintf("BOSH::%s::Returning response object with rid: %s", state.sid, ro.rid);
+			});
 		}
 		dutil.log_it("DEBUG", function() {
 			return dutil.sprintf("BOSH::%s::Holding %s response objects", state.sid, res.length);
