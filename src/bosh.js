@@ -818,6 +818,10 @@ exports.createServer = function(options) {
 			// On error, try the next one or start the timer if there
 			// is nothing left to try.
 			ro.res.on('error', function() {
+				dutil.log_it("DEBUG", function() {
+					return dutil.sprintf("BOSH::%s::error sending response on rid: %s", state.sid, ro.rid);
+				});
+
 				var _ro = get_response_object(sstate);
 
 				if (_ro) {
