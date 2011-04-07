@@ -72,20 +72,21 @@ var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 function inflated_attrs(node) {
 	var xmlns = { };
 	var attrs = { };
+	var k, m;
 
-	for (var k in node.attrs) {
-		var m = k.match(/^xmlns:([\S\s]+)$/);
+	for (k in node.attrs) {
+		m = k.match(/^xmlns:([\S\s]+)$/);
 		if (m && m.length > 0) {
 			xmlns[m[1]] = node.attrs[k];
 			attrs[k] = node.attrs[k];
 		}
 	}
 
-	for (var k in node.attrs) {
+	for (k in node.attrs) {
 		for (var xk in xmlns) {
 			// Looks like a smiley, doesn't it; a sad one at that :-p
 			var re = new RegExp("^" + xk + ":([\\s\\S]+)$");
-			var m = k.match(re);
+			m = k.match(re);
 
 			if (m && m.length > 0) {
 				attrs[xmlns[xk] + ":" + m[1]] = node.attrs[k];
@@ -191,7 +192,7 @@ exports.createServer = function(options) {
 	// }
 	//
 	var sid_state = {
-	}
+	};
 
 	// This encapsulates the state for the client stream
 	//
@@ -242,13 +243,9 @@ exports.createServer = function(options) {
 		options.max_rid_sent = options.rid - 1;
 
 		if (options.inactivity) {
-			options.inactivity = parseInt(options.inactivity);
-			options.inactivity = options.inactivity < MAX_INACTIVITY_SEC 
-				? options.inactivity 
-				: MAX_INACTIVITY_SEC;
-			options.inactivity = options.inactivity < DEFAULT_INACTIVITY_SEC 
-				? options.inactivity 
-				: DEFAULT_INACTIVITY_SEC;
+			options.inactivity = Math.floor(options.inactivity);
+			options.inactivity = options.inactivity < MAX_INACTIVITY_SEC ? options.inactivity : MAX_INACTIVITY_SEC;
+			options.inactivity = options.inactivity < DEFAULT_INACTIVITY_SEC ? options.inactivity : DEFAULT_INACTIVITY_SEC;
 		}
 		else {
 			options.inactivity = DEFAULT_INACTIVITY_SEC;
@@ -281,7 +278,7 @@ exports.createServer = function(options) {
 		dutil.log_it("DEBUG", "BOSH::route_parse:", m);
 		if (m && m.length == 4) {
 			return {
-				protocol: m[1], host: m[2], port: parseInt(m[3])
+				protocol: m[1], host: m[2], port: Math.floor(m[3])
 			};
 		}
 		else {
@@ -294,9 +291,9 @@ exports.createServer = function(options) {
 		var sid = uuid();
 		var opt = {
 			sid: sid, 
-			rid: parseInt(node.attrs.rid), 
-			wait: parseInt(node.attrs.wait), 
-			hold: parseInt(node.attrs.hold),
+			rid: Math.floor(node.attrs.rid), 
+			wait: Math.floor(node.attrs.wait), 
+			hold: Math.floor(node.attrs.hold),
 			content: "text/xml; charset=utf-8"
 		};
 
@@ -330,7 +327,7 @@ exports.createServer = function(options) {
 	}
 
 	function session_terminate(state) {
-		if (state.streams.length != 0) {
+		if (state.streams.length !== 0) {
 			dutil.log_it("DEBUG", function() {
 				return dutil.sprintf("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid);
 			});
@@ -646,7 +643,7 @@ exports.createServer = function(options) {
 		var ro    = get_response_object(sstate);
 
 		var attrs = {
-			stream:     sstate.name, 
+			stream:     sstate.name
 		};
 		if (condition) {
 			attrs.condition = condition;
@@ -683,7 +680,7 @@ exports.createServer = function(options) {
 	/* End Response Sending Functions */
 
 	function get_random_stream(state) {
-		if (state.streams.length == 0) {
+		if (state.streams.length === 0) {
 			dutil.log_it("FATAL", function() {
 				return sprintf("BOSH::%s::state object has no streams", state.sid);
 			});
@@ -822,7 +819,7 @@ exports.createServer = function(options) {
 		var state = sstate.state;
 
 		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::send_or_queue::ro is: %s", state.sid, ro != null);
+			return dutil.sprintf("BOSH::%s::send_or_queue::ro is: %s", state.sid, ro !== null);
 		});
 
 		if (state.pending.length > 0) {
@@ -881,14 +878,14 @@ exports.createServer = function(options) {
 			// http://xmpp.org/extensions/xep-0124.html#terminate
 			send_stream_terminate_response(sstate);
 
-			stream_terminate(sstate, state)
+			stream_terminate(sstate, state);
 			bee.emit('stream-terminate', sstate);
 		});
 
 
 		// Terminate the session if all streams in this session have
 		// been terminated.
-		if (state.streams.length == 0) {
+		if (state.streams.length === 0) {
 			//
 			// Send the session termination response to the client.
 			// Copy the condition if mentioned.
@@ -941,15 +938,16 @@ exports.createServer = function(options) {
 		stop: function() {
 			// console.log("stop::", http_server);
 			return http_server.close();
-		}, 
-		
-		get sid_state() {
+		}
+
+, 	get sid_state() {
 			return sid_state;
 		}, 
 
 		get sn_state() {
 			return sn_state;
 		}
+
 	});
 
 	var bee = new BoshEventEmitter();
@@ -982,7 +980,7 @@ exports.createServer = function(options) {
 		// console.log("ro:", ro);
 
 		var response = $body({
-			stream:     sstate.name, 
+			stream:     sstate.name
 		}).cnode(connector_response).tree();
 
 		send_or_queue(ro, response, sstate);
@@ -1003,7 +1001,7 @@ exports.createServer = function(options) {
 		send_stream_terminate_response(sstate, "remote-connection-failed");
 
 		// Should we terminate the BOSH session as well?
-		if (state.streams.length == 0) {
+		if (state.streams.length === 0) {
 			send_session_terminate(get_response_object(state), state);
 			session_terminate(state);
 		}
@@ -1011,7 +1009,8 @@ exports.createServer = function(options) {
 
 
 	function _handle_incoming_request(res, node) {
-		var state = get_state(node);
+		var state  = get_state(node);
+		var sstate = null;
 
 		// This will eventually contain all the nodes to be processed.
 		var nodes = [ ];
@@ -1021,8 +1020,8 @@ exports.createServer = function(options) {
 		// Check if this is a session start packet.
 		if (is_session_creation_packet(node)) {
 			dutil.log_it("DEBUG", "BOSH::Session creation");
-			var state  = session_create(node, res);
-			var sstate = stream_add(state, node);
+			state  = session_create(node, res);
+			sstate = stream_add(state, node);
 
 			reset_session_inactivity_timeout(state);
 
@@ -1033,8 +1032,6 @@ exports.createServer = function(options) {
 		}
 		else {
 			var sname = node.attrs.stream;
-			var sid   = node.attrs.sid;
-			var sstate = null;
 
 			try  {
 				// This is enclosed in a try/catch block since invalid requests
@@ -1059,16 +1056,14 @@ exports.createServer = function(options) {
 			}
 
 
-			if (!sid) {
-				// No session ID in BOSH request. Not phare enuph.
+			if (!state) {
+				// No (valid) session ID in BOSH request. Not phare enuph.
 				send_termination_stanza(res, 'bad-request');
 				return;
 			}
 
-			var state = sid_state[sid];
-
 			// Are we the only stream for this BOSH session?
-			if (state && state.streams.length == 1) {
+			if (state.streams.length == 1) {
 				// Yes, we are. Let's pretend that the stream name came along
 				// with this request. This is mentioned in the XEP.
 				sstate = sn_state[state.streams[0]];
@@ -1078,9 +1073,9 @@ exports.createServer = function(options) {
 			//
 			// is_valid_packet() handles the rid range checking
 			//
-			if (!state || !is_valid_packet(node, state)) {
+			if (!is_valid_packet(node, state)) {
 				dutil.log_it("WARN", function() {
-					return dutil.sprintf("BOSH::%s::NOT a Valid packet", (state ? state.sid : "INVALID STATE OBJECT"));
+					return dutil.sprintf("BOSH::%s::NOT a Valid packet", state.sid);
 				});
 
 				send_termination_stanza(res, 'bad-request');
@@ -1155,9 +1150,9 @@ exports.createServer = function(options) {
 				}
 
 				// And has not acknowledged the receipt of the last message we sent it.
-				if (node.attrs.ack 
-					&& node.attrs.ack < state.max_rid_sent 
-					&& state.unacked_responses[node.attrs.ack]) {
+				if (node.attrs.ack && 
+					node.attrs.ack < state.max_rid_sent && 
+					state.unacked_responses[node.attrs.ack]) {
 						var _ts = state.unacked_responses[node.attrs.ack].ts;
 
 						var ss = sstate || get_random_stream(state);
