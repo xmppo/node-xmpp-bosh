@@ -140,6 +140,24 @@ function is_stream_terminate_request(node) {
 // End packet type checkers
 
 
+// Begin packet builders
+function $body(attrs) {
+	attrs = attrs || { };
+	var _attrs = {
+		xmlns: BOSH_XMLNS
+	};
+	dutil.extend(_attrs, attrs);
+	return new ltx.Element('body', _attrs);
+}
+
+function $terminate(attrs) {
+	attrs = attrs || { };
+	attrs.type = 'terminate';
+	return $body(attrs);
+}
+
+// End packet builders
+
 
 
 // options: { path: , port: }
@@ -156,10 +174,20 @@ exports.createServer = function(options) {
 	//     rid:
 	//     wait:
 	//     hold:
-	//     res: [ An array of HTTP response objects ]
+	//     res: [ An array of response objects (format is show below) ]
 	//     pending: [ An array of pending responses to send to the client ]
 	//     ... and other jazz ...
 	//   }
+	// }
+	//
+	// Format of a single response object:
+	//
+	// {
+	//   res: HTTP response object (obtained from node.js)
+	//   timeout: A timeout, after which an empty <body> packet will be
+	//            sent on this response object
+	//   rid: The 'rid' of the request to which this response object is
+	//        associated
 	// }
 	//
 	var sid_state = {
@@ -227,6 +255,9 @@ exports.createServer = function(options) {
 		}
 
 		options.window = WINDOW_SIZE;
+
+		// There is just 1 inactivity timeout for the whole BOSH session
+		// (as opposed to for each response as it was earlier)
 		options.timeout = null;
 
 		if (options.route) {
@@ -456,9 +487,7 @@ exports.createServer = function(options) {
 				// We don't add this to unacked_responses since it's wasteful. NO
 				// WE ACTUALLY DO add it to unacked_responses
 				//
-				send_no_requeue(ro, state, new ltx.Element('body', {
-					xmlns: BOSH_XMLNS
-				}));
+				send_no_requeue(ro, state, $body());
 			}, state.wait * 1000)
 		};
 		state.res.push(ro);
@@ -467,6 +496,7 @@ exports.createServer = function(options) {
 	}
 
 	function unset_session_inactivity_timeout(state) {
+		/* Disables the BOSH session inactivity timeout */
 		if (state.timeout) {
 			clearTimeout(state.timeout);
 			state.timeout = null;
@@ -474,6 +504,7 @@ exports.createServer = function(options) {
 	}
 
 	function reset_session_inactivity_timeout(state) {
+		/* Resets the BOSH session inactivity timeout */
 		if (state.timeout) {
 			clearTimeout(state.timeout);
 		}
@@ -516,10 +547,7 @@ exports.createServer = function(options) {
 		 */
 		while (state.res.length > state.hold) {
 			var ro = get_response_object(state);
-			var response = new ltx.Element('body', {
-				xmlns: BOSH_XMLNS
-			});
-			send_no_requeue(ro, state, response);
+			send_no_requeue(ro, state, $body());
 		}
 
 	}
@@ -559,8 +587,7 @@ exports.createServer = function(options) {
 			return false;
 		}
 
-		var response = new ltx.Element('body', {
-			xmlns:      BOSH_XMLNS, 
+		var response = $body({
 			stream:     sstate.name, 
 			sid:        state.sid, 
 			wait:       state.wait, 
@@ -588,8 +615,7 @@ exports.createServer = function(options) {
 		var state = sstate.state;
 		var ro    = get_response_object(sstate);
 
-		var response = new ltx.Element('body', {
-			xmlns:      BOSH_XMLNS, 
+		var response = $body({
 			stream:     sstate.name, 
 			from:       sstate.to
 		});
@@ -609,9 +635,7 @@ exports.createServer = function(options) {
 		var ro    = get_response_object(sstate);
 
 		var attrs = {
-			xmlns:      BOSH_XMLNS, 
 			stream:     sstate.name, 
-			type:       'terminate'
 		};
 		if (condition) {
 			attrs.condition = condition;
@@ -619,7 +643,7 @@ exports.createServer = function(options) {
 
 		sstate.terminated = true;
 
-		var response = new ltx.Element('body', attrs);
+		var response = $terminate(attrs);
 		send_or_queue(ro, response, sstate);
 	}
 
@@ -636,17 +660,12 @@ exports.createServer = function(options) {
 		 *     send to the client as to why the session was closed.
 		 *
 		 */
-		var attrs = {
-			xmlns:      BOSH_XMLNS, 
-			// sid:        state.sid, 
-			type:       'terminate'
-		};
+		var attrs = { };
 		if (condition) {
 			attrs.condition = condition;
 		}
 
-		var response = new ltx.Element('body', attrs);
-
+		var response = $terminate(attrs);
 		send_no_requeue(ro, state, response);
 	}
 	/* End Response Sending Functions */
@@ -663,13 +682,7 @@ exports.createServer = function(options) {
 		 */
 
 		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-
-		res.write(new ltx.Element('body', {
-			type: 'terminate', 
-			condition: condition, 
-			xmlns: BOSH_XMLNS
-		}).toString());
-		res.end();
+		res.end($terminate({ condition: condition }).toString());
 	}
 
 	function emit_nodes_event(nodes, state, sstate) {
@@ -929,10 +942,8 @@ exports.createServer = function(options) {
 		var ro = get_response_object(sstate);
 		// console.log("ro:", ro);
 
-		var response = new ltx.Element('body', {
-			xmlns:      BOSH_XMLNS, 
+		var response = $body({
 			stream:     sstate.name, 
-			// sid:        sstate.state.sid
 		}).cnode(connector_response).tree();
 
 		send_or_queue(ro, response, sstate);
@@ -944,13 +955,7 @@ exports.createServer = function(options) {
 	bee.addListener('terminate', function(sstate) {
 		// We send a terminate response to the client.
 		var ro = get_response_object(sstate);
-		var attrs = {
-			xmlns:      BOSH_XMLNS, 
-			stream:     sstate.name, 
-			// sid:        sstate.state.sid, 
-			type:       'terminate'
-		};
-		var response = new ltx.Element('body', attrs);
+		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
 
 		stream_terminate(sstate, state);
@@ -1036,7 +1041,7 @@ exports.createServer = function(options) {
 			//
 			if (!state || !is_valid_packet(node, state)) {
 				dutil.log_it("WARN", function() {
-					return sutil.sprintf("BOSH::%s::NOT a Valid packet", (state ? state.sid : "INVALID STATE OBJECT"));
+					return dutil.sprintf("BOSH::%s::NOT a Valid packet", (state ? state.sid : "INVALID STATE OBJECT"));
 				});
 
 				send_termination_stanza(res, 'bad-request');
@@ -1121,10 +1126,9 @@ exports.createServer = function(options) {
 						// We inject a response packet into the pending queue to 
 						// notify the client that it _may_ have missed something.
 						state.pending.push({
-							response: new ltx.Element('body', {
+							response: $body({
 								report: node.attrs.ack + 1, 
-								time: new Date() - _ts, 
-								xmlns: BOSH_XMLNS
+								time: new Date() - _ts
 							}), 
 							sstate: ss
 						});
@@ -1172,9 +1176,7 @@ exports.createServer = function(options) {
 							// stupidity and not us.
 							//
 							state.pending.push({
-								response: new ltx.Element('body', {
-									xmlns: BOSH_XMLNS
-								}), 
+								response: $body(), 
 								sstate: ss
 							});
 						}
@@ -1430,4 +1432,3 @@ exports.createServer = function(options) {
 
 // TODO: Figure out if req.destroy() is valid.
 
-// TODO: Have only 1 inactivity timer for the whole BOSH session.
