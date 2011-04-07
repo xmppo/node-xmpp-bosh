@@ -178,7 +178,7 @@ XMPPProxyConnector.prototype = {
 		dutil.log_it("WARN", function() {
 			return [ "XMPP PROXY CONNECTOR::No Client for this response:", response.toString() ];
 		});
-	}, 
+	}
 
 };
 

@@ -280,8 +280,9 @@ function log_it(level) {
 		args.unshift(level, new Date());
 
 		args.forEach(function(arg, i) {
+			var astr = '';
 			try {
-				var astr = arg.toString();
+				astr = arg.toString();
 				// console.log(astr.length);
 				process.stdout.write(astr);
 				process.stdout.write(i < args.length - 1 ? ' ' : '');
@@ -318,7 +319,7 @@ exports.sprintf            = sprintf;
 exports.hitch              = hitch;
 exports.not                = not;
 exports.get_keys           = get_keys;
-exports.rev_hash           = rev_hash
+exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
 exports.isFalsy            = isFalsy;
 exports.isTruthy           = isTruthy;
