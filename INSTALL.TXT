@@ -20,7 +20,7 @@ npm install underscore -g
 npm install node-uuid -g
 npm install jsdom -g
 
-5. If you are a developer, goto setp [12]
+5. If you are a developer, goto step [12]
 
 6. Set the node executable in the path (if not already set):
 export PATH=/opt/PATH-TO-NODE/bin/:$PATH

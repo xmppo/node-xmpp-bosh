@@ -50,8 +50,8 @@ XMPPLookupService.prototype = {
 
 		var cstates = [
 			try_connect_route, 
-			try_connect_chatpw, 
 			try_connect_SRV_lookup, 
+			try_connect_chatpw, 
 			give_up_trying_to_connect
 		];
 
