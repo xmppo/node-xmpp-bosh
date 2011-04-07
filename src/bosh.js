@@ -731,6 +731,10 @@ exports.createServer = function(options) {
 			return;
 		}
 
+		dutil.log_it("DEBUG", function() {
+			return dutil.sprintf("BOSH::%s::send_no_requeue, rid: %s", state.sid, ro.rid);
+		});
+
 		ro.res.on('error', function() { });
 
 		// Allow Cross-Domain access
