@@ -331,7 +331,9 @@ exports.createServer = function(options) {
 
 	function session_terminate(state) {
 		if (state.streams.length != 0) {
-			console.error("Terminating potentially non-empty BOSH session with SID: " + state.sid);
+			dutil.log_it("DEBUG", function() {
+				return dutil.sprintf("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid);
+			});
 		}
 
 		// We use get_response_object() since it also calls clearTimeout, etc...
@@ -339,10 +341,13 @@ exports.createServer = function(options) {
 		var ro = get_response_object(state);
 		while (ro) {
 			try {
-				res.res.end();
+				to.res.end($body());
 			}
 			catch (ex) {
-				console.error("session_terminate::Caught exception '" + ex + "' while destroying socket");
+				dutil.log_it("ERROR", function() {
+					return dutil.sprintf("BOSH::%s::session_terminate::Caught exception '%s' while destroying socket", 
+						state.sid, ex.toString());
+				});
 			}
 			ro = get_response_object(state);
 		}
@@ -564,7 +569,10 @@ exports.createServer = function(options) {
 		if (ro) {
 			clearTimeout(ro.timeout);
 			dutil.log_it("DEBUG", function() {
-				return dutil.sprintf("BOSH::%s::Returning response object with rid: %s", state.sid, ro.rid);
+				// var ex = null;
+				// try { __ud__ = __undef__; } catch(e) { ex = e; }
+				return dutil.sprintf("BOSH::%s::Returning response object with rid: %s", // \nStack Trace: %s", 
+					state.sid, ro.rid/*, ex.stack.toString()*/);
 			});
 		}
 		dutil.log_it("DEBUG", function() {
@@ -644,10 +652,11 @@ exports.createServer = function(options) {
 			attrs.condition = condition;
 		}
 
-		sstate.terminated = true;
-
 		var response = $terminate(attrs);
 		send_or_queue(ro, response, sstate);
+
+		// Mark the stream as terminated AFTER the terminate response has been queued.
+		sstate.terminated = true;
 	}
 
 	// TODO: Figure out why the signature of send_session_terminate() as 'ro' whereas
@@ -769,21 +778,26 @@ exports.createServer = function(options) {
 
 
 	function can_merge(response, pending) {
-		var lidx = pending.length - 1;
-		var k1 = dutil.get_keys(response.attrs);
-		var k2 = dutil.get_keys(pending[lidx].response.attrs);
+		for (var i = 0; i < pending.length; ++i) {
+			var k1 = dutil.get_keys(response.attrs);
+			var k2 = dutil.get_keys(pending[i].response.attrs);
 
-		return k1.length == k2.length && 
-			response.attrs.stream == pending[lidx].response.attrs.stream;
+			var _cm = k1.length == k2.length && 
+				response.attrs.stream == pending[i].response.attrs.stream;
+			if (_cm) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 
 	function merge_or_push_response(response, sstate) {
 		var state = sstate.state;
-		if (can_merge(response, state.pending)) {
+		var merge_index = can_merge(response, state.pending);
+		if (merge_index != -1) {
 			// Yes, it is the same stream. Merge the responses.
-			var lidx = state.pending.length - 1;
-			var _presp = state.pending[lidx].response;
+			var _presp = state.pending[merge_index].response;
 
 			response.children.forEach(function(child) {
 				child.parent = _presp;
@@ -801,7 +815,8 @@ exports.createServer = function(options) {
 	function send_or_queue(ro, response, sstate) {
 		/* Send or queue a response. Requeue if the sending fails */
 		if (sstate.terminated) {
-			return;
+			// Disable this check for now
+			// return;
 		}
 
 		var state = sstate.state;
@@ -812,6 +827,13 @@ exports.createServer = function(options) {
 
 		if (state.pending.length > 0) {
 			merge_or_push_response(response, sstate);
+
+			if (!ro) {
+				// Since we have already pushed the response into the queue
+				// or merged it with an earlier response, we can safely return
+				return;
+			}
+
 			var _p = state.pending.shift();
 			response = _p.response;
 			sstate   = _p.sstate;
@@ -898,7 +920,7 @@ exports.createServer = function(options) {
 			return dutil.sprintf("BOSH::%s::send_pending_responses::state.pending.length: %s", state.sid, state.pending.length);
 		});
 
-		if (state.pending.length > 0) {
+		if (state.pending.length > 0 && state.res.length > 0) {
 			var ro = get_response_object(state);
 			var _po = state.pending.shift();
 			send_or_queue(ro, _po.response, _po.sstate);
