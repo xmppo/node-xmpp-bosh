@@ -938,16 +938,9 @@ exports.createServer = function(options) {
 		stop: function() {
 			// console.log("stop::", http_server);
 			return http_server.close();
-		}
-
-, 	get sid_state() {
-			return sid_state;
 		}, 
-
-		get sn_state() {
-			return sn_state;
-		}
-
+	 	sid_state: sid_state, 
+		sn_state:  sn_state
 	});
 
 	var bee = new BoshEventEmitter();
