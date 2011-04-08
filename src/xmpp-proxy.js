@@ -51,7 +51,6 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, void_star) {
 	this._first        = true;
 	this._is_connected = false;
 	this._terminate_on_connect = false;
-	this.clean_termination = false;
 
 	return this;
 }
@@ -71,7 +70,7 @@ dutil.copy(XMPPProxy.prototype, {
 	_attach_handlers: function() {
 		this._sock.on('connect', dutil.hitch(this, this._on_connect));
 		this._sock.on('data',    dutil.hitch(this, this._on_data));
-		this._sock.on('error',   dutil.hitch(this, this._on_error));
+		this._sock.on('close',   dutil.hitch(this, this._on_close));
 		// TODO: Handle the 'end' event.
 	}, 
 
@@ -140,13 +139,16 @@ dutil.copy(XMPPProxy.prototype, {
 
 	terminate: function() {
 		if (this._is_connected) {
-			// Detach the data handler so that we don't get any more events.
+			// Detach the 'data' handler so that we don't get any more events.
 			this._sock.removeAllListeners('data');
+
+			// Detach the 'error' handler so that we don't trigger the 'error'
+			// event when we disconnect.
+			this._sock.removeAllListeners('error');
 
 			// Write the stream termination tag
 			this.send("</stream:stream>");
 
-			this.clean_termination = true;
 			this._is_connected = false;
 
 			this._sock.destroy();
@@ -163,7 +165,7 @@ dutil.copy(XMPPProxy.prototype, {
 			}
 			catch (ex) {
 				this._is_connected = false;
-				this._on_error(ex);
+				// this.on_close(true, ex);
 			}
 		}
 
@@ -222,6 +224,14 @@ dutil.copy(XMPPProxy.prototype, {
 			return;
 		}
 
+		var stream_terminated = false;
+		var st_pos = this._buff.indexOf("</stream:stream>");
+		// Check for the </stream:stream> packet
+		if (st_pos != -1) {
+			stream_terminated = true;
+			this._buff = this._buff.substring(0, st_pos);
+		}
+
 		try {
 			var tmp = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' version='1.0'>" + 
 				this._buff + 
@@ -266,12 +276,18 @@ dutil.copy(XMPPProxy.prototype, {
 			// Eat the exception.
 			dutil.log_it("ERROR", "XMPP PROXY::Incomplete packet parsed in XMPPProxy::_on_data");
 		}
+
+		if (stream_terminated) {
+			dutil.log_it("DEBUG", "XMPP PROXY::Got a </stream:stream> from the server");
+			this.terminate();
+		}
+
 		// For debugging
 		// this._sock.destroy();
 	}, 
 
-	_on_error: function(ex) {
-		dutil.log_it("WARN", "XMPP PROXY::ERROR event triggered on XMPPProxy");
-		this.emit('error', ex, this._void_star);
+	_on_close: function(had_error) {
+		dutil.log_it("WARN", "XMPP PROXY::CLOSE event triggered on XMPPProxy:had_error:", had_error);
+		this.emit('close', had_error, this._void_star);
 	}
 });

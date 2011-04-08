@@ -693,13 +693,18 @@ exports.createServer = function(options) {
 	}
 
 
-	function send_termination_stanza(res, condition) {
+	function send_termination_stanza(res, condition, attrs) {
 		/* Send a stream termination response to a response object.
 		 * This method is generally used to terminate rogue connections.
 		 */
 
+		attrs = attrs || { };
+		if (condition) {
+			condition: condition;
+		}
+
 		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-		res.end($terminate({ condition: condition }).toString());
+		res.end($terminate(attrs).toString());
 	}
 
 	function emit_nodes_event(nodes, state, sstate) {
@@ -1057,19 +1062,6 @@ exports.createServer = function(options) {
 			catch (ex) { }
 
 
-			if (sname) {
-				// The stream name is included in the BOSH request.
-				sstate = sn_state[sname];
-
-				// If the stream name is present, but the stream is not valid, we
-				// blow up.
-				if (!sstate) {
-					send_termination_stanza(res, 'bad-request');
-					return;
-				}
-			}
-
-
 			if (!state) {
 				// No (valid) session ID in BOSH request. Not phare enuph.
 				send_termination_stanza(res, 'bad-request');
@@ -1092,9 +1084,15 @@ exports.createServer = function(options) {
 					return dutil.sprintf("BOSH::%s::NOT a Valid packet", state.sid);
 				});
 
-				send_termination_stanza(res, 'bad-request');
+				var attrs = { };
+				if (node.attrs.stream) {
+					attrs.stream = node.attrs.stream;
+				}
+
+				send_termination_stanza(res, 'bad-request', attrs);
 				return;
 			}
+
 
 			// Reset the BOSH session timeout
 			reset_session_inactivity_timeout(state);
@@ -1251,6 +1249,25 @@ exports.createServer = function(options) {
 				});
 
 				/* End ACK handling */
+			}
+
+			// 
+			// We handle this condition right at the end so that RID updates
+			// can be processed correctly. If only the stream name is invalid, 
+			// we treat this packet as a valid packet.
+			// 
+			if (sname) {
+				// The stream name is included in the BOSH request.
+				sstate = sn_state[sname];
+
+				// If the stream name is present, but the stream is not valid, we
+				// blow up.
+				if (!sstate) {
+					send_termination_stanza(res, 'bad-request', {
+						stream: sname
+					});
+					return;
+				}
 			}
 
 

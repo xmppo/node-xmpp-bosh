@@ -49,8 +49,8 @@ function XMPPProxyConnector(bosh_server) {
 	this.streams = { };
 
 
-	// Fired when an 'error' event is raised by the XMPP Proxy.
-	this._on_xmpp_proxy_error = dutil.hitch(this, function(ex, sstate) {
+	// Fired when an 'close' event is raised by the XMPP Proxy.
+	this._on_xmpp_proxy_close = dutil.hitch(this, function(had_error, sstate) {
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[sstate.name];
 		if (!ss) {
@@ -59,10 +59,7 @@ function XMPPProxyConnector(bosh_server) {
 
 		delete this.streams[sstate.name];
 
-		// Emit the 'error' event ONLY if the termination was not clean
-		if (!ss.clean_termination) {
-			this.bosh_server.emit('terminate', sstate);
-		}
+		this.bosh_server.emit('terminate', sstate);
 	});
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
@@ -152,7 +149,7 @@ XMPPProxyConnector.prototype = {
 
 		proxy.on('connect', this._on_xmpp_proxy_connected);
 		proxy.on('stanza',  this._on_stanza_received);
-		proxy.on('error',   this._on_xmpp_proxy_error);
+		proxy.on('close',   this._on_xmpp_proxy_close);
 
 		proxy.connect();
 	}, 

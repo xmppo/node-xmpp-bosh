@@ -28,13 +28,12 @@ function XMPPLookupService(domain_name, port, route) {
 
 	if (domain_name in _special) {
 		if (!this._route) {
-			this.route = {
+			this._route = {
 				protocol: "xmpp", 
 				host: _special[domain_name], 
 				port: this._port
 			};
 		}
-
 	}
 }
 
