@@ -54,7 +54,7 @@ function main() {
 	var opts = require('tav').set();
 
 	if (opts.username) {
-		XMPP_USERNAME = opts.username
+		XMPP_USERNAME = opts.username;
 	}
 
 	if (opts.password) {
@@ -98,7 +98,7 @@ function rawInput(data)
 
 function rawOutput(data)
 {
-   	console.log("\nSent:", data);
+	console.log("\nSent:", data);
 }
 
 // GO!!

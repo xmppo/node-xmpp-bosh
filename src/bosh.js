@@ -939,7 +939,7 @@ exports.createServer = function(options) {
 			// console.log("stop::", http_server);
 			return http_server.close();
 		}, 
-	 	sid_state: sid_state, 
+		sid_state: sid_state, 
 		sn_state:  sn_state
 	});
 

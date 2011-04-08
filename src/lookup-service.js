@@ -19,7 +19,7 @@ var dutil = require('./dutil.js');
 function XMPPLookupService(domain_name, port, route) {
 	this._domain_name = domain_name;
 	this._port = port;
-	this._route = route
+	this._route = route;
 
 	var _special = {
 		"gmail.com": "talk.google.com", 
@@ -48,18 +48,6 @@ XMPPLookupService.prototype = {
 		var _connect_listeners = socket.listeners('connect').splice(0);
 
 
-		var cstates = [
-			try_connect_route, 
-			try_connect_SRV_lookup, 
-			try_connect_chatpw, 
-			give_up_trying_to_connect
-		];
-
-		function _on_socket_error(e) {
-			var next = cstates.shift();
-			next(e);
-		}
-
 		function _reattach_socket_listeners() {
 			// Reinstall all handlers.
 			_error_listeners.unshift(0, 0);
@@ -72,23 +60,12 @@ XMPPLookupService.prototype = {
 			_cl.splice.apply(_cl, _connect_listeners);
 		}
 
-		function _rollback() {
-			// Remove custom error handlers that we attached on the socket.
-			socket.removeListener('error', _on_socket_error);
-			socket.removeListener('connect', _on_socket_connect);
-
-			_reattach_socket_listeners();
-		}
-
 		function _on_socket_connect(e) {
 			_rollback();
 
 			// Re-trigger the connect event.
 			socket.emit('connect', e);
 		}
-
-		socket.on('error', _on_socket_error);
-		socket.on('connect', _on_socket_connect);
 
 		function try_connect_route() {
 			// First just connect to the server if this._route is defined.
@@ -137,6 +114,29 @@ XMPPLookupService.prototype = {
 			// Trigger the error event.
 			socket.emit('error', e);
 		}
+
+		var cstates = [
+			try_connect_route, 
+			try_connect_SRV_lookup, 
+			try_connect_chatpw, 
+			give_up_trying_to_connect
+		];
+
+		function _on_socket_error(e) {
+			var next = cstates.shift();
+			next(e);
+		}
+
+		function _rollback() {
+			// Remove custom error handlers that we attached on the socket.
+			socket.removeListener('error', _on_socket_error);
+			socket.removeListener('connect', _on_socket_connect);
+
+			_reattach_socket_listeners();
+		}
+
+		socket.on('error', _on_socket_error);
+		socket.on('connect', _on_socket_connect);
 
 		// Start the avalanche.
 		_on_socket_error();
