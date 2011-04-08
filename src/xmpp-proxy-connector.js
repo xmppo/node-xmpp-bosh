@@ -58,7 +58,11 @@ function XMPPProxyConnector(bosh_server) {
 		}
 
 		delete this.streams[sstate.name];
-		this.bosh_server.emit('terminate', sstate);
+
+		// Emit the 'error' event ONLY if the termination was not clean
+		if (!ss.clean_termination) {
+			this.bosh_server.emit('terminate', sstate);
+		}
 	});
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
@@ -133,9 +137,10 @@ XMPPProxyConnector.prototype = {
 
 		// Create a new stream.
 		var proxy = new this.Proxy(sstate.to, 
-			new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.state.route), 
+			new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.route), 
 			sstate.attrs, 
-			sstate);
+			sstate
+		);
 
 		var stream = {
 			sstate: sstate, 

@@ -51,6 +51,7 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, void_star) {
 	this._first        = true;
 	this._is_connected = false;
 	this._terminate_on_connect = false;
+	this.clean_termination = false;
 
 	return this;
 }
@@ -144,6 +145,10 @@ dutil.copy(XMPPProxy.prototype, {
 
 			// Write the stream termination tag
 			this.send("</stream:stream>");
+
+			this.clean_termination = true;
+			this._is_connected = false;
+
 			this._sock.destroy();
 		}
 		else {

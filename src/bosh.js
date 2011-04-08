@@ -257,10 +257,6 @@ exports.createServer = function(options) {
 		// (as opposed to for each response as it was earlier)
 		options.timeout = null;
 
-		if (options.route) {
-			options.route = route_parse(options.route);
-		}
-
 		add_held_http_connection(options, options.rid, res);
 
 		return options;
@@ -376,6 +372,12 @@ exports.createServer = function(options) {
 			to:         node.attrs.to, 
 			state:      state
 		};
+
+		// Routs are specific to a stream, and not a session
+		if (node.attrs.route) {
+			sstate.route = route_parse(node.attrs.route);
+		}
+
 		state.streams.push(sname);
 
 		sn_state[sname] = sstate;
@@ -810,9 +812,26 @@ exports.createServer = function(options) {
 	}
 
 	function send_or_queue(ro, response, sstate) {
-		/* Send or queue a response. Requeue if the sending fails */
+		/* Send or queue a response. Requeue if the sending fails.
+		 * 
+		 * This function tries to merge the response with an existing
+		 * queued response to be sent on this stream (if merging them
+		 * is feasible). Subsequently, it will pop the first queued 
+		 * response to be sent on this BOSH session and try to send it.
+		 * In the unfortunate event that it can NOT be sent, it will be
+		 * added to the back to the queue (not the front). This can be
+		 * the cause of very rare unordered responses.
+		 * 
+		 * If you see unordered responses, this bit needs to be fixed 
+		 * to maintain state.pending as a priority queue rather than
+		 * a simple array.
+		 *
+		 * Note: Just adding to the front of the queue will NOT work, 
+		 * so don't even waste your time trying to fix it this way.
+		 *
+		 */
 		if (sstate.terminated) {
-			// Disable this check for now
+			// @taher.g Disable this check for now
 			// return;
 		}
 
@@ -955,6 +974,8 @@ exports.createServer = function(options) {
 		});
 
 		// Send only if this is the 2nd (or more) stream on this BOSH session.
+		// This should work all the time. If anyone finds a case where it will
+		// NOT work, please do let me know.
 		if (sstate.streams.length > 1) {
 			send_stream_add_response(sstate);
 		}
