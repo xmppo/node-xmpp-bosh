@@ -42,14 +42,17 @@ The BOSH is now available at: http://localhost:5280/http-bind/
     * Stream restarts
     * Request & Response Acknowledgements (implemented but untested)
     * Chunked responses (due to node.js)
-    * STARTTLS support for connecting to the backend XMPP server (tested with google talk) 
+    * STARTTLS support for connecting to the backend XMPP server 
+      (tested with google talk & jabber.org)
     * Custom stream attributes on stream restart requests
     * Custom attributes supported during session creation (passed on to handlers)
+    * A client may request a custom inactivity period from the server by setting the
+      'inactivity' attribute in the session creation request
 
 
 [C] Features not Planned:
 
-    * gzip support for communicating with the backend XMPP server 
+    * gzip support for communicating with the backend XMPP server
 
 
 [D] Architecture:
@@ -156,6 +159,8 @@ The project itself is divided into 4 main components as of now.
         * JSJaC (https://github.com/sstrigler/JSJaC)
         * dojox.xmpp (http://dojoapi-mirror.devs.nu/jsdoc/dojox/1.2/dojox.xmpp) 
           (modified since node-xmpp-bosh doesn't support the authid attribute)
+	* libpurple - Does NOT work with libpurple since libpurple
+	  expects <stream:features> in the initial BOSH creation response
 
 [H] Tested using:
 
