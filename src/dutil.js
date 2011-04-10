@@ -307,6 +307,10 @@ function json_parse(jstr, def) {
 	return def;
 }
 
+function num_cmp(lhs, rhs) {
+	return lhs - rhs;
+}
+
 
 
 exports.copy               = copy;
@@ -327,3 +331,4 @@ exports.set_log_level      = set_log_level;
 exports.log_it             = log_it;
 exports.once               = once;
 exports.json_parse         = json_parse;
+exports.num_cmp            = num_cmp;

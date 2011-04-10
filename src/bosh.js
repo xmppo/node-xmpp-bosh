@@ -737,6 +737,11 @@ exports.createServer = function(options) {
 		state.pending.push(_po);
 	}
 
+	function send_immediate(res, response) {
+		res.on('error', function() { });
+		res.write(response.toString());
+	}
+
 	function send_no_requeue(ro, state, response) {
 		/* Send a response, but do NOT requeue if it fails */
 		dutil.log_it("DEBUG", function() {
@@ -1104,7 +1109,7 @@ exports.createServer = function(options) {
 
 			// Process all queued requests
 			var _queued_request_keys = dutil.get_keys(state.queued_requests);
-			_queued_request_keys.sort();
+			_queued_request_keys.sort(dutil.num_cmp);
 
 			_queued_request_keys.forEach(function(rid) {
 				if (rid == state.rid + 1) {
@@ -1193,16 +1198,21 @@ exports.createServer = function(options) {
 				// We only handle broken connections for streams which have
 				// acknowledgements enabled.
 				// 
-				// We MUST respond on this same connection if we have 
-				// something to respond with.
+				// We MUST respond on this same connection - We always have 
+				// something to respond with for any request with an rid that
+				// is less than state.rid + 1
 				//
 				_queued_request_keys = dutil.get_keys(state.queued_requests);
-				_queued_request_keys.sort();
+				_queued_request_keys.sort(dutil.num_cmp);
 				var quit_me = false;
 
 				_queued_request_keys.forEach(function(rid) {
-
+					// 
+					// There should be exactly 1 'rid' in state.queued_requests that is 
+					// less than state.rid+1
+					// 
 					if (rid < state.rid + 1) {
+						delete state.queued_requests[rid];
 
 						var ss = sstate || get_random_stream(state);
 						if (rid in state.unacked_responses) {
