@@ -1193,13 +1193,12 @@ exports.createServer = function(options) {
 				// We only handle broken connections for streams which have
 				// acknowledgements enabled.
 				// 
-				// TODO: Figure if we need to reply on the same connection or
-				// a connection with the lowest 'rid' or the earliest 
-				// connection in time. Currently, we have a FIFO for response
-				// objects.
+				// We MUST respond on this same connection if we have 
+				// something to respond with.
 				//
 				_queued_request_keys = dutil.get_keys(state.queued_requests);
 				_queued_request_keys.sort();
+				var quit_me = false;
 
 				_queued_request_keys.forEach(function(rid) {
 
@@ -1207,14 +1206,11 @@ exports.createServer = function(options) {
 
 						var ss = sstate || get_random_stream(state);
 						if (rid in state.unacked_responses) {
-							// Send back the original response
 							//
-							// TODO: How do we know which rid this is??
+							// Send back the original response on this conection itself
 							//
-							state.pending.push({
-								response: state.unacked_responses[rid].response, 
-								sstate: ss
-							});
+							send_immediate(res, state.unacked_responses[rid].response);
+							quit_me = true;
 						}
 						else if (rid >= state.rid - state.window - 2)
 						{
@@ -1227,10 +1223,8 @@ exports.createServer = function(options) {
 							// body the second time around. The client is to be blamed for its 
 							// stupidity and not us.
 							//
-							state.pending.push({
-								response: $body(), 
-								sstate: ss
-							});
+							send_immediate(res, $body());
+							quit_me = true;
 						}
 						else {
 							//
@@ -1247,6 +1241,10 @@ exports.createServer = function(options) {
 						}
 					}
 				});
+
+				if (quit_me) {
+					return;
+				}
 
 				/* End ACK handling */
 			}
