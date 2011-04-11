@@ -572,8 +572,10 @@ exports.createServer = function(options) {
 					state.sid, ro.rid);
 			});
 		}
+
 		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::Holding %s response objects", state.sid, res.length);
+			return dutil.sprintf("BOSH::%s::Holding %s response objects", 
+				state.sid, (res ? res.length : 0));
 		});
 
 		return ro;
