@@ -568,10 +568,8 @@ exports.createServer = function(options) {
 		if (ro) {
 			clearTimeout(ro.timeout);
 			dutil.log_it("DEBUG", function() {
-				// var ex = null;
-				// try { __ud__ = __undef__; } catch(e) { ex = e; }
-				return dutil.sprintf("BOSH::%s::Returning response object with rid: %s", // \nStack Trace: %s", 
-					state.sid, ro.rid/*, ex.stack.toString()*/);
+				return dutil.sprintf("BOSH::%s::Returning response object with rid: %s", 
+					state.sid, ro.rid);
 			});
 		}
 		dutil.log_it("DEBUG", function() {
@@ -1243,11 +1241,11 @@ exports.createServer = function(options) {
 							//
 							// I don't think that control will ever reach here.
 							//
-							node.attrs = {
+							dutil.copy(node.attrs, {
 								type: 'terminate', 
 								condition: 'item-not-found', 
 								xmlns: BOSH_XMLNS
-							};
+							});
 						}
 					}
 				});
