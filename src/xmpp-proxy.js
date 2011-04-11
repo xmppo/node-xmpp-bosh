@@ -287,6 +287,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_close: function(had_error) {
+		had_error = had_error || false;
 		dutil.log_it("WARN", "XMPP PROXY::CLOSE event triggered on XMPPProxy:had_error:", had_error);
 		this.emit('close', had_error, this._void_star);
 	}
