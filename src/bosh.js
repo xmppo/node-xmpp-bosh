@@ -498,6 +498,9 @@ exports.createServer = function(options) {
 				send_no_requeue(ro, state, $body());
 			}, state.wait * 1000)
 		};
+
+		log_it("DEBUG", sprintfd("BOSH::%s::adding a response object", state.sid));
+
 		state.res.push(ro);
 
 		return state;
