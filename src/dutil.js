@@ -21,6 +21,9 @@
  *
  */
 
+var us = require('underscore');
+
+
 function copy(dest, src, restrict) {
 	/* Copy keys from the hash 'src' to the hash 'dest'.
 	 * If restrict is truthy, then it should be an array
@@ -129,8 +132,10 @@ function sprintf(fmt_str) {
 		log_it("WARN", sprintf("The number of arguments in your format string (%s)[%s] " + 
 			"does NOT match the number of arguments passed [%s]", 
 			fmt_str, fs_parts.length-1, args.length));
+		process.exit(6);
 	}
-	return alternator(fs_parts, args).join("");
+
+	return us(fs_parts).chain().zip(us(args).push('')).flatten().value().join('');
 }
 
 function ToStringPromise(proc, args) {
