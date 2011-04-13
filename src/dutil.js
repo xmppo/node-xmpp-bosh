@@ -133,6 +133,26 @@ function sprintf(fmt_str) {
 	return alternator(fs_parts, args).join("");
 }
 
+function ToStringPromise(proc, args) {
+	this._proc = proc;
+	this._args = args;
+}
+
+ToStringPromise.prototype = {
+	toString: function(obj) {
+		obj = obj || null;
+		return this._proc.apply(obj, this._args);
+	}
+};
+
+
+// Delayed sprintf()
+function sprintfd() {
+	return new ToStringPromise(sprintf, arguments);
+}
+
+
+
 // TODO: Use _'s once instead
 function once(proc) {
 	/* Ensure that 'proc' is called only once, irrespective of how many 
@@ -320,6 +340,7 @@ exports.alternator         = alternator;
 exports.arguments_to_array = arguments_to_array;
 exports.map                = map;
 exports.sprintf            = sprintf;
+exports.sprintfd           = sprintfd;
 exports.hitch              = hitch;
 exports.not                = not;
 exports.get_keys           = get_keys;

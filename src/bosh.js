@@ -30,6 +30,8 @@ var uuid   = require('node-uuid');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 
+var sprintfd = dutil.sprintfd;
+var log_it   = dutil.log_it;
 
 
 // The maximum number of bytes that the BOSH server will 
@@ -271,7 +273,7 @@ exports.createServer = function(options) {
 		 *
 		 */
 		var m = route.match(/^(\S+):(\S+):([0-9]+)$/);
-		dutil.log_it("DEBUG", "BOSH::route_parse:", m);
+		log_it("DEBUG", "BOSH::route_parse:", m);
 		if (m && m.length == 4) {
 			return {
 				protocol: m[1], host: m[2], port: Math.floor(m[3])
@@ -324,9 +326,7 @@ exports.createServer = function(options) {
 
 	function session_terminate(state) {
 		if (state.streams.length !== 0) {
-			dutil.log_it("DEBUG", function() {
-				return dutil.sprintf("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid);
-			});
+			log_it("DEBUG", sprintfd("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid));
 		}
 
 		// We use get_response_object() since it also calls clearTimeout, etc...
@@ -337,10 +337,9 @@ exports.createServer = function(options) {
 				to.res.end($body());
 			}
 			catch (ex) {
-				dutil.log_it("ERROR", function() {
-					return dutil.sprintf("BOSH::%s::session_terminate::Caught exception '%s' while destroying socket", 
-						state.sid, ex.toString());
-				});
+				log_it("ERROR", 
+					sprintfd("BOSH::%s::session_terminate::Caught exception '%s' while destroying socket", state.sid, ex)
+				);
 			}
 			ro = get_response_object(state);
 		}
@@ -403,9 +402,9 @@ exports.createServer = function(options) {
 		// From streams, remove all entries that are 
 		// null or undefined, and log this condition.
 		if (sie.length > 0) {
-			dutil.log_it("WARN", function() {
-				return dutil.sprintf("BOSH::%s::get_streams_to_terminate::%s streams are in error", state.sid, sie.length);
-			});
+			log_it("WARN", 
+				sprintfd("BOSH::%s::get_streams_to_terminate::%s streams are in error", state.sid, sie.length)
+			);
 		}
 
 		return stt;
@@ -429,10 +428,10 @@ exports.createServer = function(options) {
 		 * state of the BOSH session 'state'. This mainly checks
 		 * the 'sid' and 'rid' attributes.
 		 */
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::is_valid_packet::node.attrs.rid:%s, state.rid:%s", 
-				state.sid, node.attrs.rid, state.rid);
-		});
+		log_it("DEBUG", 
+			sprintfd("BOSH::%s::is_valid_packet::node.attrs.rid:%s, state.rid:%s", 
+				state.sid, node.attrs.rid, state.rid)
+		);
 
 		// Allow variance of "window" rids on either side. This is in violation
 		// of the XEP though.
@@ -475,6 +474,11 @@ exports.createServer = function(options) {
 			return;
 		}
 
+		// TODO: Add an 'error' event handler on 'res' that removes this connection from
+		// further consideration.
+		// TODO: Test what happens when a client closes a connection and a response to
+		// an HTTP request is not sent
+
 		var ro = {
 			res: res, 
 			rid: rid, // This is the 'rid' of the request associated with this response.
@@ -513,14 +517,10 @@ exports.createServer = function(options) {
 			clearTimeout(state.timeout);
 		}
 
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::setting a timeout of '%s' sec", state.sid, state.inactivity + 10);
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::setting a timeout of '%s' sec", state.sid, state.inactivity + 10));
 
 		state.timeout = setTimeout(function() {
-			dutil.log_it("DEBUG", function() {
-				return dutil.sprintf("BOSH::%s::terminating BOSH session due to inactivity", state.sid);
-			});
+			log_it("DEBUG", sprintfd("BOSH::%s::terminating BOSH session due to inactivity", state.sid));
 
 			// Raise a no-client event on pending as well as unacked responses.
 			var _p = state.pending.map(function(po) {
@@ -567,16 +567,14 @@ exports.createServer = function(options) {
 		var ro = res ? (res.length > 0 ? res.shift() : null) : null;
 		if (ro) {
 			clearTimeout(ro.timeout);
-			dutil.log_it("DEBUG", function() {
-				return dutil.sprintf("BOSH::%s::Returning response object with rid: %s", 
-					state.sid, ro.rid);
-			});
+			log_it("DEBUG", 
+				sprintfd("BOSH::%s::Returning response object with rid: %s", state.sid, ro.rid)
+			);
 		}
 
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::Holding %s response objects", 
-				state.sid, (res ? res.length : 0));
-		});
+		log_it("DEBUG", 
+			sprintfd("BOSH::%s::Holding %s response objects", state.sid, (res ? res.length : 0))
+		);
 
 		return ro;
 	}
@@ -683,9 +681,7 @@ exports.createServer = function(options) {
 
 	function get_random_stream(state) {
 		if (state.streams.length === 0) {
-			dutil.log_it("FATAL", function() {
-				return sprintf("BOSH::%s::state object has no streams", state.sid);
-			});
+			log_it("FATAL", sprintfd("BOSH::%s::state object has no streams", state.sid));
 			process.exit(4);
 		}
 		var sstate = sn_state[state.streams[0]];
@@ -700,7 +696,7 @@ exports.createServer = function(options) {
 
 		attrs = attrs || { };
 		if (condition) {
-			condition: condition;
+			attrs.condition = condition;
 		}
 
 		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
@@ -744,17 +740,13 @@ exports.createServer = function(options) {
 
 	function send_no_requeue(ro, state, response) {
 		/* Send a response, but do NOT requeue if it fails */
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::send_no_requeue, ro valid: %s", state.sid, dutil.isTruthy(ro));
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue, ro valid: %s", state.sid, dutil.isTruthy(ro)));
 
 		if (dutil.isFalsy(ro)) {
 			return;
 		}
 
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::send_no_requeue, rid: %s", state.sid, ro.rid);
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue, rid: %s", state.sid, ro.rid));
 
 		ro.res.on('error', function() { });
 
@@ -778,9 +770,7 @@ exports.createServer = function(options) {
 		}
 
 		var res_str = response.toString();
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::send_no_requeue:writing response: %s", state.sid, res_str);
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue:writing response: %s", state.sid, res_str));
 
 		ro.res.end(res_str);
 	}
@@ -847,9 +837,7 @@ exports.createServer = function(options) {
 
 		var state = sstate.state;
 
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::send_or_queue::ro is: %s", state.sid, ro !== null);
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::send_or_queue::ro is: %s", state.sid, ro !== null));
 
 		if (state.pending.length > 0) {
 			merge_or_push_response(response, sstate);
@@ -869,9 +857,7 @@ exports.createServer = function(options) {
 			// On error, try the next one or start the timer if there
 			// is nothing left to try.
 			ro.res.on('error', function() {
-				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("BOSH::%s::error sending response on rid: %s", state.sid, ro.rid);
-				});
+				log_it("DEBUG", sprintfd("BOSH::%s::error sending response on rid: %s", state.sid, ro.rid));
 
 				var _ro = get_response_object(sstate);
 
@@ -942,9 +928,9 @@ exports.createServer = function(options) {
 		// problems with the 'rid' parameter though).
 		//
 
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::send_pending_responses::state.pending.length: %s", state.sid, state.pending.length);
-		});
+		log_it("DEBUG", 
+			sprintfd("BOSH::%s::send_pending_responses::state.pending.length: %s", state.sid, state.pending.length)
+		);
 
 		if (state.pending.length > 0 && state.res.length > 0) {
 			var ro = get_response_object(state);
@@ -979,9 +965,7 @@ exports.createServer = function(options) {
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
 	bee.addListener('stream-added', function(sstate) {
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.stream);
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.stream));
 
 		// Send only if this is the 2nd (or more) stream on this BOSH session.
 		// This should work all the time. If anyone finds a case where it will
@@ -994,11 +978,7 @@ exports.createServer = function(options) {
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
 	bee.addListener('response', function(connector_response, sstate) {
-		dutil.log_it("DEBUG", function() {
-			// We use this trick to avoid the runtime overhead of
-			// calling toString() if we never log anything.
-			return [ dutil.sprintf("BOSH::%s::response: %s", sstate.state.sid, connector_response.toString()) ];
-		});
+		log_it("DEBUG", sprintfd("BOSH::%s::response: %s", sstate.state.sid, connector_response));
 
 		var ro = get_response_object(sstate);
 		// console.log("ro:", ro);
@@ -1043,7 +1023,7 @@ exports.createServer = function(options) {
 
 		// Check if this is a session start packet.
 		if (is_session_creation_packet(node)) {
-			dutil.log_it("DEBUG", "BOSH::Session creation");
+			log_it("DEBUG", "BOSH::Session creation");
 			state  = session_create(node, res);
 			sstate = stream_add(state, node);
 
@@ -1060,9 +1040,9 @@ exports.createServer = function(options) {
 			try  {
 				// This is enclosed in a try/catch block since invalid requests
 				// at this point MAY not have these attributes
-				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("BOSH::%s::RID: %s, state.RID: %s", state.sid, node.attrs.rid, state.rid);
-				});
+				log_it("DEBUG", 
+					sprintfd("BOSH::%s::RID: %s, state.RID: %s", state.sid, node.attrs.rid, state.rid)
+				);
 			}
 			catch (ex) { }
 
@@ -1085,9 +1065,7 @@ exports.createServer = function(options) {
 			// is_valid_packet() handles the rid range checking
 			//
 			if (!is_valid_packet(node, state)) {
-				dutil.log_it("WARN", function() {
-					return dutil.sprintf("BOSH::%s::NOT a Valid packet", state.sid);
-				});
+				log_it("WARN", sprintfd("BOSH::%s::NOT a Valid packet", state.sid));
 
 				var attrs = { };
 				if (node.attrs.stream) {
@@ -1119,9 +1097,7 @@ exports.createServer = function(options) {
 
 					// Increment the 'rid'
 					state.rid += 1;
-					dutil.log_it("DEBUG", function() {
-						return dutil.sprintf("BOSH::%s::updated RID to: %s", state.sid, state.rid);
-					});
+					log_it("DEBUG", sprintfd("BOSH::%s::updated RID to: %s", state.sid, state.rid));
 				}
 			});
 
@@ -1140,9 +1116,7 @@ exports.createServer = function(options) {
 					// last WINDOW_SIZE * 4 requests. We turn off ACKs.
 					delete state.ack;
 
-					dutil.log_it("WARN", function() {
-						return dutil.sprintf("BOSH::%s::disabling ACKs", state.sid);
-					});
+					log_it("WARN", sprintfd("BOSH::%s::disabling ACKs", state.sid));
 
 					state.unacked_responses = { };
 				}
@@ -1174,9 +1148,7 @@ exports.createServer = function(options) {
 
 						var ss = sstate || get_random_stream(state);
 						if (!ss) {
-							dutil.log_it("FATAL", function() {
-								return sutil.sprintf("BOSH::%s::ss is invalid", state.sid);
-							});
+							log_it("FATAL", sprintfd("BOSH::%s::ss is invalid", state.sid));
 							process.exit(3);
 						}
 
@@ -1290,18 +1262,14 @@ exports.createServer = function(options) {
 			// Should we process this packet?
 			if (node.attrs.rid > state.rid) {
 				// Not really...
-				dutil.log_it("INFO", function() {
-					return dutil.sprintf("BOSH::%s::not processing packet: %s", state.sid, node.toString());
-				});
+				log_it("INFO", sprintfd("BOSH::%s::not processing packet: %s", state.sid, node));
 				return;
 			}
 
 
 			// Check if this is a stream restart packet.
 			if (is_stream_restart_packet(node)) {
-				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("BOSH::%s::Stream Restart", state.sid);
-				});
+				log_it("DEBUG", sprintfd("BOSH::%s::Stream Restart", state.sid));
 
 				if (node.attrs.stream_attrs) {
 					sstate.attrs = dutil.json_parse(node.attrs.stream_attrs, { });
@@ -1324,9 +1292,7 @@ exports.createServer = function(options) {
 
 			// Check if this is a new stream start packet (multiple streams)
 			else if (is_stream_add_request(node)) {
-				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("BOSH::%s::Stream Add", state.sid);
-				});
+				log_it("DEBUG", sprintfd("BOSH::%s::Stream Add", state.sid));
 
 				sstate = stream_add(state, node);
 
@@ -1338,9 +1304,7 @@ exports.createServer = function(options) {
 
 			// Check for stream terminate
 			if (is_stream_terminate_request(node)) {
-				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("BOSH::%s::Stream Terminate", state.sid);
-				});
+				log_it("DEBUG", sprintfd('BOSH::%s::Stream Terminate', state.sid));
 
 				// We may be required to terminate one stream, or all
 				// the open streams on this BOSH session.
@@ -1387,9 +1351,7 @@ exports.createServer = function(options) {
 			return;
 		}
 
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("BOSH::Processing request: %s", node.toString());
-		});
+		log_it("DEBUG", sprintfd("BOSH::Processing request: %s", node));
 
 		_handle_incoming_request(res, node);
 	}
@@ -1407,7 +1369,7 @@ exports.createServer = function(options) {
 		//
 
 
-		dutil.log_it("DEBUG", "BOSH::Someone connected");
+		log_it("DEBUG", "BOSH::Someone connected");
 
 		var ppos = u.pathname.search(path);
 
@@ -1424,7 +1386,7 @@ exports.createServer = function(options) {
 		}
 
 		if (req.method != "POST" || ppos == -1) {
-			dutil.log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
+			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
 			res.writeHead(404);
 			res.end();
 			return;
@@ -1436,7 +1398,7 @@ exports.createServer = function(options) {
 
 		var _on_end_callback = dutil.once(function(timed_out) {
 			if (timed_out) {
-				dutil.log_it("WARN", "BOSH::Timing out connection from '" + req.socket.remoteAddress + "'");
+				log_it("WARN", "BOSH::Timing out connection from '" + req.socket.remoteAddress + "'");
 				req.destroy();
 			}
 			else {
@@ -1478,8 +1440,8 @@ exports.createServer = function(options) {
 		})
 
 		.on('error', function(ex) {
-			dutil.log_it("WARN", "BOSH::Exception '" + ex.toString() + "' while processing request");
-			dutil.log_it("WARN", "BOSH::Stack Trace:\n", ex.stack);
+			log_it("WARN", "BOSH::Exception '" + ex.toString() + "' while processing request");
+			log_it("WARN", "BOSH::Stack Trace:\n", ex.stack);
 		});
 
 	}

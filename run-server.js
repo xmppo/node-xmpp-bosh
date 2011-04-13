@@ -54,8 +54,18 @@ function main() {
 		server_options.logging = opts.logging.toUpperCase();
 	}
 
+
+
 	var nxb    = require("./src/main.js");
+
+	var msg = "Starting the BOSH server on port '" + server_options.port + "' at '" + new Date() + "'";
+	var hr  = "+-" + nxb.dutil.repeat('-', msg.length).join('') + "-+";
+	console.log(hr);
+	console.log("| " + msg + " |");
+	console.log(hr);
+
 	var server = nxb.start(server_options);
+
 }
 
 // Go!!

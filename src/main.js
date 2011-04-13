@@ -34,6 +34,7 @@ exports.bosh      = bosh;
 exports.connector = xpc;
 exports.proxy     = xp;
 exports.lookup    = ls;
+exports.dutil     = dutil;
 exports.start     = function(options) {
 
 // TODO: Try to add all functions in dutil into the _ namespace.
