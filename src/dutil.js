@@ -282,7 +282,7 @@ function log_it(level) {
 	/* Logs stuff (2nd parameter onwards) according to the logging level
 	 * set using the set_log_level() function. The default logging level
 	 * is INFO logging only. The order of logging is as follows:
-	 * NONE < INFO < WARN < DEBUG < ERROR < FATAL < anything else
+	 * NONE < INFO < WARN < ERROR < FATAL < DEBUG < anything else
 	 *
 	 * If the 2nd paramater is the only other parameter and it is a 
 	 * function, then it is evaluated and the result is expected to be
@@ -297,6 +297,8 @@ function log_it(level) {
 		if (args.length == 1 && typeof args[0] == "function") {
 			// Lazy evaluation.
 			args = args[0]();
+
+			// TODO: Instead check if !(args instanceof Array)
 			if (typeof args === "string") {
 				args = [ args ];
 			}

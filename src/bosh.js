@@ -34,40 +34,6 @@ var sprintfd = dutil.sprintfd;
 var log_it   = dutil.log_it;
 
 
-// The maximum number of bytes that the BOSH server will 
-// "hold" from the client.
-var MAX_DATA_HELD_BYTES = 30000;
-
-// Don't entertain more than 3 simultaneous connections on any
-// BOSH session.
-var MAX_BOSH_CONNECTIONS = 3;
-
-// The maximum number of packets on either side of the current 'rid'
-// that we are willing to accept.
-var WINDOW_SIZE = 2;
-
-// How much time should we hold a response object before sending
-// and empty response to it?
-var DEFAULT_INACTIVITY_SEC = 70;
-
-var MAX_INACTIVITY_SEC = 7200;
-
-var HTTP_POST_RESPONSE_HEADERS = {
-	'Content-Type': 'text/xml', 
-	'Access-Control-Allow-Origin': '*', 
-	'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
-	'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
-};
-
-var HTTP_POST_RESPONSE_HEADERS = {
-	'Access-Control-Allow-Origin': '*', 
-	'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
-	'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 
-	'Access-Control-Max-Age': '14400'
-};
-
-// TODO: Read off the Headers request from the request and set that in the response.
-
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
 
@@ -162,12 +128,76 @@ function $terminate(attrs) {
 // End packet builders
 
 
+// Begin HTTP header helpers
+function add_to_headers(dest, src) {
+	var acah = dest['Access-Control-Allow-Headers'].split(', ');
+	for (var k in src) {
+		dest[k] = src[k];
+		acah.push(k);
+	}
+	dest['Access-Control-Allow-Headers'] = acah.join(', ');
+}
 
-// options: { path: , port: }
+// End HTTP header helpers
+
+
+//
+// options:
+//
+// * path
+// * port
+// * max_data_held_bytes
+// * max_bosh_connections
+// * window_size
+// * default_inactivity_sec
+// * max_inactivity_sec
+// * http_headers
+//
 exports.createServer = function(options) {
 
 	var path = options.path;
 	var port = options.port;
+
+	// The maximum number of bytes that the BOSH server will 
+	// "hold" from the client.
+	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
+
+	// Don't entertain more than 3 simultaneous connections on any
+	// BOSH session.
+	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 3;
+
+	// The maximum number of packets on either side of the current 'rid'
+	// that we are willing to accept.
+	var WINDOW_SIZE = options.window_size || 2;
+
+	// How much time should we hold a response object before sending
+	// and empty response to it?
+	var DEFAULT_INACTIVITY_SEC = options.default_inactivity_sec || 70;
+
+	var MAX_INACTIVITY_SEC = options.max_inactivity_sec || 3600;
+
+	var HTTP_POST_RESPONSE_HEADERS = {
+		'Content-Type': 'text/xml', 
+		'Access-Control-Allow-Origin': '*', 
+		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
+		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
+	};
+
+	var HTTP_OPTIONS_RESPONSE_HEADERS = {
+		'Access-Control-Allow-Origin': '*', 
+		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
+		'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 
+		'Access-Control-Max-Age': '14400'
+	};
+
+	if (options.http_headers) {
+		add_to_headers(HTTP_POST_RESPONSE_HEADERS,    options.http_headers);
+		add_to_headers(HTTP_OPTIONS_RESPONSE_HEADERS, options.http_headers);
+	}
+
+
+	// TODO: Read off the Headers request from the request and set that in the response.
+
 
 	// This encapsulates the state for the BOSH session
 	//
