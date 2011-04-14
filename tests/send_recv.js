@@ -7,7 +7,7 @@ var XMPP_USERS = null;
 
 /* The file passed in as --users should have the follow format:
 exports.users = [
-	{ jid: "JID01", password: "PASSWORD01" }, 
+	{ jid: "JID01", password: "PASSWORD01", route: "xmpp:domain:port" }, 
 	{ jid: "JID02", password: "PASSWORD02" }
 ];
 */
@@ -22,6 +22,21 @@ var $iq     = strophe.$iq;
 var $msg    = strophe.$msg;
 var $build  = strophe.$build;
 var $pres   = strophe.$pres;
+
+var out_queue = [ ];
+
+var SEND_EVERY_MSEC = 1000;
+var PACKETS_TO_SEND = 7;
+
+
+setInterval(function() {
+	var victims = out_queue.splice(0, PACKETS_TO_SEND);
+	console.log("victims.length:", victims.length);
+
+	victims.forEach(function(v) {
+		v.conn.send(v.msg);
+	});
+}, SEND_EVERY_MSEC);
 
 
 function disconnect(conn) {
@@ -68,19 +83,24 @@ function start_test() {
 			}
 			else if (status == Strophe.Status.CONNECTED) {
 				// Send packets to all other users.
-				dutil.repeat(0, 500).forEach(function(v, j) {
-					setTimeout(function() {
-						us(XMPP_USERS).chain()
-							.filter(function(x) { return true; /*x.jid != jid;*/ })	
-							.each(function(uinfo2, i) {
-								conn.send($msg({
-									type: "chat", 
-									to: uinfo2.jid
-								})
-								.c("body")
-								.t("A message " + j + " to be sent from: " + jid));
-						});
-					}, j * 200);
+				dutil.repeat(0, 10).forEach(function(v, j) {
+					us(XMPP_USERS).chain()
+					.filter(function(x) { return true; /*x.jid != jid;*/ })	
+					.each(function(uinfo2, i) {
+						setTimeout(function() {
+							var msg = $msg({
+								type: "chat", 
+								to: uinfo2.jid
+							})
+							.c("body")
+							.t("A message " + j + " to be sent from: " + jid);
+
+							out_queue.push({
+								conn: conn, 
+								msg: msg
+							});
+						}, j * 700);
+					});
 				});
 			}
 		}
