@@ -172,7 +172,20 @@ The project itself is divided into 4 main components as of now.
     * node basic.js [params] # To check basic working
     * node send_recv.js [params] # To check message sending/stress testing
 
-[J] Releases:
+[J] Scaling:
+
+    * node-xmpp-bosh allows you to set custom HTTP headers in the response to
+      every valid request. You can use this in combination with the 
+      [http://code.google.com/p/nginx-sticky-module/ nginx-sticky-module] to
+      load-blance requests across multiple running BOSH server instances.
+
+    * You can also load balance based on the HTTP PATH requested by the 
+      client. You may set up node-xmpp-bosh to accept requests as long as 
+      they begin with /PREFIX/ and set up nginx to route requests to 
+      /PREFIX/A/ to one instance and requests to /PREFIX/B/ to another
+      instance and so on.
+
+[K] Releases:
     * v0.0.1 == SVN Commit #39
     * v0.0.2 == SVN Commit #50
     * v0.0.3 == SVN Commit #56
