@@ -1,8 +1,10 @@
 #!node
 
+var fs   = require('fs');
+var path = require('path');
+
 
 function show_version() {
-	var fs = require('fs');
 	var pkg_str = fs.readFileSync("./package.json");
 	var pkg_info = JSON.parse(pkg_str);
 	console.log(pkg_info.name + ": BOSH server version " + pkg_info.version);
@@ -25,18 +27,44 @@ function main() {
 		version: {
 			note: "Display version info and exit", 
 			value: false
+		}, 
+		config: {
+			note: "The config file to load (default: /etc/bosh.js.conf)", 
+			value: "/etc/bosh.js.conf"
 		}
 	}, "Usage: bosh_server [option=value]");
-
-	var server_options = { };
 
 	if (opts.version) {
 		show_version();
 		return;
 	}
-	
+
+	var server_options = { };
+
+	if (opts.config) {
+		if (opts.config[0] != '/') {
+			opts.config = "./" + opts.config;
+		}
+
+		if (!path.exists(opts.config)) {
+			console.error("The file: '" + opts.config + "' does not exist. Please check " + 
+			"if it is in the correct place.");
+			process.exit(2);
+		}
+
+		try {
+			var _cfg = require(opts.config);
+			server_options = _cfg.config;
+		}
+		catch(ex) {
+			console.error("Caught Exception: '" + ex.toString() + "' while trying to read " + 
+				"config file '" + opts.config + "'");
+			process.exit(2);
+		}
+	}
+
 	if (opts.port) {
-		var _port = parseInt(opts.port);
+		var _port = Math.ceil(opts.port);
 		if (!_port) {
 			_port = 5280;
 		}

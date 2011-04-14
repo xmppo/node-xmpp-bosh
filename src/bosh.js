@@ -1247,6 +1247,7 @@ exports.createServer = function(options) {
 							// that the client asked for termination.
 							//
 							// I don't think that control will ever reach here.
+							// Note: Control DOES reach here. We need to figure out WHY.
 							//
 							dutil.copy(node.attrs, {
 								type: 'terminate', 
