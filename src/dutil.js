@@ -298,8 +298,10 @@ function log_it(level) {
 			// Lazy evaluation.
 			args = args[0]();
 
-			// TODO: Instead check if !(args instanceof Array)
-			if (typeof args === "string") {
+			// args can be either an array, or something else. If it is
+			// anything but an array, we set it to an array with args being
+			// the only element of that array.
+			if (!(args instanceof Array)) {
 				args = [ args ];
 			}
 		}
