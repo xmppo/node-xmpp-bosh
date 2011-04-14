@@ -8,7 +8,9 @@ TARFILE="$DIR.tar.gz"
 rm -Rf $DIR
 mkdir $DIR
 
-cp -R images src strophe tests package.json README.TXT INSTALL.TXT EMBEDDING.TXT release.sh run-server.js lintit.sh $DIR
+cp -R images src strophe tests package.json \
+README.TXT INSTALL.TXT EMBEDDING.TXT release.sh \
+run-server.js lintit.sh monitor.js $DIR
 
 cd $DIR
 
