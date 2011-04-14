@@ -253,11 +253,11 @@ function isTruthy(x) {
 
 var _log_level = 1;
 var _log_levels = {
-	"NONE": 0, 
-	"INFO": 1, 
-	"WARN": 2, 
-	"ERROR": 3,
-	"FATAL": 4, 
+	"NONE":  0, 
+	"FATAL": 1, 
+	"ERROR": 2,
+	"WARN":  3, 
+	"INFO":  4, 
 	"DEBUG": 5
 };
 
