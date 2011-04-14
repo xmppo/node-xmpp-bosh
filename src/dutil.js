@@ -251,7 +251,7 @@ function isTruthy(x) {
 }
 
 
-var _log_level = 1;
+var _log_level = 4;
 var _log_levels = {
 	"NONE":  0, 
 	"FATAL": 1, 
