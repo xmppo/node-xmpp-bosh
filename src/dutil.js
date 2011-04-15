@@ -129,10 +129,11 @@ function sprintf(fmt_str) {
 	// log_it('debug', "fs_parts, args:", fs_parts, args);
 
 	if (fs_parts.length != args.length + 1) {
-		log_it("WARN", sprintf("The number of arguments in your format string (%s)[%s] " + 
+		var estr = sprintf("The number of arguments in your format string (%s)[%s] " + 
 			"does NOT match the number of arguments passed [%s]", 
-			fmt_str, fs_parts.length-1, args.length));
-		process.exit(6);
+			fmt_str, fs_parts.length-1, args.length);
+		log_it("WARN", estr);
+		throw estr;
 	}
 
 	return us(fs_parts).chain().zip(us(args).push('')).flatten().value().join('');
@@ -313,8 +314,12 @@ function log_it(level) {
 			try {
 				astr = arg.toString();
 				// console.log(astr.length);
-				process.stdout.write(astr);
-				process.stdout.write(i < args.length - 1 ? ' ' : '');
+				if (astr.length < 30000) {
+					// We limit the writes because we are running into a 
+					// bug at this point of time.
+					process.stdout.write(astr);
+					process.stdout.write(i < args.length - 1 ? ' ' : '');
+				}
 			}
 			catch (ex) {
 				console.error("DUTIL::log_it:astr.length:", astr.length);
@@ -370,4 +375,5 @@ exports.set_log_level      = set_log_level;
 exports.log_it             = log_it;
 exports.once               = once;
 exports.json_parse         = json_parse;
+exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;
