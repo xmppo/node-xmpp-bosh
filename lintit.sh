@@ -1,6 +1,6 @@
 #!/bin/bash
 
-find src tests -name "*.js" | 
+find src tests *.js -name "*.js" | 
 while read fn
 do
   S="JSLinting file: $fn"

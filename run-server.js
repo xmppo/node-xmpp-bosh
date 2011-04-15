@@ -3,6 +3,9 @@
 var fs   = require('fs');
 var path = require('path');
 
+var BOSH_DEFAULT_CONFIG_PATH = '/etc/bosh.js.conf';
+
+
 
 function show_version() {
 	var pkg_str = fs.readFileSync("./package.json");
@@ -30,7 +33,7 @@ function main() {
 		}, 
 		config: {
 			note: "The config file to load (default: /etc/bosh.js.conf)", 
-			value: "/etc/bosh.js.conf"
+			value: BOSH_DEFAULT_CONFIG_PATH
 		}
 	}, "Usage: bosh_server [option=value]");
 
@@ -57,9 +60,11 @@ function main() {
 			server_options = _cfg.config;
 		}
 		catch(ex) {
-			console.error("Caught Exception: '" + ex.toString() + "' while trying to read " + 
-				"config file '" + opts.config + "'");
-			process.exit(2);
+			if (opts.config != BOSH_DEFAULT_CONFIG_PATH) {
+				console.error("Caught Exception: '" + ex.toString() + "' while trying to read " + 
+					"config file '" + opts.config + "'");
+				process.exit(2);
+			}
 		}
 	}
 
