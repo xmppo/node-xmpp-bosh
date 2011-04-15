@@ -336,6 +336,15 @@ function json_parse(jstr, def) {
 	return def;
 }
 
+function jid_parse(jid) {
+	var parts = jid.match(/^([^@]+)@([^\/]+)(\/([\S]+))?$/);
+	return {
+		username: parts[1], 
+		domain:   parts[2], 
+		resource: parts[4]
+	};
+}
+
 function num_cmp(lhs, rhs) {
 	return lhs - rhs;
 }
