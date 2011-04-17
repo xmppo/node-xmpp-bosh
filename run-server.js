@@ -49,12 +49,6 @@ function main() {
 			opts.config = "./" + opts.config;
 		}
 
-		if (!path.exists(opts.config)) {
-			console.error("The file: '" + opts.config + "' does not exist. Please check " + 
-			"if it is in the correct place.");
-			process.exit(2);
-		}
-
 		try {
 			var _cfg = require(opts.config);
 			server_options = _cfg.config;
