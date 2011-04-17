@@ -253,6 +253,10 @@ function set_log_level(level) {
 	_log_level = get_numeric_log_level(level);
 }
 
+
+var MAX_CHARS_IN_LOG_LINE = 4096;
+
+
 // TODO: Log local time instead of GMT time.
 function log_it(level) {
 	/* Logs stuff (2nd parameter onwards) according to the logging level
@@ -286,18 +290,24 @@ function log_it(level) {
 
 		args.forEach(function(arg, i) {
 			var astr = '';
+			var more_hint = '';
+
 			try {
 				astr = arg.toString();
+
 				// console.log(astr.length);
-				if (astr.length < 30000) {
+				if (astr.length > MAX_CHARS_IN_LOG_LINE) {
 					// We limit the writes because we are running into a 
 					// bug at this point of time.
-					process.stdout.write(astr);
-					process.stdout.write(i < args.length - 1 ? ' ' : '');
+					more_hint = ' ... ' + (astr.length - MAX_CHARS_IN_LOG_LINE) + ' more characters';
+					astr = astr.substr(0, MAX_CHARS_IN_LOG_LINE);
 				}
-				else {
-					process.stdout.write("DUTIL::log_it:Omiting a line of size: " + astr.length + " bytes");
+
+				process.stdout.write(astr);
+				if (more_hint) {
+					process.stdout.write(more_hint);
 				}
+				process.stdout.write(i < args.length - 1 ? ' ' : '');
 			}
 			catch (ex) {
 				console.error("DUTIL::log_it:astr.length:", astr.length);
