@@ -295,6 +295,9 @@ function log_it(level) {
 					process.stdout.write(astr);
 					process.stdout.write(i < args.length - 1 ? ' ' : '');
 				}
+				else {
+					process.stdout.write("DUTIL::log_it:Omiting a line of size: " + astr.length + " bytes");
+				}
 			}
 			catch (ex) {
 				console.error("DUTIL::log_it:astr.length:", astr.length);
