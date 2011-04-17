@@ -838,13 +838,30 @@ exports.createServer = function(options) {
 
 
 	function can_merge(response, pending) {
+		/* Check if we can merge the XML stanzas in 'response' and some 
+		 * response in 'pending'.
+		 *
+		 * The way this check is made is that all the attributes of the
+		 * outer (body) element are checked, and if found equal, the
+		 * two are said to be the equal.
+		 *
+		 * When 2 body tags are found to be equal, they can be merged, 
+		 * and the position of the first such response in 'pending' 
+		 * is returned.
+		 *
+		 * Note: This can cause subtle bugs such as out of order responses.
+		 * Consider the case where you get a normal body followed by a 
+		 * body with a 'response' attribute followed by a normal body. In 
+		 * this case, the 2nd body will be clubbed with the 1st body. 
+		 * However, such situations should be very rare.
+		 * 
+		 * To be 100% sure, we should just check the last (most recent)
+		 * response which has the same 'stream' as the current 'response'
+		 * and merge the two only if their attributes are equal.
+		 *
+		 */
 		for (var i = 0; i < pending.length; ++i) {
-			var k1 = dutil.get_keys(response.attrs);
-			var k2 = dutil.get_keys(pending[i].response.attrs);
-
-			var _cm = k1.length == k2.length && 
-				response.attrs.stream == pending[i].response.attrs.stream;
-			if (_cm) {
+			if (us.isEqual(response.attrs, pending[i].response.attrs)) {
 				return i;
 			}
 		}
