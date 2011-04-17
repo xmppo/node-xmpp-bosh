@@ -68,9 +68,9 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_attach_handlers: function() {
-		this._sock.on('connect', dutil.hitch(this, this._on_connect));
-		this._sock.on('data',    dutil.hitch(this, this._on_data));
-		this._sock.on('close',   dutil.hitch(this, this._on_close));
+		this._sock.on('connect', us.bind(this._on_connect, this));
+		this._sock.on('data',    us.bind(this._on_data, this));
+		this._sock.on('close',   us.bind(this._on_close, this));
 		this._sock.on('error',   function() { });
 		// TODO: Handle the 'end' event.
 	}, 

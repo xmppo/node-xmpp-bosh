@@ -50,7 +50,7 @@ function XMPPProxyConnector(bosh_server) {
 
 
 	// Fired when an 'close' event is raised by the XMPP Proxy.
-	this._on_xmpp_proxy_close = dutil.hitch(this, function(had_error, sstate) {
+	this._on_xmpp_proxy_close = us.bind(function(had_error, sstate) {
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[sstate.name];
 		if (!ss) {
@@ -60,16 +60,16 @@ function XMPPProxyConnector(bosh_server) {
 		delete this.streams[sstate.name];
 
 		this.bosh_server.emit('terminate', sstate);
-	});
+	}, this);
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
-	this._on_stanza_received = dutil.hitch(this, function(stanza, sstate) {
+	this._on_stanza_received = us.bind(function(stanza, sstate) {
 		dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Connector received stanza");
 		this.bosh_server.emit('response', stanza, sstate);
-	});
+	}, this);
 
 	// Fired every time the XMPP proxy fires the 'connect' event.
-	this._on_xmpp_proxy_connected = dutil.hitch(this, function(sstate) {
+	this._on_xmpp_proxy_connected = us.bind(function(sstate) {
 		dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Received 'connect' event");
 		this.bosh_server.emit('stream-added', sstate);
 
@@ -84,23 +84,22 @@ function XMPPProxyConnector(bosh_server) {
 		});
 
 		ss.pending = [ ];
-	});
+	}, this);
 
-	var self = this;
 
-	bosh_server.on('nodes', function(nodes, sstate) {
+	bosh_server.on('nodes', us.bind(function(nodes, sstate) {
 		nodes = nodes.filter(dutil.not(us.isString));
-		nodes.forEach(function(stanza) {
-			self.stanza(stanza, sstate);
-		});
-	});
+		nodes.forEach(us.bind(function(stanza) {
+			this.stanza(stanza, sstate);
+		}, this));
+	}, this));
 
-	bosh_server.on('stream-add', dutil.hitch(this, this.stream_add));
-	bosh_server.on('stream-restart', dutil.hitch(this, this.stream_restart));
-	bosh_server.on('stream-terminate', dutil.hitch(this, this.stream_terminate));
-	bosh_server.on('no-client', dutil.hitch(this, this.no_client));
-
+	bosh_server.on('stream-add',       us.bind(this.stream_add, this));
+	bosh_server.on('stream-restart',   us.bind(this.stream_restart, this));
+	bosh_server.on('stream-terminate', us.bind(this.stream_terminate, this));
+	bosh_server.on('no-client',        us.bind(this.no_client, this));
 }
+
 
 XMPPProxyConnector.prototype = {
 

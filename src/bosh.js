@@ -198,6 +198,17 @@ exports.createServer = function(options) {
 
 	// TODO: Read off the Headers request from the request and set that in the response.
 
+	// 
+	// +-------+
+	// | NOTE: |
+	// +-------+
+	// 
+	// Always ensure that you update the definitions of the objects (in the 
+	// comments) as and when you add/remove members from them. Please try to 
+	// keep these object definitions up-to-date since it is the main 
+	// (and only) place of reference for object structure.
+	// 
+
 
 	// This encapsulates the state for the BOSH session
 	//
@@ -258,6 +269,8 @@ exports.createServer = function(options) {
 		// { response: <The body element>, sstate: <The stream state object> }
 		//
 		options.pending = [ ];
+
+		// This is just an array of strings holding the stream names
 		options.streams = [ ];
 
 		// A set of responses that have been sent by the BOSH server, but
@@ -529,7 +542,9 @@ exports.createServer = function(options) {
 			}, state.wait * 1000)
 		};
 
-		log_it("DEBUG", sprintfd("BOSH::%s::adding a response object", state.sid));
+		log_it("DEBUG", sprintfd("BOSH::%s::adding a response object. Holding %s response objects", 
+			state.sid, state.res.length)
+		);
 
 		state.res.push(ro);
 
@@ -556,9 +571,7 @@ exports.createServer = function(options) {
 			log_it("DEBUG", sprintfd("BOSH::%s::terminating BOSH session due to inactivity", state.sid));
 
 			// Raise a no-client event on pending as well as unacked responses.
-			var _p = state.pending.map(function(po) {
-				return po.response;
-			});
+			var _p = us.pluck(state.pending, 'response');
 
 			var _uar = dutil.get_keys(state.unacked_responses)
 			.map(function(rid) {
@@ -689,10 +702,12 @@ exports.createServer = function(options) {
 		sstate.terminated = true;
 	}
 
-	// TODO: Figure out why the signature of send_session_terminate() as 'ro' whereas
-	// that of send_stream_terminate_response() doesn't.
-
-
+	// 
+	// send_session_terminate() takes 'ro' as its first argument whereas
+	// send_stream_terminate_response() does NOT because we might want to send a 
+	// session termination response on certain error conditions that have
+	// the 'ro' object with them already (i.e. it is not shift()ed from state.res
+	//
 	function send_session_terminate(ro, state, condition) {
 		/* Terminates an open BOSH session.
 		 * 
@@ -713,6 +728,11 @@ exports.createServer = function(options) {
 	/* End Response Sending Functions */
 
 	function get_random_stream(state) {
+		/* Fetches a random stream from the BOSH session. This is used to 
+		 * send a sstate object to function that require one even though
+		 * the particular response may have nothing to do with a stream
+		 * as such.
+		 */
 		if (state.streams.length === 0) {
 			log_it("FATAL", sprintfd("BOSH::%s::state object has no streams", state.sid));
 			process.exit(4);
@@ -723,7 +743,7 @@ exports.createServer = function(options) {
 
 
 	function send_termination_stanza(res, condition, attrs) {
-		/* Send a stream termination response to a response object.
+		/* Send a stream termination response on an HTTP response (res) object.
 		 * This method is generally used to terminate rogue connections.
 		 */
 
@@ -737,6 +757,11 @@ exports.createServer = function(options) {
 	}
 
 	function emit_nodes_event(nodes, state, sstate) {
+		/* Raise the 'nodes' event on 'bee' for every node in 'nodes'.
+		 * If 'sstate' is falsy, then the 'nodes' event is raised on 
+		 * every open stream in the BOSH session represented by 'state'.
+		 *
+		 */
 		if (!sstate) {
 			// No stream name specified. This packet needs to be
 			// broadcast to all open streams on this BOSH session.
@@ -754,10 +779,12 @@ exports.createServer = function(options) {
 
 
 	function on_no_client_found(response, sstate) {
+		//
 		// We add this response to the list of pending responses. 
 		// If and when a new HTTP request on this BOSH session is detected, 
 		// it will clear the pending response and send the packet 
 		// (in FIFO order).
+		//
 		var _po = {
 			response: response, 
 			sstate: sstate
@@ -767,6 +794,7 @@ exports.createServer = function(options) {
 	}
 
 	function send_immediate(res, response) {
+		log_it("DEBUG", sprintfd("BOSH::send_immediate:%s", response));
 		res.on('error', function() { });
 		res.write(response.toString());
 	}
@@ -1217,6 +1245,8 @@ exports.createServer = function(options) {
 					// less than state.rid+1
 					// 
 					if (rid < state.rid + 1) {
+						log_it("DEBUG", sprintfd("BOSH::%s::qr-rid: %s, state.rid: %s", rid, state.rid));
+
 						delete state.queued_requests[rid];
 
 						var ss = sstate || get_random_stream(state);
@@ -1246,7 +1276,10 @@ exports.createServer = function(options) {
 							// Terminate this session. We make the rest of the code believe
 							// that the client asked for termination.
 							//
-							// I don't think that control will ever reach here.
+							// I don't think that control will ever reach here since the 
+							// validation for the 'rid' being in a permissible range has
+							// already been made.
+							//
 							// Note: Control DOES reach here. We need to figure out WHY.
 							//
 							dutil.copy(node.attrs, {
@@ -1430,7 +1463,7 @@ exports.createServer = function(options) {
 		var data = [];
 		var data_len = 0;
 
-		var _on_end_callback = dutil.once(function(timed_out) {
+		var _on_end_callback = us.once(function(timed_out) {
 			if (timed_out) {
 				log_it("WARN", "BOSH::Timing out connection from '" + req.socket.remoteAddress + "'");
 				req.destroy();

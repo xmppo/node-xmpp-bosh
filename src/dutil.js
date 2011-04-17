@@ -158,31 +158,6 @@ function sprintfd() {
 }
 
 
-
-// TODO: Use _'s once instead
-function once(proc) {
-	/* Ensure that 'proc' is called only once, irrespective of how many 
-	* times the wrapping (outer) procedure is called.
-	*/
-	var _fired = false;
-	var _ret = null;
-
-	return function() {
-		if (!_fired) {
-			_fired = true;
-			_ret = proc.apply(null, arguments);
-		}
-		return _ret;
-	};
-}
-
-// TODO: Use _'s bind instead
-function hitch(obj, proc) {
-	return function() {
-		return proc.apply(obj, arguments);
-	};
-}
-
 function not(proc) {
 	return function() {
 		return !proc.apply(this, arguments);
@@ -364,7 +339,6 @@ exports.arguments_to_array = arguments_to_array;
 exports.map                = map;
 exports.sprintf            = sprintf;
 exports.sprintfd           = sprintfd;
-exports.hitch              = hitch;
 exports.not                = not;
 exports.get_keys           = get_keys;
 exports.rev_hash           = rev_hash;
@@ -373,7 +347,6 @@ exports.isFalsy            = isFalsy;
 exports.isTruthy           = isTruthy;
 exports.set_log_level      = set_log_level;
 exports.log_it             = log_it;
-exports.once               = once;
 exports.json_parse         = json_parse;
 exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;
