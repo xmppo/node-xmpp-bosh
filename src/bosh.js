@@ -996,14 +996,18 @@ exports.createServer = function(options) {
 		// being added to the right place. This is because we rely on 
 		// send_or_queue() to append it back to the list of pending responses.
 		// We hope for this to not occur too frequently.
-		// The right way to do it would be to remove it from the pending queue
-		// only when it is sent successfully. However, due to the async nature 
-		// of things, we let this be this way for now.
 		//
-		// Either ways, in practice, this out of order delivery can occur if
-		// the 2nd HTTP response (of the 2 held responses) reaches the client 
-		// first, so we needn't worry about this too much. (This can cause 
-		// problems with the 'rid' parameter though).
+		// The right way to do it would be to either:
+		// 
+		// [1] Remove it from the pending queue only when it is sent 
+		//     successfully or
+		// [2] Use a priority queue instead of an array so that we can always
+		//     re-insert the failed response in the correct order
+		//
+		// However, due to the async nature of things, we let it be this 
+		// way for now. Additionally, no matter how hard we try, there will 
+		// always be situations which will cause a stream restart, so we 
+		// don't lose out sleep over this.
 		//
 
 		log_it("DEBUG", 
