@@ -1254,6 +1254,7 @@ exports.createServer = function(options) {
 							//
 							// Send back the original response on this conection itself
 							//
+							log_it("DEBUG", sprintfd("BOSH::%s::re-sending unacked response: %s", state.sid, rid));
 							send_immediate(res, state.unacked_responses[rid].response);
 							quit_me = true;
 						}
@@ -1268,6 +1269,7 @@ exports.createServer = function(options) {
 							// body the second time around. The client is to be blamed for its 
 							// stupidity and not us.
 							//
+							log_it("DEBUG", sprintfd("BOSH::%s::sending empty BODY for: %s", state.sid, rid));
 							send_immediate(res, $body());
 							quit_me = true;
 						}
