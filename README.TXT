@@ -153,6 +153,8 @@ The project itself is divided into 4 main components as of now.
         * gmail.com
         * facebook.com
         * Pappu 
+	* Prosody IM
+	* Openfile
 
     * Clients
         * strophe.js (http://github.com/metajack/strophejs)
