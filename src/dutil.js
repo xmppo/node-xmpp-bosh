@@ -133,7 +133,7 @@ function sprintf(fmt_str) {
 			"does NOT match the number of arguments passed [%s]", 
 			fmt_str, fs_parts.length-1, args.length);
 		log_it("WARN", estr);
-		throw estr;
+		throw new Error(estr);
 	}
 
 	return us(fs_parts).chain().zip(us(args).push('')).flatten().value().join('');
@@ -310,6 +310,7 @@ function log_it(level) {
 				process.stdout.write(i < args.length - 1 ? ' ' : '');
 			}
 			catch (ex) {
+				console.error("DUTIL::args:", args);
 				console.error("DUTIL::arg:", arg);
 				console.error("DUTIL::log_it:astr.length:", astr.length);
 				console.error("DUTIL::log_it:Exception:\n", ex.stack);
