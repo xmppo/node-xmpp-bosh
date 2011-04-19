@@ -602,6 +602,9 @@ exports.createServer = function(options) {
 
 	}
 
+	function is_bosh_session_state(state) {
+	}
+
 
 	// Fetches a "held" HTTP response object that we can potentially
 	// send responses to. This function accepts either a BOSH session
@@ -1216,7 +1219,7 @@ exports.createServer = function(options) {
 					_uar_keys.forEach(function(rid) {
 						if (rid <= node.attrs.ack) {
 							// Raise the 'response-acknowledged' event.
-							bee.emit('response-acknowledged', state.unacked_responses[rid]);
+							bee.emit('response-acknowledged', state.unacked_responses[rid], state);
 							delete state.unacked_responses[rid];
 						}
 					});

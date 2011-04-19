@@ -75,7 +75,7 @@ exports.start     = function(options) {
 		dutil.log_it("ERROR", "Could not create the BOSH server:", e);
 	});
 
-	bosh_server.on('response-acknowledged', function(wrapped_response) {
+	bosh_server.on('response-acknowledged', function(wrapped_response, state) {
 		// What to do with this response??
 		dutil.log_it("WARN", function() {
 			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", wrapped_response.rid ];
