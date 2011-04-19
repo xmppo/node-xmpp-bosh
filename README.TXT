@@ -40,7 +40,7 @@ The BOSH is now available at: http://localhost:5280/http-bind/
 
     * Multiple Streams
     * Stream restarts
-    * Request & Response Acknowledgements (implemented but untested)
+    * Request & Response Acknowledgements
     * Chunked responses (due to node.js)
     * STARTTLS support for connecting to the backend XMPP server 
       (tested with google talk & jabber.org)

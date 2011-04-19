@@ -268,7 +268,7 @@ dutil.copy(XMPPProxy.prototype, {
 				}
 				catch (ex) {
 					dutil.log_it("WARN", function() {
-						return [ "XMPP PROXY::Incomplete packet:", stanza.toString(), ex.stack ];
+						return [ "XMPP PROXY::Exception handling stanza:", stanza.toString(), ex.stack ];
 					});
 				}
 			});

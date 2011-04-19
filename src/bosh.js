@@ -35,6 +35,7 @@ var log_it   = dutil.log_it;
 
 
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
+var NULL_FUNC  = function() { };
 
 
 function inflated_attrs(node) {
@@ -798,7 +799,7 @@ exports.createServer = function(options) {
 
 	function send_immediate(res, response) {
 		log_it("DEBUG", sprintfd("BOSH::send_immediate:%s", response));
-		res.on('error', function() { });
+		res.on('error', NULL_FUNC);
 		res.write(response.toString());
 	}
 
@@ -812,7 +813,7 @@ exports.createServer = function(options) {
 
 		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue, rid: %s", state.sid, ro.rid));
 
-		ro.res.on('error', function() { });
+		ro.res.on('error', NULL_FUNC);
 
 		// Allow Cross-Domain access
 		// https://developer.mozilla.org/En/HTTP_access_control
@@ -1513,14 +1514,17 @@ exports.createServer = function(options) {
 		//
 		req.on('data', function(d) {
 			// dutil.log_it("DEBUG", "BOSH::onData:", d.toString());
+			// TODO: When we need to work with non ASCII character sets, we will
+			// *probably* need to use Buffer with the 'binary' encoding 
+			// instead of .toString()
 			var _d = d.toString();
 			data_len += _d.length;
 
 			// Prevent attacks. If data (in its entirety) gets too big, 
 			// terminate the connection.
 			if (data_len > MAX_DATA_HELD_BYTES) {
-				// Terminate the connection
-				data = [];
+				// Terminate the connection. We null out 'data' to aid GC
+				data = null;
 				req.destroy();
 				return;
 			}
