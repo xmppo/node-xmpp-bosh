@@ -310,6 +310,7 @@ function log_it(level) {
 				process.stdout.write(i < args.length - 1 ? ' ' : '');
 			}
 			catch (ex) {
+				console.error("DUTIL::arg:", arg);
 				console.error("DUTIL::log_it:astr.length:", astr.length);
 				console.error("DUTIL::log_it:Exception:\n", ex.stack);
 				process.exit(3);
