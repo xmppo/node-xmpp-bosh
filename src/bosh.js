@@ -30,6 +30,7 @@ var uuid   = require('node-uuid');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 
+var sprintf  = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
 var log_it   = dutil.log_it;
 
