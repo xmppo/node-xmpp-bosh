@@ -344,6 +344,35 @@ function num_cmp(lhs, rhs) {
 	return lhs - rhs;
 }
 
+function time_diff(past, present) {
+	var diff = Math.floor((present - past) / 1000);
+
+	var mapping = [
+		[ 'year', 365 * 24 * 3600 ], 
+		[ 'month', 30 * 24 * 3600 ], 
+		[ 'week', 7 * 24 * 3600 ], 
+		[ 'day', 1 * 24 * 3600 ], 
+		[ 'hour', 3600 ], 
+		[ 'minute', 60 ], 
+		[ 'second', 1 ]
+	];
+
+	var out = mapping.map(function(v) {
+		var r = [ v[0], Math.floor(diff / v[1]) ];
+		diff %= v[1];
+		return r;
+	})
+	.filter(function(v) {
+		return v[1] > 0;
+	})
+	.map(function(v) {
+		return v[1] + ' ' + v[0] + (v[1] > 1 ? 's' : '');
+	})
+	.join(' ');
+
+	return out;
+}
+
 
 
 exports.copy               = copy;
@@ -365,3 +394,4 @@ exports.log_it             = log_it;
 exports.json_parse         = json_parse;
 exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;
+exports.time_diff          = time_diff;
