@@ -10,7 +10,8 @@ mkdir $DIR
 
 cp -R images src strophe tests package.json \
 README.TXT INSTALL.TXT EMBEDDING.TXT release.sh \
-run-server.js lintit.sh monitor.js $DIR
+run-server.js lintit.sh monitor.js bosh.conf.example.js \
+$DIR
 
 cd $DIR
 

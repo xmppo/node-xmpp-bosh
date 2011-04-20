@@ -165,7 +165,7 @@ exports.createServer = function(options) {
 
 	// Don't entertain more than 3 simultaneous connections on any
 	// BOSH session.
-	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 3;
+	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 2;
 
 	// The maximum number of packets on either side of the current 'rid'
 	// that we are willing to accept.
