@@ -333,11 +333,12 @@ exports.createServer = function(options) {
 	function session_create(node, res) {
 		var sid = uuid();
 		var opt = {
-			sid: sid, 
-			rid: Math.floor(node.attrs.rid), 
-			wait: Math.floor(node.attrs.wait), 
-			hold: Math.floor(node.attrs.hold),
-			content: "text/xml; charset=utf-8"
+			sid:        sid, 
+			rid:        Math.floor(node.attrs.rid), 
+			wait:       Math.floor(node.attrs.wait), 
+			hold:       Math.floor(node.attrs.hold),
+			inactivity: Math.floor(node.attrs.inactivity), 
+			content:    "text/xml; charset=utf-8"
 		};
 
 		if (!opt.hold) {
