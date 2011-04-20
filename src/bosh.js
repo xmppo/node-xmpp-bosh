@@ -757,8 +757,8 @@ exports.createServer = function(options) {
 		 */
 		if (state.streams.length === 0) {
 			var estr = sprintf("BOSH::%s::state object has no streams", state.sid);
-			log_it("FATAL", estr);
-			throw new Error(estr);
+			log_it("ERROR", estr);
+			return null;
 		}
 		var sstate = sn_state[state.streams[0]];
 		return sstate;
@@ -1254,19 +1254,19 @@ exports.createServer = function(options) {
 						var ss = sstate || get_random_stream(state);
 						if (!ss) {
 							var estr = sprintf("BOSH::%s::ss is invalid", state.sid);
-							log_it("FATAL", estr);
-							throw new Error(estr);
+							log_it("ERROR", estr);
 						}
-
-						// We inject a response packet into the pending queue to 
-						// notify the client that it _may_ have missed something.
-						state.pending.push({
-							response: $body({
-								report: node.attrs.ack + 1, 
-								time: new Date() - _ts
-							}), 
-							sstate: ss
-						});
+						else {
+							// We inject a response packet into the pending queue to 
+							// notify the client that it _may_ have missed something.
+							state.pending.push({
+								response: $body({
+									report: node.attrs.ack + 1, 
+									time: new Date() - _ts
+								}), 
+								sstate: ss
+							});
+						}
 				}
 
 				// 
@@ -1294,7 +1294,6 @@ exports.createServer = function(options) {
 
 						delete state.queued_requests[rid];
 
-						var ss = sstate || get_random_stream(state);
 						if (rid in state.unacked_responses) {
 							//
 							// Send back the original response on this conection itself
