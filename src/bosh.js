@@ -292,7 +292,7 @@ exports.createServer = function(options) {
 		if (options.inactivity) {
 			options.inactivity = Math.floor(options.inactivity);
 			options.inactivity = options.inactivity < MAX_INACTIVITY_SEC ? options.inactivity : MAX_INACTIVITY_SEC;
-			options.inactivity = options.inactivity < DEFAULT_INACTIVITY_SEC ? options.inactivity : DEFAULT_INACTIVITY_SEC;
+			options.inactivity = options.inactivity > DEFAULT_INACTIVITY_SEC ? options.inactivity : DEFAULT_INACTIVITY_SEC;
 		}
 		else {
 			options.inactivity = DEFAULT_INACTIVITY_SEC;
