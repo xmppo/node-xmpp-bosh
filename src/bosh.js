@@ -755,8 +755,9 @@ exports.createServer = function(options) {
 		 * as such.
 		 */
 		if (state.streams.length === 0) {
-			log_it("FATAL", sprintfd("BOSH::%s::state object has no streams", state.sid));
-			process.exit(4);
+			var estr = sprintf("BOSH::%s::state object has no streams", state.sid);
+			log_it("FATAL", estr);
+			throw new Error(estr);
 		}
 		var sstate = sn_state[state.streams[0]];
 		return sstate;
@@ -1251,8 +1252,9 @@ exports.createServer = function(options) {
 
 						var ss = sstate || get_random_stream(state);
 						if (!ss) {
-							log_it("FATAL", sprintfd("BOSH::%s::ss is invalid", state.sid));
-							process.exit(3);
+							var estr = sprintf("BOSH::%s::ss is invalid", state.sid);
+							log_it("FATAL", estr);
+							throw new Error(estr);
 						}
 
 						// We inject a response packet into the pending queue to 
