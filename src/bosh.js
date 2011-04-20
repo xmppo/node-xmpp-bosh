@@ -165,7 +165,7 @@ exports.createServer = function(options) {
 
 	// Don't entertain more than 3 simultaneous connections on any
 	// BOSH session.
-	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 2;
+	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 3;
 
 	// The maximum number of packets on either side of the current 'rid'
 	// that we are willing to accept.
@@ -505,6 +505,11 @@ exports.createServer = function(options) {
 		// http://xmpp.org/extensions/xep-0124.html#overactive
 		//
 		// This is currently not being enforced. See comment #001
+		//
+		// However, if the client specifies a 'hold' value greater than
+		// 'MAX_BOSH_CONNECTIONS', then the session will be terminated 
+		// because of the rule below.
+		//
 
 		if (state.res.length >= MAX_BOSH_CONNECTIONS) {
 			// Just send the termination message and destroy the socket.
@@ -513,13 +518,20 @@ exports.createServer = function(options) {
 				timeout: null, 
 				rid: rid // This is the 'rid' of the request associated with this response.
 			};
+
 			send_session_terminate(_ro, state, 'policy-violation');
+
+			state.streams.forEach(function(name) {
+				stream_terminate(name, state);
+			});
+
 			session_terminate(state);
 			return;
 		}
 
 		// TODO: Add an 'error' event handler on 'res' that removes this connection from
-		// further consideration.
+		// further consideration
+		//
 		// TODO: Test what happens when a client closes a connection and a response to
 		// an HTTP request is not sent
 
@@ -721,6 +733,11 @@ exports.createServer = function(options) {
 		 *     send to the client as to why the session was closed.
 		 *
 		 */
+
+		log_it('DEBUG', sprintfd("BOSH::%s::send_session_terminate(%s, %s)", 
+			state.sid, (!!ro), condition || '')
+		);
+
 		var attrs = { };
 		if (condition) {
 			attrs.condition = condition;
