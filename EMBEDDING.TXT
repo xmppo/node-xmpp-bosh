@@ -17,7 +17,7 @@ EVENT and HANDLER are defined as follows:
 1. 'stream-add'            => function(stream_state)
 2. 'stream-restart'        => function(stream_state)
 3. 'stream-terminate'      => function(stream_state)
-4. 'response-acknowledged' => function([unacked_response])
+4. 'response-acknowledged' => function(wrapped_response, state)
 5. 'error'                 => function(exception)
 6. 'no-client'             => function(response_object)
 7. 'nodes'                 => function([node], stream_state)
