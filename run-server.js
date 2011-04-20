@@ -17,22 +17,23 @@ function main() {
 	var opts = require('tav').set({
 		logging: {
 			note: "The logging level to use (default: DEBUG)", 
-			value: "DEBUG"
+			value: -1
 		}, 
 		path: {
 			note: "The HTTP PATH at which to run the BOSH server (default: /http-bind/)", 
-			value: "/http-bind/"
+			value: -1
 		}, 
 		port: {
 			note: "The port on which to run the BOSH server (default: 5280)", 
-			value: 5280
+			value: -1
 		}, 
 		version: {
 			note: "Display version info and exit", 
 			value: false
 		}, 
 		config: {
-			note: "The config file to load (default: /etc/bosh.js.conf)", 
+			note: "The config file to load (default: /etc/bosh.js.conf). NOTE: Command " + 
+				"line options (if specified) will override options in the config file", 
 			value: BOSH_DEFAULT_CONFIG_PATH
 		}
 	}, "Usage: bosh_server [option=value]");
@@ -62,7 +63,12 @@ function main() {
 		}
 	}
 
-	if (opts.port) {
+	if (opts.port == -1) {
+		if (!server_options.port) {
+			server_options.port = 5280;
+		}
+	}
+	else {
 		var _port = Math.ceil(opts.port);
 		if (!_port) {
 			_port = 5280;
@@ -70,14 +76,24 @@ function main() {
 		server_options.port = _port;
 	}
 
-	if (opts.path) {
+	if (opts.path == -1) {
+		if (!server_options.path) {
+			server_options.path = '/http-bind/';
+		}
+	}
+	else {
 		if (opts.path.length > 0 && opts.path[0] != "/") {
 			opts.path = "/" + opts.path;
 		}
 		server_options.path = opts.path;
 	}
 
-	if (opts.logging) {
+	if (opts.logging == -1) {
+		if (!server_options.logging) {
+			server_options.logging = 'DEBUG';
+		}
+	}
+	else {
 		server_options.logging = opts.logging.toUpperCase();
 	}
 
