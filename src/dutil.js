@@ -375,6 +375,32 @@ function time_diff(past, present) {
 	return out;
 }
 
+function ends_with(haystack, needle) {
+	var re = new RegExp(needle + '$');
+	return haystack.search(needle) != -1;
+}
+
+function find_module(file_name) {
+	var mhandle = { handle: null, key: '' };
+	for (var mname in require.cache) {
+		if (ends_with(mname, file_name)) {
+			mhandle.handle = require.cache[mname];
+			mhandle.key    = mname;
+			break;
+		}
+	}
+	return mhandle;
+}
+
+
+function require_again(file_path) {
+	var old_mhandle = find_module(file_path);
+	if (old_mhandle.key) {
+		delete require.cache[old_mhandle.key];
+	}
+	return require(file_path);
+}
+
 
 
 exports.copy               = copy;
@@ -397,3 +423,6 @@ exports.json_parse         = json_parse;
 exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;
 exports.time_diff          = time_diff;
+exports.ends_with          = ends_with;
+exports.find_module        = find_module;
+exports.require_again      = require_again;
