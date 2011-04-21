@@ -352,9 +352,9 @@ function time_diff(past, present) {
 		[ 'month', 30 * 24 * 3600 ], 
 		[ 'week', 7 * 24 * 3600 ], 
 		[ 'day', 1 * 24 * 3600 ], 
-		[ 'hour', 3600 ], 
-		[ 'minute', 60 ], 
-		[ 'second', 1 ]
+		[ ':', 3600 ], 
+		[ ':', 60 ], 
+		[ '', 1 ]
 	];
 
 	var out = mapping.map(function(v) {
@@ -363,12 +363,14 @@ function time_diff(past, present) {
 		return r;
 	})
 	.filter(function(v) {
-		return v[1] > 0;
+		return v[0] != ':' && v[0] != '' ? v[1] > 0 : true;
 	})
 	.map(function(v) {
-		return v[1] + ' ' + v[0] + (v[1] > 1 ? 's' : '');
+		return v[0] != ':' && v[0] != '' ? 
+			(v[1] + ' ' + v[0] + (v[1] > 1 ? 's' : '') + ' ') : 
+			((v[1] < 10 ? '0' : '') + v[1] + v[0]);
 	})
-	.join(' ');
+	.join('');
 
 	return out;
 }
