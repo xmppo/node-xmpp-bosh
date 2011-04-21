@@ -1291,7 +1291,7 @@ exports.createServer = function(options) {
 					// less than state.rid+1
 					// 
 					if (rid < state.rid + 1) {
-						log_it("DEBUG", sprintfd("BOSH::%s::qr-rid: %s, state.rid: %s", rid, state.rid));
+						log_it("DEBUG", sprintfd("BOSH::%s::qr-rid: %s, state.rid: %s", state.sid, rid, state.rid));
 
 						delete state.queued_requests[rid];
 

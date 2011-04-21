@@ -130,7 +130,7 @@ function sprintf(fmt_str) {
 
 	if (fs_parts.length != args.length + 1) {
 		var estr = sprintf("The number of arguments in your format string (%s)[%s] " + 
-			"does NOT match the number of arguments passed [%s]", 
+			"does NOT match the number of arguments passed[%s]", 
 			fmt_str, fs_parts.length-1, args.length);
 		log_it("WARN", estr);
 		throw new Error(estr);
