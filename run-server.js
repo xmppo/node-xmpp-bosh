@@ -6,12 +6,17 @@ var path = require('path');
 var BOSH_DEFAULT_CONFIG_PATH = '/etc/bosh.js.conf';
 
 
-
-function show_version() {
+function get_version() {
+	var fs = require('fs');
 	var pkg_str = fs.readFileSync("./package.json");
 	var pkg_info = JSON.parse(pkg_str);
-	console.log(pkg_info.name + ": BOSH server version " + pkg_info.version);
+	return pkg_info.version;
 }
+
+function show_version() {
+	console.log(pkg_info.name + ": BOSH server version " + get_version());
+}
+
 
 function main() {
 	var opts = require('tav').set({
