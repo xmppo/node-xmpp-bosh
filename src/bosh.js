@@ -29,6 +29,8 @@ var events = require('events');
 var uuid   = require('node-uuid');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
+var assert = require('assert').ok;
+
 
 var sprintf  = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
@@ -40,6 +42,13 @@ var NULL_FUNC  = function() { };
 
 
 function inflated_attrs(node) {
+	// 
+	// This function expands XML attribute namespaces and helps us 
+	// lookup fully qualified XML attributes
+	//
+	// It returns a list of fully qualified attributes for the node
+	// that is passed to it
+	//
 	var xmlns = { };
 	var attrs = { };
 	var k, m;
@@ -181,13 +190,13 @@ exports.createServer = function(options) {
 	var HTTP_POST_RESPONSE_HEADERS = {
 		'Content-Type': 'text/xml', 
 		'Access-Control-Allow-Origin': '*', 
-		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
+		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
 		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
 	};
 
 	var HTTP_OPTIONS_RESPONSE_HEADERS = {
 		'Access-Control-Allow-Origin': '*', 
-		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with',
+		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
 		'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 
 		'Access-Control-Max-Age': '14400'
 	};
@@ -337,7 +346,8 @@ exports.createServer = function(options) {
 			rid:        Math.floor(node.attrs.rid), 
 			wait:       Math.floor(node.attrs.wait), 
 			hold:       Math.floor(node.attrs.hold),
-			inactivity: Math.floor(node.attrs.inactivity), 
+			// The 'inactivity' attribute is an extension
+			inactivity: Math.floor(node.attrs.inactivity || DEFAULT_INACTIVITY_SEC), 
 			content:    "text/xml; charset=utf-8"
 		};
 
@@ -360,6 +370,7 @@ exports.createServer = function(options) {
 			opt.route = node.attrs.route;
 		}
 
+		// The 'ua' attribute is an extension
 		if (node.attrs.ua) {
 			// The user-agent
 			opt.ua = node.attrs.ua;
@@ -371,6 +382,11 @@ exports.createServer = function(options) {
 	}
 
 	function session_terminate(state) {
+		// 
+		// Note: Even if we terminate a non-empty BOSH session, it is 
+		// OKAY since the 'inactivity' timeout will eventually timeout
+		// all open streams
+		// 
 		if (state.streams.length !== 0) {
 			log_it("DEBUG", sprintfd("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid));
 		}
@@ -379,18 +395,13 @@ exports.createServer = function(options) {
 		// for us for free.
 		var ro = get_response_object(state);
 		while (ro) {
-			try {
-				to.res.end($body());
-			}
-			catch (ex) {
-				log_it("ERROR", 
-					sprintfd("BOSH::%s::session_terminate::Caught exception '%s' while destroying socket", state.sid, ex)
-				);
-			}
+			// To prevent an unhandled exception later
+			to.res.on('error', NULL_FUNC);
+			to.res.end($body());
 			ro = get_response_object(state);
 		}
 
-		state.res = [ ];
+		assert(state.res.length === 0);
 
 		// Unset the inactivity timeout
 		unset_session_inactivity_timeout(state);
@@ -430,7 +441,12 @@ exports.createServer = function(options) {
 	}
 
 	function get_streams_to_terminate(sstate, state) {
-		var streams = state.streams; // The streams to terminate
+		// The streams to terminate. We start off we assuming that 
+		// we have to terminate all streams on this session
+		var streams = state.streams;
+
+		// If we have a valid stream to terminate, then we reduce 
+		// our set of streams to terminate to only this one
 		if (sstate) {
 			streams = [ sstate.name ];
 		}
@@ -618,6 +634,8 @@ exports.createServer = function(options) {
 	}
 
 	function is_bosh_session_state(state) {
+		// This is downright ugly
+		return !state.hasOwnProperty('state');
 	}
 
 
@@ -626,9 +644,13 @@ exports.createServer = function(options) {
 	// object OR a stream object.
 	//
 	function get_response_object(sstate /* or state */) {
-		var state = sstate.name ? sstate.state : sstate;
+		var state = is_bosh_session_state(sstate) ? sstate : sstate.state;
+
 		var res = state.res;
-		var ro = res ? (res.length > 0 ? res.shift() : null) : null;
+		assert(res instanceof Array);
+
+		var ro = res.length > 0 ? res.shift() : null;
+
 		if (ro) {
 			clearTimeout(ro.timeout);
 			log_it("DEBUG", 
@@ -820,7 +842,7 @@ exports.createServer = function(options) {
 	function send_immediate(res, response) {
 		log_it("DEBUG", sprintfd("BOSH::send_immediate:%s", response));
 		res.on('error', NULL_FUNC);
-		res.write(response.toString());
+		res.end(response.toString());
 	}
 
 	function send_no_requeue(ro, state, response) {
@@ -901,6 +923,11 @@ exports.createServer = function(options) {
 			var _presp = state.pending[merge_index].response;
 
 			response.children.forEach(function(child) {
+				// 
+				// Don't forget to reset 'parent' since reassigning
+				// children w/o assigning the 'parent' can be
+				// DISASTROUS!! You'll never know what hit you
+				// 
 				child.parent = _presp;
 				_presp.children.push(child);
 			});
@@ -929,7 +956,7 @@ exports.createServer = function(options) {
 		 * a simple array.
 		 *
 		 * Note: Just adding to the front of the queue will NOT work, 
-		 * so don't even waste your time trying to fix it this way.
+		 * so don't even waste your time trying to fix it that way.
 		 *
 		 */
 		if (sstate.terminated) {
@@ -1031,7 +1058,7 @@ exports.createServer = function(options) {
 		// However, due to the async nature of things, we let it be this 
 		// way for now. Additionally, no matter how hard we try, there will 
 		// always be situations which will cause a stream restart, so we 
-		// don't lose out sleep over this.
+		// don't lose our sleep over this.
 		//
 
 		log_it("DEBUG", 
@@ -1098,7 +1125,7 @@ exports.createServer = function(options) {
 
 	// This event is raised when the server terminates the connection.
 	// The Connector typically raises this even so that we can tell
-	// the client that such an event has occurred.
+	// the client (user) that such an event has occurred.
 	bee.addListener('terminate', function(sstate) {
 		// We send a terminate response to the client.
 		var ro = get_response_object(sstate);
@@ -1274,7 +1301,7 @@ exports.createServer = function(options) {
 				// Handle the condition of broken connections
 				// http://xmpp.org/extensions/xep-0124.html#rids-broken
 				// 
-				// We only handle broken connections for streams which have
+				// We only handle broken connections for streams that have
 				// acknowledgements enabled.
 				// 
 				// We MUST respond on this same connection - We always have 
@@ -1348,7 +1375,8 @@ exports.createServer = function(options) {
 			// 
 			// We handle this condition right at the end so that RID updates
 			// can be processed correctly. If only the stream name is invalid, 
-			// we treat this packet as a valid packet.
+			// we treat this packet as a valid packet (only as far as updates
+			// to 'rid' are concerned)
 			// 
 			if (sname) {
 				// The stream name is included in the BOSH request.
@@ -1357,6 +1385,8 @@ exports.createServer = function(options) {
 				// If the stream name is present, but the stream is not valid, we
 				// blow up.
 				if (!sstate) {
+					// FIXME: Subtle bug alert: We have implicitly ACKed all 
+					// 'rids' till now since we didn't send an 'ack'
 					send_termination_stanza(res, 'bad-request', {
 						stream: sname
 					});
@@ -1375,7 +1405,8 @@ exports.createServer = function(options) {
 
 			// Should we process this packet?
 			if (node.attrs.rid > state.rid) {
-				// Not really...
+				// Not really... The request will remain in queued_requests 
+				// and the response object has already been held
 				log_it("INFO", sprintfd("BOSH::%s::not processing packet: %s", state.sid, node));
 				return;
 			}
@@ -1445,6 +1476,7 @@ exports.createServer = function(options) {
 		//
 		// This is in disagreement with the XEP
 		// http://xmpp.org/extensions/xep-0124.html#overactive
+		// if the client sent an empty <body/> tag and was overactive
 		//
 		// However, we do it since many flaky clients and network 
 		// configurations exist in the wild.
@@ -1516,7 +1548,7 @@ exports.createServer = function(options) {
 				req.destroy();
 			}
 			else {
-				_on_data_end(res, data.join(""));
+				_on_data_end(res, data.join(''));
 				clearTimeout(end_timeout);
 			}
 		});
