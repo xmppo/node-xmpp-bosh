@@ -77,7 +77,7 @@ exports.start     = function(options) {
 
 	bosh_server.on('response-acknowledged', function(wrapped_response, state) {
 		// What to do with this response??
-		dutil.log_it("WARN", function() {
+		dutil.log_it("DEBUG", function() {
 			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", wrapped_response.rid ];
 		});
 	});

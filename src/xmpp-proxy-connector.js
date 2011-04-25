@@ -176,7 +176,7 @@ XMPPProxyConnector.prototype = {
 
 	no_client: function(response) {
 		// What to do with this response??
-		dutil.log_it("WARN", function() {
+		dutil.log_it("DEBUG", function() {
 			return [ "XMPP PROXY CONNECTOR::No Client for this response:", response.toString() ];
 		});
 	}
