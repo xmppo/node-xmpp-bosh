@@ -397,6 +397,7 @@ exports.createServer = function(options) {
 		while (ro) {
 			// To prevent an unhandled exception later
 			to.res.on('error', NULL_FUNC);
+			to.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 			to.res.end($body());
 			ro = get_response_object(state);
 		}
@@ -788,15 +789,12 @@ exports.createServer = function(options) {
 	}
 
 
-	function send_termination_stanza(res, condition, attrs) {
+	function send_termination_stanza(res, attrs) {
 		/* Send a stream termination response on an HTTP response (res) object.
 		 * This method is generally used to terminate rogue connections.
 		 */
 
 		attrs = attrs || { };
-		if (condition) {
-			attrs.condition = condition;
-		}
 
 		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 		res.end($terminate(attrs).toString());
@@ -842,6 +840,7 @@ exports.createServer = function(options) {
 	function send_immediate(res, response) {
 		log_it("DEBUG", sprintfd("BOSH::send_immediate:%s", response));
 		res.on('error', NULL_FUNC);
+		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 		res.end(response.toString());
 	}
 
@@ -1182,7 +1181,10 @@ exports.createServer = function(options) {
 
 			if (!state) {
 				// No (valid) session ID in BOSH request. Not phare enuph.
-				send_termination_stanza(res, 'bad-request');
+				send_termination_stanza(res, {
+					condition: 'item-not-found', 
+					message:   'Invalid session ID'
+				});
 				return;
 			}
 
@@ -1200,12 +1202,15 @@ exports.createServer = function(options) {
 			if (!is_valid_packet(node, state)) {
 				log_it("WARN", sprintfd("BOSH::%s::NOT a Valid packet", state.sid));
 
-				var attrs = { };
+				var attrs = {
+					condition: 'item-not-found', 
+					message: 'Invalid packet'
+				};
 				if (node.attrs.stream) {
 					attrs.stream = node.attrs.stream;
 				}
 
-				send_termination_stanza(res, 'bad-request', attrs);
+				send_termination_stanza(res, attrs);
 				return;
 			}
 
@@ -1387,7 +1392,9 @@ exports.createServer = function(options) {
 				if (!sstate) {
 					// FIXME: Subtle bug alert: We have implicitly ACKed all 
 					// 'rids' till now since we didn't send an 'ack'
-					send_termination_stanza(res, 'bad-request', {
+					send_termination_stanza(res, {
+						condition: 'item-not-found', 
+						message: 'Invalid stream name', 
 						stream: sname
 					});
 					return;
@@ -1492,8 +1499,8 @@ exports.createServer = function(options) {
 		var node = dutil.xml_parse(data);
 
 		if (!node || !node.is('body')) {
-			res.writeHead(404);
-			res.end();
+			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
+			res.end($terminate({ condition: 'bad-request' }));
 			return;
 		}
 
