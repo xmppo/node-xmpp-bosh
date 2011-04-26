@@ -41,6 +41,14 @@ var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 var NULL_FUNC  = function() { };
 
 
+//
+// Important links:
+// 
+// List of BOSH errors for the terminate packet
+// http://xmpp.org/extensions/xep-0124.html#errorstatus-terminal
+//
+
+
 function inflated_attrs(node) {
 	// 
 	// This function expands XML attribute namespaces and helps us 
@@ -548,11 +556,9 @@ exports.createServer = function(options) {
 			return;
 		}
 
-		// TODO: Add an 'error' event handler on 'res' that removes this connection from
-		// further consideration
-		//
-		// TODO: Test what happens when a client closes a connection and a response to
-		// an HTTP request is not sent
+		// If a client closes a connection and a response to that HTTP request 
+		// has not yet been sent, then the 'error' event is NOT raised by node.js.
+		// Hence, we need not attach an 'error' event handler yet.
 
 		var ro = {
 			res: res, 
@@ -1620,12 +1626,4 @@ exports.createServer = function(options) {
 	return bee;
 
 };
-
-// Handle error conditions comprehensively
-// http://xmpp.org/extensions/xep-0124.html#schema
-// Instead of sending back a 404, try to send back something
-// sensible in the BOSH world - done for as many requests
-// that I humanly could.
-
-// TODO: Figure out if req.destroy() is valid.
 
