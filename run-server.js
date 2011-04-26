@@ -6,15 +6,21 @@ var path = require('path');
 var BOSH_DEFAULT_CONFIG_PATH = '/etc/bosh.js.conf';
 
 
-function get_version() {
+function app_meta() {
 	var fs = require('fs');
 	var pkg_str = fs.readFileSync("./package.json");
-	var pkg_info = JSON.parse(pkg_str);
-	return pkg_info.version;
+	var meta = JSON.parse(pkg_str);
+	return meta;
+}
+
+
+function get_version() {
+	return app_meta().version;
 }
 
 function show_version() {
-	console.log(pkg_info.name + ": BOSH server version " + get_version());
+	var meta = app_meta();
+	console.log(meta.name + ": BOSH server version " + meta.version);
 }
 
 
