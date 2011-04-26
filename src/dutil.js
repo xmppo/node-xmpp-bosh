@@ -23,6 +23,9 @@
 
 var us = require('underscore');
 
+// The maximum number of characters that a single log line can contain
+var MAX_CHARS_IN_LOG_LINE = 4096;
+
 
 function copy(dest, src, restrict) {
 	/* Copy keys from the hash 'src' to the hash 'dest'.
@@ -254,10 +257,8 @@ function set_log_level(level) {
 }
 
 
-var MAX_CHARS_IN_LOG_LINE = 4096;
 
 
-// TODO: Log local time instead of GMT time.
 function log_it(level) {
 	/* Logs stuff (2nd parameter onwards) according to the logging level
 	 * set using the set_log_level() function. The default logging level
@@ -332,6 +333,13 @@ function json_parse(jstr, def) {
 }
 
 function jid_parse(jid) {
+	/* Parses a full JID and returns an object containing 3 fields:
+	 *
+	 * username: The part before the @ sign
+	 * domain  : The domain part of the JID (between @ and /)
+	 * resource: The resource of the JID. May be undefined if not set
+	 *
+	 */
 	var parts = jid.match(/^([^@]+)@([^\/]+)(\/([\S]+))?$/);
 	return {
 		username: parts[1], 
@@ -345,6 +353,15 @@ function num_cmp(lhs, rhs) {
 }
 
 function time_diff(past, present) {
+	/* Returns a humanly readable difference between 2 Date objects
+	 *
+	 * Specifically, it returns the difference (present - past)
+	 *
+	 * If present < past then the results are not defined
+	 *
+	 * Example Return: 3 day 10:23:33
+	 *
+	 */
 	var diff = Math.floor((present - past) / 1000);
 
 	var mapping = [
@@ -376,11 +393,24 @@ function time_diff(past, present) {
 }
 
 function ends_with(haystack, needle) {
+	/* Checks whether the string needle ends with the string
+	 * haystack
+	 *
+	 */
 	var re = new RegExp(needle + '$');
 	return haystack.search(needle) != -1;
 }
 
 function find_module(file_name) {
+	/* Searches for a module that ends with file_name
+	 *
+	 * Returns an object with 2 attributes
+	 * handle: The handle to the require()d module and
+	 * key   : The full absolute path of the module
+	 *
+	 * If the module was not found, then handle is null
+	 *
+	 */
 	var mhandle = { handle: null, key: '' };
 	for (var mname in require.cache) {
 		if (ends_with(mname, file_name)) {
@@ -394,7 +424,16 @@ function find_module(file_name) {
 
 
 function require_again(file_path) {
-	var old_mhandle = find_module(file_path);
+	/* This function require()s a file again.
+	 * 
+	 * Arguments:
+	 * file_path: The complete (full absolute) path of the file to be require()d.
+	 *
+	 * It does this by deleting the older handle to the module from require.cache
+	 * and calling require() in the file_path
+	 *
+	 */
+ 	var old_mhandle = find_module(file_path);
 	if (old_mhandle.key) {
 		delete require.cache[old_mhandle.key];
 	}
