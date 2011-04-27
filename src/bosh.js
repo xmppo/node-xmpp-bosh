@@ -406,7 +406,7 @@ exports.createServer = function(options) {
 			// To prevent an unhandled exception later
 			to.res.on('error', NULL_FUNC);
 			to.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-			to.res.end($body());
+			to.res.end($body().toString());
 			ro = get_response_object(state);
 		}
 
@@ -1506,7 +1506,7 @@ exports.createServer = function(options) {
 
 		if (!node || !node.is('body')) {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-			res.end($terminate({ condition: 'bad-request' }));
+			res.end($terminate({ condition: 'bad-request' }).toString());
 			return;
 		}
 
@@ -1627,3 +1627,4 @@ exports.createServer = function(options) {
 
 };
 
+// TODO: Write out the headers even for 404 responses
