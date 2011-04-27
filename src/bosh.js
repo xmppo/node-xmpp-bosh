@@ -1,3 +1,5 @@
+// -*-  tab-width:4  -*-
+
 /*
  * Copyright (c) 2011 Dhruv Matani
  * 
@@ -20,6 +22,7 @@
  * THE SOFTWARE.
  *
  */
+
 
 var http   = require('http');
 var url    = require('url');

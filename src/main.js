@@ -1,3 +1,5 @@
+// -*-  tab-width:4  -*-
+
 /*
  * Copyright (c) 2011 Dhruv Matani
  * 
