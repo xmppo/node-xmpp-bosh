@@ -32,7 +32,7 @@ var dutil = require('./dutil.js');
  *
  * 1. Try to directly connect to a host if the route parameter is passed
  *
- * 2. Try to connect using rules for the chat.pw chat service. This means
+ * 2. Try to connect using rules for the talk.to chat service. This means
  * connecting to DOMAIN_NAME.chat.pw
  *
  * 3. Try to do an SRV record lookup for _xmpp-client._tcp record on the 

@@ -1555,7 +1555,7 @@ exports.createServer = function(options) {
 
 		if (req.method != "POST" || ppos == -1) {
 			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
-			res.writeHead(404);
+			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
 			return;
 		}
@@ -1636,4 +1636,3 @@ exports.createServer = function(options) {
 
 };
 
-// TODO: Write out the headers even for 404 responses

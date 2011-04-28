@@ -23,7 +23,7 @@
  *
  */
 
-/* The STARTTLS bits are taken from the node-xmpp project by astro on github */
+/* The STARTTLS bits are taken from the node-xmpp project on github by astro */
 
 var net    = require('net');
 var ltx    = require('ltx');
@@ -189,8 +189,16 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_data: function(d) {
-		dutil.log_it("DEBUG", "XMPP PROXY::received:", d.toString('binary'));
-		this._buff += d.toString();
+		//
+		// TODO: All this will become *much* cleaner (and faster) if we move 
+		// to a SAX based XML parser instead of using ltx to parse() buffers. 
+		// The current implementation will fail if we get a <stream:stream/> 
+		// packet. The SAX based parser will handle that very well.
+		//
+		dutil.log_it("DEBUG", function() {
+			return dutil.sprintf("XMPP PROXY::received:%s", d.toString('binary'));
+		});
+		this._buff += d.toString('binary');
 
 		if (this._first) {
 			// Parse and save attribites from the first response
@@ -217,8 +225,11 @@ dutil.copy(XMPPProxy.prototype, {
 					}
 
 					this._buff = this._buff.substring(gt_pos+1);
+
+					// Now that we have the complete <stream:stream> stanza, we can set
+					// this._first to false
+					this._first = false;
 				}
-				this._first = false;
 			}
 		}
 
