@@ -306,6 +306,9 @@ function _xml_parse() {
 	var ltx = null;
 
 	return function(xml) {
+		// We do the dynamic require() of the 'ltx' module since 
+		// it is required be present on only those systems that actually
+		// use this function.
 		if (!ltx) {
 			ltx = require('ltx');
 		}
