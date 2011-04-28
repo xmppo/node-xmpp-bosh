@@ -50,6 +50,12 @@ var NULL_FUNC  = function() { };
 // List of BOSH errors for the terminate packet
 // http://xmpp.org/extensions/xep-0124.html#errorstatus-terminal
 //
+// XEP-206
+// http://xmpp.org/extensions/xep-0206.html
+//
+// CORS headers
+// https://developer.mozilla.org/En/HTTP_access_control
+//
 
 
 function inflated_attrs(node) {
@@ -865,10 +871,6 @@ exports.createServer = function(options) {
 
 		ro.res.on('error', NULL_FUNC);
 
-		// Allow Cross-Domain access
-		// https://developer.mozilla.org/En/HTTP_access_control
-		ro.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-
 		// If the client has enabled ACKs, then acknowledge the highest request
 		// that we have received till now -- if it is not the current request.
 		if (state.ack) {
@@ -886,6 +888,10 @@ exports.createServer = function(options) {
 
 		var res_str = response.toString();
 		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue:writing response: %s", state.sid, res_str));
+
+		// Allow Cross-Domain access
+		// https://developer.mozilla.org/En/HTTP_access_control
+		ro.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 
 		ro.res.end(res_str);
 	}
@@ -1526,8 +1532,8 @@ exports.createServer = function(options) {
 		// and call them sequentially?
 		// 
 		// because that significantly complicates code and using 
-		// 'return;' in those function doesn't return from the 
-		// control from current function.
+		// 'return;' in those function doesn't return control from 
+		// the current function.
 		//
 
 

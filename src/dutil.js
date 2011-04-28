@@ -28,6 +28,100 @@ var us = require('underscore');
 // The maximum number of characters that a single log line can contain
 var MAX_CHARS_IN_LOG_LINE = 4096;
 
+var _log_level = 4;
+var _log_levels = {
+	"NONE":  0, 
+	"FATAL": 1, 
+	"ERROR": 2,
+	"WARN":  3, 
+	"INFO":  4, 
+	"DEBUG": 5
+};
+
+
+function arguments_to_array(args) {
+	return Array.prototype.slice.call(args, 0);
+}
+
+function get_numeric_log_level(level) {
+	level = level.toUpperCase();
+	var nll = 6;
+
+	if (level in _log_levels) {
+		nll = _log_levels[level];
+	}
+
+	return nll;
+}
+	
+function set_log_level(level) {
+	_log_level = get_numeric_log_level(level);
+}
+
+function log_it(level) {
+	/* Logs stuff (2nd parameter onwards) according to the logging level
+	 * set using the set_log_level() function. The default logging level
+	 * is INFO logging only. The order of logging is as follows:
+	 * NONE < INFO < WARN < ERROR < FATAL < DEBUG < anything else
+	 *
+	 * If the 2nd paramater is the only other parameter and it is a 
+	 * function, then it is evaluated and the result is expected to be
+	 * an array, which contains the elements to be logged.
+	 *
+	 */
+	level = level.toUpperCase();
+	var numeric_level = get_numeric_log_level(level);
+
+	if (numeric_level > 0 && numeric_level <= _log_level) {
+		var args = arguments_to_array(arguments).slice(1);
+		if (args.length == 1 && typeof args[0] == "function") {
+			// Lazy evaluation.
+			args = args[0]();
+
+			// args can be either an array, or something else. If it is
+			// anything but an array, we set it to an array with args being
+			// the only element of that array.
+			if (!(args instanceof Array)) {
+				args = [ args ];
+			}
+		}
+
+		args.unshift(level, new Date());
+
+		args.forEach(function(arg, i) {
+			var astr = '';
+			var more_hint = '';
+
+			try {
+				astr = arg.toString();
+
+				// console.log(astr.length);
+				if (astr.length > MAX_CHARS_IN_LOG_LINE) {
+					// We limit the writes because we are running into a 
+					// bug at this point of time.
+					more_hint = ' ... ' + (astr.length - MAX_CHARS_IN_LOG_LINE) + ' more characters';
+					astr = astr.substr(0, MAX_CHARS_IN_LOG_LINE);
+				}
+
+				process.stdout.write(astr);
+				if (more_hint) {
+					process.stdout.write(more_hint);
+				}
+				process.stdout.write(i < args.length - 1 ? ' ' : '');
+			}
+			catch (ex) {
+				console.error("DUTIL::args:", args);
+				console.error("DUTIL::arg:", arg);
+				console.error("DUTIL::log_it:astr.length:", astr.length);
+				console.error("DUTIL::log_it:Exception:\n", ex.stack);
+				process.exit(3);
+			}
+		});
+
+		process.stdout.write('\n');
+	}
+}
+
 
 function copy(dest, src, restrict) {
 	/* Copy keys from the hash 'src' to the hash 'dest'.
@@ -106,10 +200,6 @@ function alternator() {
 	}
 
 	return buff;
-}
-
-function arguments_to_array(args) {
-	return Array.prototype.slice.call(args, 0);
 }
 
 function map(a, f) {
@@ -232,98 +322,6 @@ function isTruthy(x) {
 }
 
 
-var _log_level = 4;
-var _log_levels = {
-	"NONE":  0, 
-	"FATAL": 1, 
-	"ERROR": 2,
-	"WARN":  3, 
-	"INFO":  4, 
-	"DEBUG": 5
-};
-
-
-function get_numeric_log_level(level) {
-	level = level.toUpperCase();
-	var nll = 6;
-
-	if (level in _log_levels) {
-		nll = _log_levels[level];
-	}
-
-	return nll;
-}
-	
-function set_log_level(level) {
-	_log_level = get_numeric_log_level(level);
-}
-
-
-
-
-function log_it(level) {
-	/* Logs stuff (2nd parameter onwards) according to the logging level
-	 * set using the set_log_level() function. The default logging level
-	 * is INFO logging only. The order of logging is as follows:
-	 * NONE < INFO < WARN < ERROR < FATAL < DEBUG < anything else
-	 *
-	 * If the 2nd paramater is the only other parameter and it is a 
-	 * function, then it is evaluated and the result is expected to be
-	 * an array, which contains the elements to be logged.
-	 *
-	 */
-	level = level.toUpperCase();
-	var numeric_level = get_numeric_log_level(level);
-
-	if (numeric_level > 0 && numeric_level <= _log_level) {
-		var args = arguments_to_array(arguments).slice(1);
-		if (args.length == 1 && typeof args[0] == "function") {
-			// Lazy evaluation.
-			args = args[0]();
-
-			// args can be either an array, or something else. If it is
-			// anything but an array, we set it to an array with args being
-			// the only element of that array.
-			if (!(args instanceof Array)) {
-				args = [ args ];
-			}
-		}
-
-		args.unshift(level, new Date());
-
-		args.forEach(function(arg, i) {
-			var astr = '';
-			var more_hint = '';
-
-			try {
-				astr = arg.toString();
-
-				// console.log(astr.length);
-				if (astr.length > MAX_CHARS_IN_LOG_LINE) {
-					// We limit the writes because we are running into a 
-					// bug at this point of time.
-					more_hint = ' ... ' + (astr.length - MAX_CHARS_IN_LOG_LINE) + ' more characters';
-					astr = astr.substr(0, MAX_CHARS_IN_LOG_LINE);
-				}
-
-				process.stdout.write(astr);
-				if (more_hint) {
-					process.stdout.write(more_hint);
-				}
-				process.stdout.write(i < args.length - 1 ? ' ' : '');
-			}
-			catch (ex) {
-				console.error("DUTIL::args:", args);
-				console.error("DUTIL::arg:", arg);
-				console.error("DUTIL::log_it:astr.length:", astr.length);
-				console.error("DUTIL::log_it:Exception:\n", ex.stack);
-				process.exit(3);
-			}
-		});
-
-		process.stdout.write('\n');
-	}
-}
 
 function json_parse(jstr, def) {
 	def = typeof def == "undefined" ? '' : def;
@@ -435,7 +433,7 @@ function require_again(file_path) {
 	 * and calling require() in the file_path
 	 *
 	 */
- 	var old_mhandle = find_module(file_path);
+	var old_mhandle = find_module(file_path);
 	if (old_mhandle.key) {
 		delete require.cache[old_mhandle.key];
 	}
