@@ -8,7 +8,7 @@ TARFILE="$DIR.tar.gz"
 rm -Rf $DIR
 mkdir $DIR
 
-cp -R images src/*.js strophe/*.js tests/*.js package.json \
+cp -R images src strophe tests package.json \
 README.TXT INSTALL.TXT EMBEDDING.TXT release.sh \
 run-server.js lintit.sh monitor.js bosh.conf.example.js \
 $DIR
@@ -20,6 +20,7 @@ if [[ $PWD == $PREVDIR ]]; then
 fi
 
 rm tests/sr_users.js
+find -name "*~" | xargs rm -Rf
 find -name ".svn" | xargs rm -Rf
 
 cd ..
