@@ -265,7 +265,7 @@ exports.createServer = function(options) {
 	var sid_state = {
 	};
 
-	// This encapsulates the state for the client stream
+	// This encapsulates the state for the client (xmpp) stream
 	//
 	// The same but by stream name.
 	// Format: {
@@ -345,7 +345,7 @@ exports.createServer = function(options) {
 		 */
 		var m = route.match(/^(\S+):(\S+):([0-9]+)$/);
 		log_it("DEBUG", "BOSH::route_parse:", m);
-		if (m && m.length == 4) {
+		if (m && m.length === 4) {
 			return {
 				protocol: m[1], host: m[2], port: Math.floor(m[3])
 			};
@@ -1113,11 +1113,12 @@ exports.createServer = function(options) {
 	// respond to the client accordingly.
 	bee.addListener('stream-added', function(sstate) {
 		log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.stream));
+		var state = sstate.state;
 
 		// Send only if this is the 2nd (or more) stream on this BOSH session.
 		// This should work all the time. If anyone finds a case where it will
 		// NOT work, please do let me know.
-		if (sstate.streams.length > 1) {
+		if (state.streams.length > 1) {
 			send_stream_add_response(sstate);
 		}
 	});
