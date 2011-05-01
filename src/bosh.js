@@ -1112,7 +1112,7 @@ exports.createServer = function(options) {
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
 	bee.addListener('stream-added', function(sstate) {
-		log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.stream));
+		log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.name));
 		var state = sstate.state;
 
 		// Send only if this is the 2nd (or more) stream on this BOSH session.

@@ -178,13 +178,17 @@ dutil.copy(XMPPProxy.prototype, {
 		dutil.log_it('DEBUG', 'XMPP PROXY::connected');
 
 		this._is_connected = true;
-		var _ss_open = this._get_stream_xml_open({ });
-
-		// Always, we connect on behalf of the real client.
-		this.send(_ss_open);
 
 		if (this._terminate_on_connect) {
 			this.terminate();
+		}
+		else {
+			var _ss_open = this._get_stream_xml_open({ });
+
+			// Always, we connect on behalf of the real client.
+			this.send(_ss_open);
+
+			this.emit('connect', this._void_star);
 		}
 	}, 
 

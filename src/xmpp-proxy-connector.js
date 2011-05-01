@@ -29,6 +29,7 @@ var lookup = require('./lookup-service.js');
 var util   = require('util');
 var us     = require('underscore');
 
+var sprintfd = dutil.sprintfd;
 
 
 var DEFAULT_XMPP_PORT = 5222;
@@ -72,7 +73,10 @@ function XMPPProxyConnector(bosh_server) {
 
 	// Fired every time the XMPP proxy fires the 'connect' event.
 	this._on_xmpp_proxy_connected = us.bind(function(sstate) {
-		dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Received 'connect' event");
+		dutil.log_it("DEBUG", 
+					 sprintfd("XMPP PROXY CONNECTOR::%s::Received 'connect' event for stream named: %s", 
+							  sstate.state.sid, sstate.name)
+					);
 		this.bosh_server.emit('stream-added', sstate);
 
 		// Flush out any pending packets.
