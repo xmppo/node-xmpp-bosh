@@ -1529,10 +1529,10 @@ exports.createServer = function(options) {
 		var u = url.parse(req.url);
 
 		//
-		// Why not create named functions that express intent 
+		// Q. Why not create named functions that express intent 
 		// and call them sequentially?
 		// 
-		// because that significantly complicates code and using 
+		// A. Because that significantly complicates code and using 
 		// 'return;' in those function doesn't return control from 
 		// the current function.
 		//

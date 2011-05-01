@@ -1,8 +1,6 @@
-Caveat: Everything is highly subject to change
-
-+-------------------------------------------------------+
-| An XMPP BOSH server written for node.js in javascript |
-+-------------------------------------------------------+
++------------------------------------------------------------------------------+
+| An XMPP BOSH server (connection manager) written using Node.js in Javascript |
++------------------------------------------------------------------------------+
 
 Project Home Page: http://code.google.com/p/node-xmpp-bosh/
 
@@ -187,7 +185,15 @@ The project itself is divided into 4 main components as of now.
       /PREFIX/A/ to one instance and requests to /PREFIX/B/ to another
       instance and so on.
 
-[K] Releases:
+[K] Other Connection Managers:
+    * [http://xmpp.org/about-xmpp/technology-overview/bosh/#impl-cm List on xmpp.org]
+    * [http://code.stanziq.com/punjab Punjab - Python & Twisted]
+    * [https://github.com/directi/chirkut Chirkut - Python & Twisted]
+    * [http://blog.jwchat.org/jhb/ JabberHTTPBind - Java]
+    * [http://blog.bluendo.com/ff/bosh-connection-manager-update Araneo - Python & Twisted]
+    * [http://rubyforge.org/projects/rhb/ rhb - Ruby]
+
+[L] Releases:
     * v0.0.1 == SVN Commit #39
     * v0.0.2 == SVN Commit #50
     * v0.0.3 == SVN Commit #56
