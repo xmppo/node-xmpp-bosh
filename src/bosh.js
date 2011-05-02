@@ -1227,6 +1227,7 @@ exports.createServer = function(options) {
 				}
 
 				send_termination_stanza(res, attrs);
+				// TODO: Also terminate the session (@satyam.s)
 				return;
 			}
 

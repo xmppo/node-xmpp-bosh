@@ -32,7 +32,9 @@ var BOSH_DEFAULT_CONFIG_PATH = '/etc/bosh.js.conf';
 
 function app_meta() {
 	var fs = require('fs');
-	var pkg_str = fs.readFileSync("./package.json");
+	var package_json_path = require.resolve("./package.json");
+
+	var pkg_str = fs.readFileSync(package_json_path);
 	var meta = JSON.parse(pkg_str);
 	return meta;
 }
