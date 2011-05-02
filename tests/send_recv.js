@@ -51,6 +51,7 @@ var $pres   = strophe.$pres;
 var out_queue = [ ];
 
 var SEND_EVERY_MSEC = 1000;
+var MESSAGES_TO_SEND = 100;
 var PACKETS_TO_SEND = 7;
 
 
@@ -108,7 +109,7 @@ function start_test() {
 			}
 			else if (status == Strophe.Status.CONNECTED) {
 				// Send packets to all other users.
-				dutil.repeat(0, 10).forEach(function(v, j) {
+				dutil.repeat(0, MESSAGES_TO_SEND).forEach(function(v, j) {
 					us(XMPP_USERS).chain()
 					.filter(function(x) { return true; /*x.jid != jid;*/ })	
 					.each(function(uinfo2, i) {

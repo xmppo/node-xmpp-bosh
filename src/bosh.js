@@ -1599,6 +1599,9 @@ exports.createServer = function(options) {
 			// terminate the connection.
 			if (data_len > MAX_DATA_HELD_BYTES) {
 				// Terminate the connection. We null out 'data' to aid GC
+				if (end_timeout) {
+					clearTimeout(end_timeout);
+				}
 				data = null;
 				req.destroy();
 				return;
