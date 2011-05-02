@@ -1567,7 +1567,7 @@ exports.createServer = function(options) {
 
 		var _on_end_callback = us.once(function(timed_out) {
 			if (timed_out) {
-				log_it("WARN", "BOSH::Timing out connection from '" + req.socket.remoteAddress + "'");
+				log_it("WARN", "BOSH::Timing out (and destroying) connection from '" + req.socket.remoteAddress + "'");
 				req.destroy();
 			}
 			else {
@@ -1599,11 +1599,8 @@ exports.createServer = function(options) {
 			// terminate the connection.
 			if (data_len > MAX_DATA_HELD_BYTES) {
 				// Terminate the connection. We null out 'data' to aid GC
-				if (end_timeout) {
-					clearTimeout(end_timeout);
-				}
 				data = null;
-				req.destroy();
+				_on_end_callback(true);
 				return;
 			}
 
