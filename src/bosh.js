@@ -413,9 +413,9 @@ exports.createServer = function(options) {
 		var ro = get_response_object(state);
 		while (ro) {
 			// To prevent an unhandled exception later
-			to.res.on('error', NULL_FUNC);
-			to.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-			to.res.end($body().toString());
+			ro.res.on('error', NULL_FUNC);
+			ro.res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
+			ro.res.end($body().toString());
 			ro = get_response_object(state);
 		}
 
