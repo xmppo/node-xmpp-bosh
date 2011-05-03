@@ -688,12 +688,14 @@ exports.createServer = function(options) {
 	//
 	function send_session_creation_response(sstate) {
 		var state = sstate.state;
-		var ro    = get_response_object(sstate);
 
 		// We _must_ get a response object. If we don't, there is something
 		// seriously messed up. Log this.
-		if (!ro) {
-			console.error("Could not find a response object for stream:", sstate);
+		if (state.res.length === 0) {
+			log_it('DEBUG', 
+				   sprintfd("BOSH::%s::send_session_creation_response::Could not find a response object for stream:%s", 
+							state.sid, sstate.name)
+				  );
 			return false;
 		}
 
@@ -718,19 +720,18 @@ exports.createServer = function(options) {
 			"window":   WINDOW_SIZE // Handle window size mismatches
 		});
 
-		send_or_queue(ro, response, sstate);
+		enqueue_response(response, sstate);
 	}
 
 	function send_stream_add_response(sstate) {
 		var state = sstate.state;
-		var ro    = get_response_object(sstate);
 
 		var response = $body({
 			stream:     sstate.name, 
 			from:       sstate.to
 		});
 
-		send_or_queue(ro, response, sstate);
+		enqueue_response(response, sstate);
 	}
 
 	function send_stream_terminate_response(sstate, condition) {
@@ -742,7 +743,6 @@ exports.createServer = function(options) {
 		 *
 		 */
 		var state = sstate.state;
-		var ro    = get_response_object(sstate);
 
 		var attrs = {
 			stream:     sstate.name
@@ -752,7 +752,7 @@ exports.createServer = function(options) {
 		}
 
 		var response = $terminate(attrs);
-		send_or_queue(ro, response, sstate);
+		enqueue_response(response, sstate);
 
 		// Mark the stream as terminated AFTER the terminate response has been queued.
 		sstate.terminated = true;
@@ -954,8 +954,39 @@ exports.createServer = function(options) {
 		}
 	}
 
-	function send_or_queue(ro, response, sstate) {
-		/* Send or queue a response. Requeue if the sending fails.
+	function pop_and_send(state) {
+		var ro = get_response_object(state);
+
+		log_it("DEBUG", 
+			   sprintfd("BOSH::%s::pop_and_send: ro:%s, state.pending.length: %s", 
+						state.sid, dutil.isTruthy(ro), state.pending.length)
+			  );
+
+		if (ro && state.pending.length > 0) {
+			var _p        = state.pending.shift();
+			var response  = _p.response;
+			var sstate    = _p.sstate;
+
+			// On error, try the next one or start the timer if there
+			// is nothing left to try.
+			ro.res.on('error', function() {
+				log_it("DEBUG", sprintfd("BOSH::%s::error sending response on rid: %s", state.sid, ro.rid));
+
+				if (state.res.length > 0) {
+					// Try the next one
+					enqueue_response(response, sstate);
+				}
+				else {
+					on_no_client_found(response, sstate);
+				}
+			});
+
+			send_no_requeue(ro, sstate.state, response);
+		}
+	}
+
+	function enqueue_response(response, sstate) {
+		/* Enqueue a response. Requeue if the sending fails.
 		 * 
 		 * This function tries to merge the response with an existing
 		 * queued response to be sent on this stream (if merging them
@@ -980,45 +1011,14 @@ exports.createServer = function(options) {
 
 		var state = sstate.state;
 
-		log_it("DEBUG", sprintfd("BOSH::%s::send_or_queue::ro is: %s", state.sid, ro !== null));
+		log_it("DEBUG", sprintfd("BOSH::%s::enqueue_response", state.sid));
 
-		if (state.pending.length > 0) {
-			merge_or_push_response(response, sstate);
+		// Merge with an existing response, or push it as a new response
+		merge_or_push_response(response, sstate);
 
-			if (!ro) {
-				// Since we have already pushed the response into the queue
-				// or merged it with an earlier response, we can safely return
-				return;
-			}
-
-			var _p = state.pending.shift();
-			response = _p.response;
-			sstate   = _p.sstate;
-		}
-
-		if (ro) {
-			// On error, try the next one or start the timer if there
-			// is nothing left to try.
-			ro.res.on('error', function() {
-				log_it("DEBUG", sprintfd("BOSH::%s::error sending response on rid: %s", state.sid, ro.rid));
-
-				var _ro = get_response_object(sstate);
-
-				if (_ro) {
-					// Try the next one
-					send_or_queue(_ro, response, sstate);
-				}
-				else {
-					on_no_client_found(response, sstate);
-				}
-			});
-
-			send_no_requeue(ro, sstate.state, response);
-		}
-		else {
-			// No HTTP connection for sending the response exists.
-			on_no_client_found(response, sstate);
-		}
+		process.nextTick(function() {
+			pop_and_send(state);
+		});
 	}
 
 	function handle_client_stream_terminate_request(sstate, state, nodes, condition) {
@@ -1059,7 +1059,7 @@ exports.createServer = function(options) {
 		// There is a subtle bug here. If the sending of this response fails
 		// then it is appended to the queue of pending responses rather than 
 		// being added to the right place. This is because we rely on 
-		// send_or_queue() to append it back to the list of pending responses.
+		// enqueue_response() to append it back to the list of pending responses.
 		// We hope for this to not occur too frequently.
 		//
 		// The right way to do it would be to either:
@@ -1080,9 +1080,7 @@ exports.createServer = function(options) {
 		);
 
 		if (state.pending.length > 0 && state.res.length > 0) {
-			var ro = get_response_object(state);
-			var _po = state.pending.shift();
-			send_or_queue(ro, _po.response, _po.sstate);
+			pop_and_send(state);
 		}
 	}
 
@@ -1128,14 +1126,11 @@ exports.createServer = function(options) {
 	bee.addListener('response', function(connector_response, sstate) {
 		log_it("DEBUG", sprintfd("BOSH::%s::response: %s", sstate.state.sid, connector_response));
 
-		var ro = get_response_object(sstate);
-		// console.log("ro:", ro);
-
 		var response = $body({
 			stream:     sstate.name
 		}).cnode(connector_response).tree();
 
-		send_or_queue(ro, response, sstate);
+		enqueue_response(response, sstate);
 	});
 
 	// This event is raised when the server terminates the connection.
@@ -1143,12 +1138,11 @@ exports.createServer = function(options) {
 	// the client (user) that such an event has occurred.
 	bee.addListener('terminate', function(sstate) {
 		// We send a terminate response to the client.
-		var ro = get_response_object(sstate);
 		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
 
 		stream_terminate(sstate, state);
-		send_or_queue(ro, response, sstate);
+		enqueue_response(response, sstate);
 
 		send_stream_terminate_response(sstate, "remote-connection-failed");
 
@@ -1226,8 +1220,9 @@ exports.createServer = function(options) {
 					attrs.stream = node.attrs.stream;
 				}
 
-				send_termination_stanza(res, attrs);
-				// TODO: Also terminate the session (@satyam.s)
+				// Terminate the session (thanks @satyam.s). The XEP mentions this as
+				// a MUST, so we humbly comply
+				handle_client_stream_terminate_request(null, state, [ ], 'item-not-found');
 				return;
 			}
 
