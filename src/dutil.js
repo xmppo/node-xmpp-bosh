@@ -344,6 +344,10 @@ function jid_parse(jid) {
 	 *
 	 */
 	var parts = jid.match(/^([^@]+)@([^\/]+)(\/([\S]+))?$/);
+	if (!parts || !(parts instanceof Array) || parts.length < 5) {
+		parts = repeat('', 5);
+	}
+
 	return {
 		username: parts[1], 
 		domain:   parts[2], 
