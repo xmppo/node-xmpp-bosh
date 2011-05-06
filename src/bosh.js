@@ -452,6 +452,10 @@ exports.createServer = function(options) {
 			sstate.route = route_parse(node.attrs.route);
 		}
 
+		if (node.attrs.from) {
+			sstate.from = node.attrs.from;
+		}
+
 		state.streams.push(sname);
 
 		sn_state[sname] = sstate;
@@ -748,7 +752,10 @@ exports.createServer = function(options) {
 			stream:     sstate.name
 		};
 		if (condition) {
-			attrs.condition = condition;
+			// Set the condition so that listeners may be able to 
+			// determine why this stream was terminated
+			sstate.condition = condition;
+			attrs.condition  = condition;
 		}
 
 		var response = $terminate(attrs);
@@ -1034,7 +1041,7 @@ exports.createServer = function(options) {
 
 			// Send stream termination response
 			// http://xmpp.org/extensions/xep-0124.html#terminate
-			send_stream_terminate_response(sstate);
+			send_stream_terminate_response(sstate, condition);
 
 			stream_terminate(sstate, state);
 			bee.emit('stream-terminate', sstate);
