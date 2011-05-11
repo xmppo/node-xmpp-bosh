@@ -705,7 +705,7 @@ exports.createServer = function(options) {
 			return false;
 		}
 
-		var response = $body({
+		var attrs = {
 			stream:     sstate.name, 
 			sid:        state.sid, 
 			wait:       state.wait, 
@@ -724,18 +724,33 @@ exports.createServer = function(options) {
 			// by the send_no_requeue function since it is the last one to 
 			// touch responses before they go out on the wire.
 			"window":   WINDOW_SIZE // Handle window size mismatches
-		});
+		};
+
+		if (sstate.from) {
+			// This is *probably* the JID of the user. Send it back as 'to'. 
+			// This isn't mentioned in the spec.
+			attrs.to = sstate.from;
+		}
+
+		var response = $body(attrs);
 
 		enqueue_response(response, sstate);
 	}
 
 	function send_stream_add_response(sstate) {
 		var state = sstate.state;
-
-		var response = $body({
+		var attrs = {
 			stream:     sstate.name, 
 			from:       sstate.to
-		});
+		};
+
+		if (sstate.from) {
+			// This is *probably* the JID of the user. Send it back as 'to'. 
+			// This isn't mentioned in the spec.
+			attrs.to = sstate.from;
+		}
+
+		var response = $body(attrs);
 
 		enqueue_response(response, sstate);
 	}
