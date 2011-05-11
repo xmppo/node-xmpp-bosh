@@ -190,8 +190,8 @@ exports.createServer = function(options) {
 	// "hold" from the client.
 	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
 
-	// Don't entertain more than 3 simultaneous connections on any
-	// BOSH session.
+	// Don't entertain more than 3 (default) simultaneous connections 
+	// on any BOSH session.
 	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 3;
 
 	// The maximum number of packets on either side of the current 'rid'
@@ -289,6 +289,8 @@ exports.createServer = function(options) {
 	// The stream name is independent of the state
 	function new_state_object(options, res) {
 
+		options.hold = options.hold > MAX_BOSH_CONNECTIONS ? MAX_BOSH_CONNECTIONS : options.hold;
+
 		// TODO: Figure if res needs to be sorted in 'rid' order.
 		options.res = [ ];
 
@@ -368,7 +370,7 @@ exports.createServer = function(options) {
 			content:    "text/xml; charset=utf-8"
 		};
 
-		if (!opt.hold) {
+		if (!opt.hold || opt.hold < 0) {
 			// Sanitize hold
 			opt.hold = 1;
 		}
@@ -402,7 +404,7 @@ exports.createServer = function(options) {
 		// 
 		// Note: Even if we terminate a non-empty BOSH session, it is 
 		// OKAY since the 'inactivity' timeout will eventually timeout
-		// all open streams
+		// all open streams (on the XMPP server side)
 		// 
 		if (state.streams.length !== 0) {
 			log_it("DEBUG", sprintfd("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid));

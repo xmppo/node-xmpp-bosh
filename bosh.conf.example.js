@@ -10,7 +10,8 @@ exports.config = {
 	max_data_held_bytes: 20000, 
 
 	// Don't entertain more than 'max_bosh_connections' simultaneous 
-	// connections on any BOSH session
+	// connections on any BOSH session. This is related to the 'hold'
+	// attribute
 	max_bosh_connections: 2, 
 
 	// The maximum number of packets on either side of the current 'rid'
