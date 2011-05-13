@@ -186,6 +186,8 @@ exports.createServer = function(options) {
 	var path = options.path;
 	var port = options.port;
 
+	var active_sessions = 0;
+
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client.
 	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
@@ -204,6 +206,13 @@ exports.createServer = function(options) {
 
 	var MAX_INACTIVITY_SEC = options.max_inactivity_sec || 3600;
 
+	var HTTP_GET_RESPONSE_HEADERS = {
+		'Content-Type': 'application/xhtml+xml', 
+		'Access-Control-Allow-Origin': '*', 
+		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
+		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
+	};
+
 	var HTTP_POST_RESPONSE_HEADERS = {
 		'Content-Type': 'text/xml', 
 		'Access-Control-Allow-Origin': '*', 
@@ -219,6 +228,7 @@ exports.createServer = function(options) {
 	};
 
 	if (options.http_headers) {
+		add_to_headers(HTTP_GET_RESPONSE_HEADERS,     options.http_headers);
 		add_to_headers(HTTP_POST_RESPONSE_HEADERS,    options.http_headers);
 		add_to_headers(HTTP_OPTIONS_RESPONSE_HEADERS, options.http_headers);
 	}
@@ -397,6 +407,7 @@ exports.createServer = function(options) {
 
 		var state = new_state_object(opt, res);
 		sid_state[sid] = state;
+		++active_sessions;
 		return state;
 	}
 
@@ -425,6 +436,8 @@ exports.createServer = function(options) {
 
 		// Unset the inactivity timeout
 		unset_session_inactivity_timeout(state);
+
+		--active_sessions;
 
 		delete sid_state[state.sid];
 	}
@@ -1570,6 +1583,24 @@ exports.createServer = function(options) {
 		//
 		if (req.method == "OPTIONS") {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
+			res.end();
+			return;
+		}
+
+		if (req.method == "GET") {
+			log_it("DEBUG", "GET::Processing request, method:", req.method, "path:", u.pathname);
+			res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
+			res.write('<?xml version="1.0" encoding="utf-8"?>\n');
+			res.write('<!DOCTYPE html>\n');
+			res.write('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">\n');
+			res.write('\t<head>\n');
+			res.write('\t\t<title>node-xmpp-bosh</title>\n');
+			res.write('\t</head>\n\n');
+			res.write('\t<body>\n');
+			res.write('\t\t<h1>node-xmpp-bosh</h1>\n');
+			res.write('\t\t<p>' + active_sessions + ' active session' + (active_sessions > 1 ? 's': '') + '.</p>\n');
+			res.write('\t</body>\n');
+			res.write('</html>\n');
 			res.end();
 			return;
 		}
