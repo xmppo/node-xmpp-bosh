@@ -345,7 +345,7 @@ exports.createServer = function(options) {
 		 * { protocol: <PROTOCOL>, host: <HOST NAME>, port: <PORT> }
 		 *
 		 */
-		var m = route.match(/^(\S+):(\S+):([0-9]+)$/);
+		var m = route.match(/^(\S+):(\S+):([0-9]+)$/) || [ ];
 		log_it("DEBUG", "BOSH::route_parse:", m);
 		if (m && m.length === 4) {
 			return {
