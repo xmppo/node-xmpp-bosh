@@ -823,6 +823,24 @@ exports.createServer = function(options) {
 		var response = $terminate(attrs);
 		send_no_requeue(ro, state, response);
 	}
+
+	function get_statistics(res) {
+		var stats = [ ];
+		stats.push('<?xml version="1.0" encoding="utf-8"?>');
+		stats.push('<!DOCTYPE html>');
+		stats.push('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">');
+		stats.push('\t<head>');
+		stats.push('\t\t<title>node-xmpp-bosh</title>');
+		stats.push('\t</head>\n');
+		stats.push('\t<body>');
+		stats.push('\t\t<h1>node-xmpp-bosh</h1>');
+		stats.push('\t\t<p>' + active_sessions + ' active session' + (active_sessions == 1 ? '': 's') + '.</p>');
+		stats.push('\t</body>');
+		stats.push('</html>');
+		stats.push('');
+		return stats.join('\n');
+	}
+
 	/* End Response Sending Functions */
 
 	function get_random_stream(state) {
@@ -1578,8 +1596,9 @@ exports.createServer = function(options) {
 		// 
 		// Validation on HTTP requests:
 		//
-		// 1. Request MUST be either an OPTIONS on a POST request
-		// 2. The path MUST begin with the 'path' parameter
+		// 1. Request MUST be either an OPTIONS, GET or a POST request
+		// 2. The path MUST begin with the 'path' parameter for a POST request
+		// 3. The path MUST be "/" for a GET request
 		//
 		if (req.method == "OPTIONS") {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
@@ -1587,21 +1606,11 @@ exports.createServer = function(options) {
 			return;
 		}
 
-		if (req.method == "GET") {
-			log_it("DEBUG", "GET::Processing request, method:", req.method, "path:", u.pathname);
+		if (req.method == "GET" && u.pathname == "/") {
+			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request", req.method));
 			res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
-			res.write('<?xml version="1.0" encoding="utf-8"?>\n');
-			res.write('<!DOCTYPE html>\n');
-			res.write('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">\n');
-			res.write('\t<head>\n');
-			res.write('\t\t<title>node-xmpp-bosh</title>\n');
-			res.write('\t</head>\n\n');
-			res.write('\t<body>\n');
-			res.write('\t\t<h1>node-xmpp-bosh</h1>\n');
-			res.write('\t\t<p>' + active_sessions + ' active session' + (active_sessions > 1 ? 's': '') + '.</p>\n');
-			res.write('\t</body>\n');
-			res.write('</html>\n');
-			res.end();
+			var stats = get_statistics();
+			res.end(stats);
 			return;
 		}
 
