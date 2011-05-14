@@ -51,7 +51,7 @@ var $pres   = strophe.$pres;
 var out_queue = [ ];
 
 var SEND_EVERY_MSEC = 1000;
-var MESSAGES_TO_SEND = 100;
+var MESSAGES_TO_SEND = 1;
 var PACKETS_TO_SEND = 7;
 
 
@@ -86,10 +86,15 @@ function start_test() {
 
 		function onStanza(stanza) {
 			console.log("Received:", stanza.nodeName);
-			var s = stanza._childNodes[0];
-			if (stanza._childNodes.length > 0 && s.nodeName == "MESSAGE" && s._childNodes.length > 0) {
-				console.log("Got:", s._childNodes[0].innerHTML);
-			}
+			stanza._childNodes.forEach(function(s) {
+				if (s.nodeName == "MESSAGE" && s._childNodes && s._childNodes.length > 0) {
+					s._childNodes.filter(function(x) {
+						return x.nodeName == "BODY";
+					}).forEach(function(x) {
+						console.log("Got:", x.innerHTML);
+					});
+				}
+			});
 		}
 
 		function onConnect(status) {

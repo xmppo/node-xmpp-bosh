@@ -128,6 +128,10 @@ The project itself is divided into 4 main components as of now.
 	  defaults are ignored and the user set attribute values are 
 	  preferred.
 
+      [3] The 'from' attribute (if sent by the client) is echoed back to 
+          the client by the server as the 'to' attribute in the session 
+          (or stream) creation response.
+
 
 [E] References:
 
