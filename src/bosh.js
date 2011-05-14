@@ -186,8 +186,6 @@ exports.createServer = function(options) {
 	var path = options.path;
 	var port = options.port;
 
-	var active_sessions = 0;
-
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client.
 	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
@@ -273,6 +271,8 @@ exports.createServer = function(options) {
 	// }
 	//
 	var sid_state = {
+		// Stores the number of active sessions
+		length: 0
 	};
 
 	// This encapsulates the state for the client (xmpp) stream
@@ -288,6 +288,8 @@ exports.createServer = function(options) {
 	// }
 	//
 	var sn_state = {
+		// Stores the number of active streams
+		length: 0
 	};
 
 	// options should have:
@@ -407,7 +409,7 @@ exports.createServer = function(options) {
 
 		var state = new_state_object(opt, res);
 		sid_state[sid] = state;
-		++active_sessions;
+		++sid_state.length;
 		return state;
 	}
 
@@ -437,9 +439,8 @@ exports.createServer = function(options) {
 		// Unset the inactivity timeout
 		unset_session_inactivity_timeout(state);
 
-		--active_sessions;
-
 		delete sid_state[state.sid];
+		--sid_state.length;
 	}
 
 
@@ -474,6 +475,7 @@ exports.createServer = function(options) {
 		state.streams.push(sname);
 
 		sn_state[sname] = sstate;
+		++sn_state.length;
 		return sstate;
 	}
 
@@ -513,6 +515,7 @@ exports.createServer = function(options) {
 		var sstream = sn_state[stream.name];
 		if (sstream) {
 			delete sn_state[stream.name];
+			--sn_state.length;
 		}
 		var pos = state.streams.indexOf(stream.name);
 		if (pos != -1) {
@@ -828,16 +831,19 @@ exports.createServer = function(options) {
 		var stats = [ ];
 		stats.push('<?xml version="1.0" encoding="utf-8"?>');
 		stats.push('<!DOCTYPE html>');
-		stats.push('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">');
-		stats.push('\t<head>');
-		stats.push('\t\t<title>node-xmpp-bosh</title>');
-		stats.push('\t</head>\n');
-		stats.push('\t<body>');
-		stats.push('\t\t<h1>node-xmpp-bosh</h1>');
-		stats.push('\t\t<p>' + active_sessions + ' active session' + (active_sessions == 1 ? '': 's') + '.</p>');
-		stats.push('\t</body>');
-		stats.push('</html>');
-		stats.push('');
+		var content = new ltx.Element('html', {
+			'xmlns':    'http://www.w3.org/1999/xhtml', 
+			'xml:lang': 'en'
+		})
+			.c('head')
+			.c('title').t('node-xmpp-bosh').up()
+			.up()
+			.c('body')
+			.c('h1').t('node-xmpp-bosh').up()
+			.c('p').t(sid_state.length + dutil.pluralize(sid_state.length, ' active session')).up()
+			.c('p').t(sn_state.length  + dutil.pluralize(sn_state.length,  ' active stream')).up()
+			.tree();
+		stats.push(content.toString());
 		return stats.join('\n');
 	}
 

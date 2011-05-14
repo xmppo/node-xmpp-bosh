@@ -447,6 +447,9 @@ function require_again(file_path) {
 	return require(file_path);
 }
 
+function pluralize(n, suffix) {
+	return n == 1 ? suffix : suffix + 's';
+}
 
 
 exports.copy               = copy;
@@ -472,3 +475,4 @@ exports.time_diff          = time_diff;
 exports.ends_with          = ends_with;
 exports.find_module        = find_module;
 exports.require_again      = require_again;
+exports.pluralize          = pluralize;
