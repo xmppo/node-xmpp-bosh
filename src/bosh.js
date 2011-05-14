@@ -205,14 +205,14 @@ exports.createServer = function(options) {
 	var MAX_INACTIVITY_SEC = options.max_inactivity_sec || 3600;
 
 	var HTTP_GET_RESPONSE_HEADERS = {
-		'Content-Type': 'application/xhtml+xml', 
+		'Content-Type': 'application/xhtml+xml; charset=UTF-8', 
 		'Access-Control-Allow-Origin': '*', 
 		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
 		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
 	};
 
 	var HTTP_POST_RESPONSE_HEADERS = {
-		'Content-Type': 'text/xml', 
+		'Content-Type': 'text/xml; charset=UTF-8', 
 		'Access-Control-Allow-Origin': '*', 
 		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
 		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
