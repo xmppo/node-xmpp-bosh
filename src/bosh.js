@@ -174,6 +174,7 @@ function add_to_headers(dest, src) {
 //
 // * path
 // * port
+// * host
 // * max_data_held_bytes
 // * max_bosh_connections
 // * window_size
@@ -205,14 +206,16 @@ exports.createServer = function(options) {
 		'Content-Type': 'application/xhtml+xml; charset=UTF-8', 
 		'Access-Control-Allow-Origin': '*', 
 		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
-		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
+		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST', 
+		'Access-Control-Max-Age': '14400'
 	};
 
 	var HTTP_POST_RESPONSE_HEADERS = {
 		'Content-Type': 'text/xml; charset=UTF-8', 
 		'Access-Control-Allow-Origin': '*', 
 		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
-		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
+		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST', 
+		'Access-Control-Max-Age': '14400'
 	};
 
 	var HTTP_OPTIONS_RESPONSE_HEADERS = {
