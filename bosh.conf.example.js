@@ -2,6 +2,7 @@
 
 exports.config = {
 	port: 5280, 
+	host: '0.0.0.0, 
 	path: /^\/http-bind\/$/, 
 	logging: 'INFO', 
 

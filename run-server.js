@@ -64,6 +64,10 @@ function main() {
 			note: "The port on which to run the BOSH server (default: 5280)", 
 			value: -1
 		}, 
+		host: {
+			note: "The host on which to the BOSH server should listen for connections (default: 0.0.0.0)", 
+			value: -1
+		}, 
 		version: {
 			note: "Display version info and exit", 
 			value: false
@@ -113,6 +117,15 @@ function main() {
 		server_options.port = _port;
 	}
 
+	if (opts.host == -1) {
+		if (!server_options.host) {
+			server_options.host = '0.0.0.0';
+		}
+	}
+	else {
+		server_options.host = opts.host;
+	}
+
 	if (opts.path == -1) {
 		if (!server_options.path) {
 			server_options.path = '/http-bind/';
@@ -138,7 +151,8 @@ function main() {
 
 	var nxb    = require("./src/main.js");
 
-	var msg = "Starting the BOSH server on port '" + server_options.port + "' at '" + new Date() + "'";
+	var msg = nxb.dutil.sprintf("Starting the BOSH server on 'http://%s:%s%s' at '%s'", 
+								server_options.host, server_options.port, server_options.path, new Date());
 	var hr  = "+-" + nxb.dutil.repeat('-', msg.length).join('') + "-+";
 	console.log(hr);
 	console.log("| " + msg + " |");

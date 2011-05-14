@@ -183,9 +183,6 @@ function add_to_headers(dest, src) {
 //
 exports.createServer = function(options) {
 
-	var path = options.path;
-	var port = options.port;
-
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client.
 	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
@@ -1597,7 +1594,7 @@ exports.createServer = function(options) {
 
 		log_it("DEBUG", "BOSH::Someone connected");
 
-		var ppos = u.pathname.search(path);
+		var ppos = u.pathname.search(options.path);
 
 		// 
 		// Validation on HTTP requests:
@@ -1685,7 +1682,7 @@ exports.createServer = function(options) {
 	}
 
 	var http_server = http.createServer(http_request_handler);
-	http_server.listen(options.port);
+	http_server.listen(options.port, options.host);
 
 	http_server.on('error', function(ex) {
 		bee.emit('error', ex);
