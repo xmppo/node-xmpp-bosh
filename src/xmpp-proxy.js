@@ -145,14 +145,15 @@ dutil.copy(XMPPProxy.prototype, {
 			// Detach the 'data' handler so that we don't get any more events.
 			this._sock.removeAllListeners('data');
 
-			// Detach the 'error' handler so that we don't trigger the 'error'
-			// event when we disconnect.
-			this._sock.removeAllListeners('error');
-
 			// Write the stream termination tag
 			this.send("</stream:stream>");
 
 			this._is_connected = false;
+
+			// Do NOT detach the 'error' handler since that caused the server 
+			// to crash.
+			//
+			// http://code.google.com/p/node-xmpp-bosh/issues/detail?id=5
 
 			this._sock.destroy();
 		}
