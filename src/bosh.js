@@ -840,6 +840,7 @@ exports.createServer = function(options) {
 			.up()
 			.c('body')
 			.c('h1').t('node-xmpp-bosh').up()
+			.c('h3').t('XEP-0124: Bidirectional-streams Over Synchronous HTTP (BOSH)').up()
 			.c('p').t(sid_state.length + dutil.pluralize(sid_state.length, ' active session')).up()
 			.c('p').t(sn_state.length  + dutil.pluralize(sn_state.length,  ' active stream')).up()
 			.tree();
