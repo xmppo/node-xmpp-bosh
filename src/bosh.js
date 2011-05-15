@@ -184,6 +184,9 @@ function add_to_headers(dest, src) {
 //
 exports.createServer = function(options) {
 
+	// When was this server started?
+	var started = new Date();
+
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client.
 	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
@@ -272,7 +275,9 @@ exports.createServer = function(options) {
 	//
 	var sid_state = {
 		// Stores the number of active sessions
-		length: 0
+		length: 0, 
+		// Stores the total number of sessions
+		total:  0
 	};
 
 	// This encapsulates the state for the client (xmpp) stream
@@ -289,7 +294,9 @@ exports.createServer = function(options) {
 	//
 	var sn_state = {
 		// Stores the number of active streams
-		length: 0
+		length: 0, 
+		// Stores the total number of streams
+		total:  0
 	};
 
 	// options should have:
@@ -410,6 +417,7 @@ exports.createServer = function(options) {
 		var state = new_state_object(opt, res);
 		sid_state[sid] = state;
 		++sid_state.length;
+		++sid_state.total;
 		return state;
 	}
 
@@ -476,6 +484,7 @@ exports.createServer = function(options) {
 
 		sn_state[sname] = sstate;
 		++sn_state.length;
+		++sn_state.total;
 		return sstate;
 	}
 
@@ -843,8 +852,9 @@ exports.createServer = function(options) {
 			.c('a', {'href': 'http://code.google.com/p/node-xmpp-bosh/'}).t('node-xmpp-bosh').up()
 			.up()
 			.c('h3').t('Bidirectional-streams Over Synchronous HTTP').up()
-			.c('p').t(sid_state.length + dutil.pluralize(sid_state.length, ' active session')).up()
-			.c('p').t(sn_state.length  + dutil.pluralize(sn_state.length,  ' active stream')).up()
+			.c('p').t(sprintf('Uptime: %s', dutil.time_diff(started, new Date()))).up()
+			.c('p').t(sprintf('%s/%s active %s', sid_state.length, sid_state.total, dutil.pluralize(sid_state.total, 'session'))).up()
+			.c('p').t(sprintf('%s/%s active %s', sn_state.length, sn_state.total, dutil.pluralize(sn_state.total, 'stream'))).up()
 			.tree();
 		stats.push(content.toString());
 		return stats.join('\n');
