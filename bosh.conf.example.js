@@ -24,6 +24,10 @@ exports.config = {
 	default_inactivity_sec: 70, 
 
 	max_inactivity_sec: 160, 
+
+	// The maximum number of active streams allowed per BOSH session
+	max_streams_per_session: 8, 
+
 	http_headers: { }
 
 };

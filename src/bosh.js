@@ -205,6 +205,8 @@ exports.createServer = function(options) {
 
 	var MAX_INACTIVITY_SEC = options.max_inactivity_sec || 3600;
 
+	var MAX_STREAMS_PER_SESSION = options.max_streams_per_session || 8;
+
 	var HTTP_GET_RESPONSE_HEADERS = {
 		'Content-Type': 'application/xhtml+xml; charset=UTF-8', 
 		'Access-Control-Allow-Origin': '*', 
@@ -1532,12 +1534,19 @@ exports.createServer = function(options) {
 			else if (is_stream_add_request(node)) {
 				log_it("DEBUG", sprintfd("BOSH::%s::Stream Add", state.sid));
 
-				sstate = stream_add(state, node);
+				if (state.streams.length > MAX_STREAMS_PER_SESSION) {
+					// Make this a session terminate request.
+					node.attrs.type      = 'terminate';
+					node.attrs.condition = 'policy-violation';
+					delete node.attrs.stream;
+				}
+				else {
+					sstate = stream_add(state, node);
 
-				// Don't yet respond to the client. Wait for the 'stream-added' event
-				// from the Connector.
-
-				bee.emit('stream-add', sstate);
+					// Don't yet respond to the client. Wait for the 'stream-added' event
+					// from the Connector.
+					bee.emit('stream-add', sstate);
+				}
 			}
 
 			// Check for stream terminate
