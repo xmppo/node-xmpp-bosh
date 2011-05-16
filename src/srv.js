@@ -4,21 +4,18 @@ var EventEmitter = require('events').EventEmitter;
 function compareNumbers(a, b) {
     a = parseInt(a, 10);
     b = parseInt(b, 10);
-    if (a < b)
-        return -1;
-    if (a > b)
-        return 1;
-    return 0;
+    return (a < b ? -1 : (a > b ? 1 : 0));
 }
 
 function groupSrvRecords(addrs) {
     var groups = {};  // by priority
     addrs.forEach(function(addr) {
-                      if (!groups.hasOwnProperty(addr.priority))
-                          groups[addr.priority] = [];
+        if (!groups.hasOwnProperty(addr.priority)) {
+            groups[addr.priority] = [];
+	}
 
-                      groups[addr.priority].push(addr);
-                  });
+        groups[addr.priority].push(addr);
+    });
 
     var result = [];
     Object.keys(groups).sort(compareNumbers).forEach(function(priority) {
@@ -32,11 +29,13 @@ function groupSrvRecords(addrs) {
         var candidate = group[0];
         group.forEach(function(addr) {
             totalWeight += addr.weight;
-            if (w < totalWeight)
+            if (w < totalWeight) {
                 candidate = addr;
+	    }
         });
-        if (candidate)
+        if (candidate) {
             result.push(candidate);
+	}
     });
     return result;
 }
@@ -58,11 +57,14 @@ function resolveSrv(name, cb) {
             };
             groupSrvRecords(addrs).forEach(function(addr) {
                 resolveHost(addr.name, function(e, a) {
-                    if (a)
+                    if (a) {
                         a = a.map(function(a1) {
-                                      return { name: a1,
-                                               port: addr.port };
-                                  });
+                            return {
+				name: a1,
+                                port: addr.port
+			    };
+                        });
+		    }
                     cb1(e, a);
                 });
                 pending++;
@@ -76,8 +78,9 @@ function resolveHost(name, cb) {
     var error, results = [];
     var cb1 = function(e, addr) {
         error = error || e;
-        if (addr)
+        if (addr) {
             results.push(addr);
+	}
 
         cb((results.length > 0) ? null : error, results);
     };
@@ -100,10 +103,12 @@ function tryConnect(socket, addrs, listener) {
     };
     var connectNext = function() {
         var addr = addrs.shift();
-        if (addr)
+        if (addr) {
             socket.connect(addr.port, addr.name);
-        else
+	}
+        else {
             listener.emit('error', error);
+	}
     };
     socket.addListener('connect', onConnect);
     socket.addListener('error', onError);
@@ -118,10 +123,12 @@ exports.connect = function(socket, services, domain, defaultPort) {
         var service = services.shift();
         if (service) {
             resolveSrv(service + '.' + domain, function(error, addrs) {
-                if (addrs)
+                if (addrs) {
                     tryConnect(socket, addrs, listener);
-                else
+		}
+                else {
                     tryServices();
+		}
             });
         } else {
             resolveHost(domain, function(error, addrs) {
@@ -131,8 +138,10 @@ exports.connect = function(socket, services, domain, defaultPort) {
                                  port: defaultPort };
                     });
                     tryConnect(socket, addrs, listener);
-                } else
+                }
+		else {
                     listener.emit('error', error);
+		}
             });
         }
 
