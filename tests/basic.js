@@ -24,13 +24,7 @@
  */
 
 // var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind'
-var BOSH_HOST = 'http://localhost:5280';
-var BOSH_ENDPOINT = '/http-bind/';
-var BOSH_SERVICE = '';
-var XMPP_USERNAME = "user@example.com";
-var XMPP_PASSWORD = "password";
-var XMPP_ROUTE = '';
-
+var options = { };
 var conn = null;
 
 var strophe = require("../strophe/strophe.js").Strophe;
@@ -48,11 +42,11 @@ function disconnect() {
 }
 
 
-function connect() {
-    conn = new Strophe.Connection(BOSH_SERVICE);
+function connect(options) {
+    conn = new Strophe.Connection(options.endpoint);
     conn.rawInput = rawInput;
     conn.rawOutput = rawOutput;
-	conn.connect(XMPP_USERNAME, XMPP_PASSWORD, onConnect, null, null, XMPP_ROUTE);
+	conn.connect(options.username, options.password, onConnect, null, null, options.route);
 }
 
 function onConnect(status)
@@ -76,39 +70,25 @@ function onConnect(status)
 }
 
 function main() {
-	var opts = require('tav').set();
+	var opts = require('tav').set({
+		username: {
+			note: 'The username to login as', 
+		}, 
+		password: {
+			note: 'The password to use', 
+		}, 
+		endpoint: {
+			note: 'The BOSH service endpoint (default: http://localhost:5280/http-bind/)', 
+			value: 'http://localhost:5280/http-bind/'
+		}, 
+		route: {
+			note: 'The route attribute to use (default: <empty>)', 
+			value: ''
+		}
+	});
 
-	if (opts.username) {
-		XMPP_USERNAME = opts.username;
-	}
-
-	if (opts.password) {
-		XMPP_PASSWORD = opts.password;
-	}
-
-	if (opts.host) {
-		BOSH_HOST = opts.host;
-	}
-
-	if (opts.endpoint) {
-		BOSH_ENDPOINT = opts.endpoint;
-	}
-
-	if (opts.route) {
-		XMPP_ROUTE = opts.route;
-	}
-
-	if (XMPP_USERNAME == "user@example.com") {
-		// The user probably forgot to pass params.
-		console.log("Usage: node basic.js --username='user@example.com' " +
-			"--password='password' --host='http://localhost:5280' " + 
-			"--endpoint='/http-bind/' --route='xmpp:domain:port'");
-		process.exit(2);
-	}
-
-	BOSH_SERVICE = BOSH_HOST + BOSH_ENDPOINT;
-
-	connect();
+	options = opts;
+	connect(options);
 }
 
 function log(msg) 

@@ -24,11 +24,8 @@
  */
 
 // var BOSH_SERVICE = 'http://bosh.metajack.im:5280/xmpp-httpbind'
-var BOSH_HOST = 'http://localhost:5280';
-var BOSH_ENDPOINT = '/http-bind/';
-var BOSH_SERVICE = '';
 
-var XMPP_USERS = null;
+var options = { };
 
 /* The file passed in as --users should have the follow format:
 exports.users = [
@@ -70,16 +67,16 @@ function disconnect(conn) {
 }
 
 
-function connect(username, password, route, onStanza, onConnect) {
-    var conn = new Strophe.Connection(BOSH_SERVICE);
+function connect(username, password, endpoint, route, onStanza, onConnect) {
+    var conn = new Strophe.Connection(endpoint);
 	conn.connect(username, password, onConnect, null, null, route);
 	conn.xmlInput = onStanza;
 	return conn;
 }
 
-function start_test() {
+function start_test(options) {
 
-	XMPP_USERS.forEach(function(user_info) {
+	options.users.forEach(function(user_info) {
 		var jid      = user_info.jid;
 		var password = user_info.password;
 		var route    = user_info.route;
@@ -115,7 +112,7 @@ function start_test() {
 			else if (status == Strophe.Status.CONNECTED) {
 				// Send packets to all other users.
 				dutil.repeat(0, MESSAGES_TO_SEND).forEach(function(v, j) {
-					us(XMPP_USERS).chain()
+					us(options.users).chain()
 					.filter(function(x) { return true; /*x.jid != jid;*/ })	
 					.each(function(uinfo2, i) {
 						setTimeout(function() {
@@ -136,36 +133,27 @@ function start_test() {
 			}
 		}
 
-		var conn = connect(jid, password, route, onStanza, onConnect);
+		var conn = connect(jid, password, options.endpoint, route, onStanza, onConnect);
 	});
 }
 
 
 function main() {
-	var opts = require('tav').set();
+	var opts = require('tav').set({
+		users: {
+			note: 'The file containing the credentials of all users ' + 
+				'(check the comments in this file for the format of the file to pass here'
+		}, 
+		endpoint: {
+			note: 'The BOSH service endpoint (default: http://localhost:5280/http-bind/)', 
+			value: 'http://localhost:5280/http-bind/'
+		}
+	});
 
-	if (opts.host) {
-		BOSH_HOST = opts.host;
-	}
+	opts.users = require("./" + opts.users).users;
 
-	if (opts.endpoint) {
-		BOSH_ENDPOINT = opts.endpoint;
-	}
-
-	if (opts.users) {
-		XMPP_USERS = require("./" + opts.users).users;
-	}
-
-	if (!XMPP_USERS) {
-		// The user probably forgot to pass params.
-		console.log("Usage: node send_recv.js --users='users_config.js' " +
-			"--host='http://localhost:5280' --endpoint='/http-bind/'");
-		process.exit(2);
-	}
-
-	BOSH_SERVICE = BOSH_HOST + BOSH_ENDPOINT;
-
-	start_test();
+	options = opts;
+	start_test(options);
 }
 
 // GO!!
