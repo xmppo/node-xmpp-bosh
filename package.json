@@ -20,7 +20,19 @@
 		 ,"email": "dhruvbird@gmail.com"
 		 ,"web": "http://dhruvbird.com/"
 		 }]
-,"contributors": [ ]
+,"contributors": [{"name":"Vanaryon"
+		  ,"email":"vanaryon@gmail.com"
+		  ,"url":"http://vanaryon.eu/"
+		  }
+		  ,{"name":"Emmanuel Gil Peyrot"
+		  ,"email":"linkmauve@linkmauve.fr"
+		  ,"url":"http://linkmauve.fr/"
+		  }
+		  ,{"name":"Satyam Shekhar"
+		  ,"email":"satyamshekhar@gmail.com"
+		  ,"url":"http://satyamshekhar.com/"
+		  }
+]
 ,"licenses": [{"type": "MIT"}]
 ,"engine": "node"
 }
