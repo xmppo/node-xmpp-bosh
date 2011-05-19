@@ -27,6 +27,7 @@ var dutil = require("../src/dutil.js");
 var ltx   = require('ltx');
 var http  = require('http');
 var url   = require('url');
+var util  = require('util');
 
 var options = { };
 
@@ -38,19 +39,24 @@ function http_request(options, cb) {
     delete options.body;
 
     var r = http.request(options, function(res) {
-	var data = '';
-	res.on('data', function(d) {
-	    data += d.toString();
-	}).on('end', function() {
-	    cb(false, data);
-	}).on('error', function() {
-	    cb(true);
-	});
+		var data = '';
+		// console.log("RES:", res);
+
+		res.on('data', function(d) {
+			data += d.toString();
+		}).on('end', function() {
+			cb(false, data);
+		}).on('error', function() {
+			cb(true);
+		});
     });
 
     r.on('error', function() {
 		cb(true);
     });
+
+	r.setHeader("Connection", "Keep-Alive");
+	// console.log("REQ:", r);
 
     r.end(body);
 	return r;
