@@ -10,7 +10,13 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     [1] To run, type:
     $ bosh-server
 
-    [2] For running from within a node application, type:
+    The BOSH is now available at: http://localhost:5280/http-bind/
+    (don't forget the trailing slash).
+
+    [2] For options, type:
+    $ bosh-server --help
+
+    [3] For running from within a node application, type:
     $ node
     > var nxb    = require("node-xmpp-bosh");
     > var server = nxb.start();
@@ -19,19 +25,9 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     > // server.stop();
     >
 
-    [3] For a more complex setup, see the file main.js
-
-    [4] For options, type:
-    $ bosh-server --help
-
-    OR:
-
-    $ node `which bosh-server` --help
+    [4] For a more complex setup, see the file main.js
 
 
-
-The BOSH is now available at: http://localhost:5280/http-bind/
-(don't forget the trailing slash).
 
 
 [B] Features
@@ -46,6 +42,7 @@ The BOSH is now available at: http://localhost:5280/http-bind/
     * Custom attributes supported during session creation (passed on to handlers)
     * A client may request a custom inactivity period from the server by setting the
       'inactivity' attribute in the session creation request
+    * Benchmarks: http://code.google.com/p/node-xmpp-bosh/wiki/Benchmarks
 
 
 [C] Features not Planned:
@@ -175,6 +172,7 @@ The project itself is divided into 4 main components as of now.
     * cd tests
     * node basic.js [params] # To check basic working
     * node send_recv.js [params] # To check message sending/stress testing
+    * node stress.js [params] # To stress test node-xmpp-bosh
 
 [J] Scaling:
 

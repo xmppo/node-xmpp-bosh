@@ -9,54 +9,56 @@ node-xmpp-bosh has been tested with node v0.4.x
 2. Install npm: https://github.com/isaacs/npm
 curl http://npmjs.org/install.sh | npm_install=rc sh
 
-3. Get the proxy (this should get all deps.):
-npm install node-xmpp-bosh -g
+3. If you are a developer, goto step [11]
 
-4. If deps. installation fails, get them manually:
-npm install tav -g
-npm install ltx -g
-npm install node-expat -g
-npm install underscore -g
-npm install node-uuid -g
-npm install jsdom -g
+4. Get the proxy (this should get all deps.):
 
-5. If you are a developer, goto step [12]
+$ npm install node-xmpp-bosh -g
+
+5. If deps. installation fails, get them manually:
+$ npm install tav -g
+$ npm install ltx -g
+$ npm install node-expat -g
+$ npm install underscore -g
+$ npm install node-uuid -g
+$ npm install jsdom -g
 
 6. Set the node executable in the path (if not already set):
-export PATH=/opt/PATH-TO-NODE/bin/:$PATH
+
+$ export PATH=/opt/PATH-TO-NODE/bin/:$PATH
 (also add to .bashrc)
 
 7. Set the NODE_PATH variable:
-export NODE_PATH=/opt/PATH-TO-NODE/lib/node_modules/:$NODE_PATH
+
+$ export NODE_PATH=/opt/PATH-TO-NODE/lib/node_modules/:$NODE_PATH
 (also add to .bashrc)
 
 8. Test node:
-$> node
+$ node
 
 9. Start it!!
-bosh-proxy
 
-10. If the above fails, try:
-node `which bosh-proxy`
+$ bosh-proxy
 
-11. Report any bugs to dhruvbird@gmail.com
+10. Report any bugs to dhruvbird@gmail.com
 
 
 * If you are a developer and want a bleeding edge version of the server, 
 pull it from SVN and link it to your node module using npm.
 
-12. cd <your project directory>
+11. $ cd <your project directory>
 
-13. svn checkout http://node-xmpp-bosh.googlecode.com/svn/trunk/
-node-xmpp-bosh-read-only
+12. $ svn checkout http://node-xmpp-bosh.googlecode.com/svn/trunk/ node-xmpp-bosh-read-only
 
-14. cd node-xmpp-bosh-read-only
+13. $ cd node-xmpp-bosh-read-only
 
-15. Link the SVN version of the proxy to the main one (so that you can
+14. Link the SVN version of the proxy to the main one (so that you can 
 pull and needn't wait for a release)
-npm link
 
-16. Set the executable flag on run-server.js:
-chmod +x run-server.js
+$ npm link
 
-17. Goto step [6]
+15. Set the executable flag on run-server.js:
+
+$ chmod +x run-server.js
+
+16. Goto step [6]
