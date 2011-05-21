@@ -43,6 +43,8 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     * A client may request a custom inactivity period from the server by setting the
       'inactivity' attribute in the session creation request
     * Benchmarks: http://code.google.com/p/node-xmpp-bosh/wiki/Benchmarks
+    * Monitor the BOSH server [http://localhost:5280/] (avaibale only if you 
+      have node-xmpp-bosh running on your system)
 
 
 [C] Features not Planned:
@@ -50,7 +52,36 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     * gzip support for communicating with the backend XMPP server
 
 
-[D] Architecture:
+[D] Configuration parameters:
+
+    The following parameters can be set in the configuration file 
+    (see the file bosh.conf.example.js for an example). The limits mentioned
+    below are all HARD limits. Soft limits are set internally, but can never exceed the
+    HARD limits. You can run node-xmpp-bosh with a config file as:
+
+    $ bosh-server --config=PATH_TO_CONFIG
+
+    * path: The path to listen on (default: /http-bind/)
+    * port: The port to listen on (default: 5280)
+    * host: The host to listen on (default: 0.0.0.0)
+    * max_data_held_bytes: The maximum allowable number of bytes that a POST 
+      request body may contain. Any request exceeding this value will be dropped
+      (default: 20000)
+    * max_bosh_connections: The maximum number of simultaneous connections
+      that the BOSH server will entertain for any open BOSH session 
+      (default: 2)
+    * window_size: The size of the window when entertaining out of order 
+      requests (default: 2)
+    * default_inactivity_sec: The default (or minimum) inactivity value (in 
+      second) that the BOSH server will set for the session inactivity timeout
+      (default: 70)
+    * max_inactivity_sec: The maximum inactivity value (in second) that the 
+      BOSH server will set for the session inactivity timeout (default: 160)
+    * http_headers: A JSON (object) containing HTTP headers to pass on along
+      with the response (default: { })
+
+
+[E] Architecture:
 
 The project itself is divided into 4 main components as of now.
 
@@ -130,12 +161,12 @@ The project itself is divided into 4 main components as of now.
           (or stream) creation response.
 
 
-[E] References:
+[F] References:
 
     * http://xmpp.org/extensions/xep-0124.html
     * http://xmpp.org/extensions/xep-0206.html 
 
-[F] Dependencies:
+[G] Dependencies:
 
     * Node.js
     * node-expat
@@ -145,7 +176,7 @@ The project itself is divided into 4 main components as of now.
     * underscore.js
     * jsdom (for tests)
 
-[G] Tested with:
+[H] Tested with:
 
     * Servers:
         * jabber.org
@@ -163,18 +194,18 @@ The project itself is divided into 4 main components as of now.
 	* libpurple - Does NOT work with libpurple since libpurple
 	  expects <stream:features> in the initial BOSH creation response
 
-[H] Tested using:
+[I] Tested using:
 
     * strophe.js 
 
-[I] Running tests:
+[J] Running tests:
 
     * cd tests
     * node basic.js [params] # To check basic working
     * node send_recv.js [params] # To check message sending/stress testing
     * node stress.js [params] # To stress test node-xmpp-bosh
 
-[J] Scaling:
+[K] Scaling:
 
     * node-xmpp-bosh allows you to set custom HTTP headers in the response to
       every valid request. You can use this in combination with the 
@@ -187,7 +218,7 @@ The project itself is divided into 4 main components as of now.
       /PREFIX/A/ to one instance and requests to /PREFIX/B/ to another
       instance and so on.
 
-[K] Other Connection Managers:
+[L] Other Connection Managers:
     * [http://xmpp.org/about-xmpp/technology-overview/bosh/#impl-cm List on xmpp.org]
     * [http://code.stanziq.com/punjab Punjab - Python & Twisted]
     * [https://github.com/directi/chirkut Chirkut - Python & Twisted]
@@ -195,7 +226,7 @@ The project itself is divided into 4 main components as of now.
     * [http://blog.bluendo.com/ff/bosh-connection-manager-update Araneo - Python & Twisted]
     * [http://rubyforge.org/projects/rhb/ rhb - Ruby]
 
-[L] Releases:
+[M] Releases:
     * v0.0.1 == SVN Commit #39
     * v0.0.2 == SVN Commit #50
     * v0.0.3 == SVN Commit #56
