@@ -595,7 +595,7 @@ exports.createServer = function(options) {
 		// because of the rule below.
 		//
 
-		if (state.res.length >= MAX_BOSH_CONNECTIONS) {
+		if (state.res.length > MAX_BOSH_CONNECTIONS) {
 			// Just send the termination message and destroy the socket.
 			var _ro = {
 				res: res, 
