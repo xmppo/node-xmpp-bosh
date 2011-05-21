@@ -1645,21 +1645,31 @@ exports.createServer = function(options) {
 		// 2. The path MUST begin with the 'path' parameter for a POST request
 		// 3. The path MUST be "/" for a GET request
 		//
-		if (req.method === "OPTIONS") {
+		if (req.method === 'OPTIONS') {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
 			return;
 		}
 
-		if (req.method === "GET" && u.pathname === "/") {
-			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request", req.method));
-			res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
-			var stats = get_statistics();
-			res.end(stats);
-			return;
+		if (req.method === 'GET') {
+			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", req.method, u.pathname));
+
+			switch (u.pathname) {
+			case '/':
+				res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
+				var stats = get_statistics();
+				res.end(stats);
+				return;
+			case '/favicon.ico':
+				res.writeHead(303, {
+					'Location': 'http://xmpp.org/favicon.ico'
+				});
+				res.end();
+				return;
+			}
 		}
 
-		if (req.method !== "POST" || ppos === -1) {
+		if (req.method !== 'POST' || ppos === -1) {
 			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
 			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
