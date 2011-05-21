@@ -304,8 +304,8 @@ exports.createServer = function(options) {
 	//     to: "domain.tld", 
 	//     terminated: true/false, 
 	//     state: The sid_state object (as above)
-    //     from (optional): The JID of the user for this stream
-    //     route (optional): The endpoint of the server to connect to (xmpp:domain:port)
+	//     from (optional): The JID of the user for this stream
+	//     route (optional): The endpoint of the server to connect to (xmpp:domain:port)
 	//   }
 	// }
 	//
