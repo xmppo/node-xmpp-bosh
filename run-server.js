@@ -87,7 +87,7 @@ function main() {
 	var server_options = { };
 
 	if (opts.config) {
-		if (opts.config[0] != '/') {
+		if (opts.config[0] !== '/') {
 			opts.config = "./" + opts.config;
 		}
 
@@ -96,7 +96,7 @@ function main() {
 			server_options = _cfg.config;
 		}
 		catch(ex) {
-			if (opts.config != BOSH_DEFAULT_CONFIG_PATH) {
+			if (opts.config !== BOSH_DEFAULT_CONFIG_PATH) {
 				console.error("Caught Exception: '" + ex.toString() + "' while trying to read " + 
 					"config file '" + opts.config + "'");
 				process.exit(2);
@@ -104,7 +104,7 @@ function main() {
 		}
 	}
 
-	if (opts.port == -1) {
+	if (opts.port === -1) {
 		if (!server_options.port) {
 			server_options.port = 5280;
 		}
@@ -117,7 +117,7 @@ function main() {
 		server_options.port = _port;
 	}
 
-	if (opts.host == -1) {
+	if (opts.host === -1) {
 		if (!server_options.host) {
 			server_options.host = '0.0.0.0';
 		}
@@ -126,19 +126,19 @@ function main() {
 		server_options.host = opts.host;
 	}
 
-	if (opts.path == -1) {
+	if (opts.path === -1) {
 		if (!server_options.path) {
 			server_options.path = '/http-bind/';
 		}
 	}
 	else {
-		if (opts.path.length > 0 && opts.path[0] != "/") {
+		if (opts.path.length > 0 && opts.path[0] !== "/") {
 			opts.path = "/" + opts.path;
 		}
 		server_options.path = opts.path;
 	}
 
-	if (opts.logging == -1) {
+	if (opts.logging === -1) {
 		if (!server_options.logging) {
 			server_options.logging = 'DEBUG';
 		}

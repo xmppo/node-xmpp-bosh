@@ -37,12 +37,12 @@ function get_files(dir) {
 
 var pwd_files   = get_files('.');
 var src_files   = get_files('src');
-var tests_files = get_files('src');
+var tests_files = get_files('tests');
 
 
 var files = [].concat(pwd_files, src_files, tests_files);
 files = files.filter(function(fn) {
-	return fn.search(/.js$/) != -1;
+	return fn.search(/.js$/) !== -1;
 });
 
 var mtimes = { };

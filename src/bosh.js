@@ -669,7 +669,7 @@ exports.createServer = function(options) {
 			// Raise a no-client event on pending as well as unacked responses.
 			var _p = us.pluck(state.pending, 'response');
 
-			var _uar = dutil.get_keys(state.unacked_responses)
+			var _uar = Object.keys(state.unacked_responses)
 			.map(function(rid) {
 				return state.unacked_responses[rid].response;
 			});
@@ -1329,7 +1329,7 @@ exports.createServer = function(options) {
 			state.queued_requests[node.attrs.rid] = node;
 
 			// Process all queued requests
-			var _queued_request_keys = dutil.get_keys(state.queued_requests);
+			var _queued_request_keys = Object.keys(state.queued_requests);
 			_queued_request_keys.sort(dutil.num_cmp);
 
 			_queued_request_keys.forEach(function(rid) {
@@ -1353,7 +1353,7 @@ exports.createServer = function(options) {
 			if (state.ack) {
 				/* Begin ACK handling */
 
-				var _uar_keys = dutil.get_keys(state.unacked_responses);
+				var _uar_keys = Object.keys(state.unacked_responses);
 				if (_uar_keys.length > WINDOW_SIZE * 4 /* We are fairly generous */) {
 					// The client seems to be buggy. It has not ACKed the
 					// last WINDOW_SIZE * 4 requests. We turn off ACKs.
@@ -1418,7 +1418,7 @@ exports.createServer = function(options) {
 				// something to respond with for any request with an rid that
 				// is less than state.rid + 1
 				//
-				_queued_request_keys = dutil.get_keys(state.queued_requests);
+				_queued_request_keys = Object.keys(state.queued_requests);
 				_queued_request_keys.sort(dutil.num_cmp);
 				var quit_me = false;
 
@@ -1738,7 +1738,7 @@ exports.createServer = function(options) {
 
 /*
 	setInterval(function() {
-		dutil.get_keys(sid_state).forEach(function(sid) {
+	    Object.keys(sid_state).forEach(function(sid) {
 			console.log("sid:", sid, "pending:", sid_state[sid].pending.length, "responses:", sid_state[sid].res.length);
 		})
 	}, 20000);

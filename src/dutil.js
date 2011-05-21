@@ -47,7 +47,7 @@ function get_numeric_log_level(level) {
 	level = level.toUpperCase();
 	var nll = 6;
 
-	if (level in _log_levels) {
+	if (_log_levels.hasOwnProperty(level)) {
 		nll = _log_levels[level];
 	}
 
@@ -74,7 +74,7 @@ function log_it(level) {
 
 	if (numeric_level > 0 && numeric_level <= _log_level) {
 		var args = arguments_to_array(arguments).slice(1);
-		if (args.length == 1 && typeof args[0] == "function") {
+		if (args.length === 1 && typeof args[0] === 'function') {
 			// Lazy evaluation.
 			args = args[0]();
 
@@ -128,14 +128,17 @@ function copy(dest, src, restrict) {
 	 * If restrict is truthy, then it should be an array
 	 * that contains the keys to be copied.
 	 */
-	for (var k in src) {
-		if (restrict) {
-			if (restrict.indexOf(k) != -1) {
+	var k;
+	for (k in src) {
+		if (src.hasOwnProperty(k)) {
+			if (restrict) {
+				if (restrict.indexOf(k) !== -1) {
+					dest[k] = src[k];
+				}
+			}
+			else {
 				dest[k] = src[k];
 			}
-		}
-		else {
-			dest[k] = src[k];
 		}
 	}
 	return dest;
@@ -146,9 +149,12 @@ function extend(dest, src) {
 	 * hash 'src'. If a key is already present in 'dest', 
 	 * don't overrite it with one from 'src'.
 	 */
-	for (var k in src) {
-		if (!(k in dest)) {
-			dest[k] = src[k];
+	var k;
+	for (k in src) {
+		if (src.hasOwnProperty(k)) {
+			if (!dest.hasOwnProperty(k)) {
+				dest[k] = src[k];
+			}
 		}
 	}
 	return dest;
@@ -163,7 +169,8 @@ function repeat(item, n) {
 	 * array being modified.
 	 */
 	var ret = [];
-	for (var i = 0; i < n; ++i) {
+	var i;
+	for (i = 0; i < n; ++i) {
 		ret.push(item);
 	}
 	return ret;
@@ -186,10 +193,11 @@ function alternator() {
 	var exhausted = false;
 	var buff = [];
 	var ctrs = repeat(0, nseq);
+	var i;
 
 	while (!exhausted) {
 		exhausted = true;
-		for (var i = 0; i < nseq; ++i) {
+		for (i = 0; i < nseq; ++i) {
 			if (ctrs[i] < arguments[i].length) {
 				// log_it('debug', "Adding to buff:", arguments[i][ctrs[i]]);
 				buff.push(arguments[i][ctrs[i]]);
@@ -205,11 +213,12 @@ function alternator() {
 function map(a, f) {
 	// Apply 'f' [with 2 arguments (element, index)] or call member function 'f' [with no arguments]
 	var r = [ ];
-	for (var i = 0; i < a.length; ++i) {
-		if (typeof f == "function") {
+	var i;
+	for (i = 0; i < a.length; ++i) {
+		if (typeof f === 'function') {
 			r.push(f(a[i], i));
 		}
-		else if (typeof f == "string") {
+		else if (typeof f === 'string') {
 			r.push(a[i][f]());
 		}
 	}
@@ -223,7 +232,7 @@ function sprintf(fmt_str) {
 
 	// log_it('debug', "fs_parts, args:", fs_parts, args);
 
-	if (fs_parts.length != args.length + 1) {
+	if (fs_parts.length !== args.length + 1) {
 		var estr = sprintf("The number of arguments in your format string (%s)[%s] " + 
 			"does NOT match the number of arguments passed[%s]", 
 			fmt_str, fs_parts.length-1, args.length);
@@ -259,18 +268,13 @@ function not(proc) {
 	};
 }
 
-function get_keys(o) {
-	var r = [ ];
-	for (var k in o) {
-		r.push(k);
-	}
-	return r;
-}
-
 function rev_hash(o) {
 	var r = { };
-	for (var k in o) {
-		r[o[k]] = k;
+	var k;
+	for (k in o) {
+		if (o.hasOwnProperty(k)) {
+			r[o[k]] = k;
+		}
 	}
 	return r;
 }
@@ -327,7 +331,7 @@ function isTruthy(x) {
 
 
 function json_parse(jstr, def) {
-	def = typeof def == "undefined" ? '' : def;
+	def = typeof def === 'undefined' ? '' : def;
 	try {
 		def = JSON.parse(jstr);
 	}
@@ -387,10 +391,10 @@ function time_diff(past, present) {
 		return r;
 	})
 	.filter(function(v) {
-		return v[0] != ':' && v[0] != '' ? v[1] > 0 : true;
+		return v[0] !== ':' && v[0] !== '' ? v[1] > 0 : true;
 	})
 	.map(function(v) {
-		return v[0] != ':' && v[0] != '' ? 
+		return v[0] !== ':' && v[0] !== '' ? 
 			(v[1] + ' ' + v[0] + (v[1] > 1 ? 's' : '') + ' ') : 
 			((v[1] < 10 ? '0' : '') + v[1] + v[0]);
 	})
@@ -405,7 +409,7 @@ function ends_with(haystack, needle) {
 	 *
 	 */
 	var re = new RegExp(needle + '$');
-	return haystack.search(needle) != -1;
+	return haystack.search(needle) !== -1;
 }
 
 function find_module(file_name) {
@@ -419,11 +423,14 @@ function find_module(file_name) {
 	 *
 	 */
 	var mhandle = { handle: null, key: '' };
-	for (var mname in require.cache) {
-		if (ends_with(mname, file_name)) {
-			mhandle.handle = require.cache[mname];
-			mhandle.key    = mname;
-			break;
+	var mname;
+	for (mname in require.cache) {
+		if (require.cache.hasOwnProperty(mname)) {
+			if (ends_with(mname, file_name)) {
+				mhandle.handle = require.cache[mname];
+				mhandle.key    = mname;
+				break;
+			}
 		}
 	}
 	return mhandle;
@@ -461,7 +468,6 @@ exports.map                = map;
 exports.sprintf            = sprintf;
 exports.sprintfd           = sprintfd;
 exports.not                = not;
-exports.get_keys           = get_keys;
 exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
 exports.isFalsy            = isFalsy;

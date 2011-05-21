@@ -158,7 +158,8 @@ function start_test(options) {
     var agent = http.getAgent(u.hostname, u.port);
     agent.maxSockets = options.nconn;
 
-    for (var i = 0; i < options.nsess; ++i) {
+	var i;
+    for (i = 0; i < options.nsess; ++i) {
 		do_test(options.domain, options.route);
     }
 }
