@@ -829,7 +829,7 @@ exports.createServer = function(options) {
 	// send_session_terminate() takes 'ro' as its first argument whereas
 	// send_stream_terminate_response() does NOT because we might want to send a 
 	// session termination response on certain error conditions that have
-	// the 'ro' object with them already (i.e. it is not shift()ed from state.res
+	// the 'ro' object with them already (i.e. it is not shift()ed from state.res)
 	//
 	function send_session_terminate(ro, state, condition) {
 		/* Terminates an open BOSH session.
@@ -1001,10 +1001,10 @@ exports.createServer = function(options) {
 		 * and the position of the first such response in 'pending' 
 		 * is returned.
 		 *
-		 * Note: This can cause subtle bugs such as out of order responses.
+		 * Note: This *may* cause subtle bugs such as out of order responses.
 		 * Consider the case where you get a normal body followed by a 
-		 * body with a 'response' attribute followed by a normal body. In 
-		 * this case, the 2nd body will be clubbed with the 1st body. 
+		 * body with a some custom attribute set, followed by a normal body. 
+		 * In this case, the 2nd body will be clubbed with the 1st body. 
 		 * However, such situations should be very rare.
 		 * 
 		 * To be 100% sure, we should just check the last (most recent)
