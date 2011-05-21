@@ -68,26 +68,36 @@ function inflated_attrs(node) {
 	//
 	var xmlns = { };
 	var attrs = { };
-	var k, m;
+	var k, m, xk;
 
 	for (k in node.attrs) {
-		m = k.match(/^xmlns:([\S\s]+)$/);
-		if (m && m.length > 0) {
-			xmlns[m[1]] = node.attrs[k];
-			attrs[k] = node.attrs[k];
+		if (node.attrs.hasOwnProperty(k)) {
+			m = k.match(/^xmlns:([\S\s]+)$/);
+			if (m && m.length > 0) {
+				xmlns[m[1]] = node.attrs[k];
+				attrs[k] = node.attrs[k];
+			}
 		}
 	}
 
 	for (k in node.attrs) {
-		for (var xk in xmlns) {
-			// Looks like a smiley, doesn't it; a sad one at that :-p
-			var re = new RegExp("^" + xk + ":([\\s\\S]+)$");
-			m = k.match(re);
+		if (node.attrs.hasOwnProperty(k)) {
+			for (xk in xmlns) {
+				if (xmlns.hasOwnProperty(xk)) {
+					// Looks like a smiley, doesn't it; a sad one at that :-p
+					var re = new RegExp("^" + xk + ":([\\s\\S]+)$");
+					m = k.match(re);
+					
+					if (m && m.length > 0) {
+						attrs[xmlns[xk] + ":" + m[1]] = node.attrs[k];
+					} // if (m && m.length > 0)
 
-			if (m && m.length > 0) {
-				attrs[xmlns[xk] + ":" + m[1]] = node.attrs[k];
-			}
-		}
+				} // if (!node.attrs.hasOwnProperty(xmlns))
+
+			} // for (xk in xmlns)
+
+		} // if (node.attrs.hasOwnProperty(k))
+
 	}
 
 	return attrs;
@@ -115,7 +125,7 @@ function is_stream_restart_packet(node) {
 	// http://xmpp.org/extensions/xep-0206.html#create and
 	// http://xmpp.org/extensions/xep-0206.html#preconditions-sasl
 	var ia = inflated_attrs(node);
-	return ia["urn:xmpp:xbosh:restart"] == "true";
+	return ia["urn:xmpp:xbosh:restart"] === "true";
 }
 
 function is_stream_add_request(node) {
@@ -132,7 +142,7 @@ function is_stream_terminate_request(node) {
 	// http://xmpp.org/extensions/xep-0124.html#terminate
 	return node.attrs.sid && 
 		node.attrs.rid && 
-		node.attrs.type == "terminate";
+		node.attrs.type === "terminate";
 }
 // End packet type checkers
 
@@ -159,9 +169,12 @@ function $terminate(attrs) {
 // Begin HTTP header helpers
 function add_to_headers(dest, src) {
 	var acah = dest['Access-Control-Allow-Headers'].split(', ');
-	for (var k in src) {
-		dest[k] = src[k];
-		acah.push(k);
+	var k;
+	for (k in src) {
+		if (src.hasOwnProperty(k)) {
+			dest[k] = src[k];
+			acah.push(k);
+		}
 	}
 	dest['Access-Control-Allow-Headers'] = acah.join(', ');
 }
@@ -291,6 +304,8 @@ exports.createServer = function(options) {
 	//     to: "domain.tld", 
 	//     terminated: true/false, 
 	//     state: The sid_state object (as above)
+    //     from (optional): The JID of the user for this stream
+    //     route (optional): The endpoint of the server to connect to (xmpp:domain:port)
 	//   }
 	// }
 	//
@@ -529,7 +544,7 @@ exports.createServer = function(options) {
 			--sn_state.length;
 		}
 		var pos = state.streams.indexOf(stream.name);
-		if (pos != -1) {
+		if (pos !== -1) {
 			state.streams.splice(pos, 1);
 		}
 	}
@@ -602,13 +617,14 @@ exports.createServer = function(options) {
 		// has not yet been sent, then the 'error' event is NOT raised by node.js.
 		// Hence, we need not attach an 'error' event handler yet.
 
-		var ro = {
+		var ro;
+		ro = {
 			res: res, 
 			rid: rid, // This is the 'rid' of the request associated with this response.
 			// timeout the connection if no one uses it for more than state.wait sec.
 			timeout: setTimeout(function() {
 				var pos = state.res.indexOf(ro);
-				if (pos == -1) {
+				if (pos === -1) {
 					return;
 				}
 				// Remove self from list of held connections.
@@ -996,7 +1012,8 @@ exports.createServer = function(options) {
 		 * and merge the two only if their attributes are equal.
 		 *
 		 */
-		for (var i = 0; i < pending.length; ++i) {
+		var i;
+		for (i = 0; i < pending.length; ++i) {
 			if (us.isEqual(response.attrs, pending[i].response.attrs)) {
 				return i;
 			}
@@ -1008,7 +1025,7 @@ exports.createServer = function(options) {
 	function merge_or_push_response(response, sstate) {
 		var state = sstate.state;
 		var merge_index = can_merge(response, state.pending);
-		if (merge_index != -1) {
+		if (merge_index !== -1) {
 			// Yes, it is the same stream. Merge the responses.
 			var _presp = state.pending[merge_index].response;
 
@@ -1080,10 +1097,10 @@ exports.createServer = function(options) {
 		 * so don't even waste your time trying to fix it that way.
 		 *
 		 */
-		if (sstate.terminated) {
+		// if (sstate.terminated) {
 			// @taher.g Disable this check for now
 			// return;
-		}
+		// }
 
 		var state = sstate.state;
 
@@ -1275,7 +1292,7 @@ exports.createServer = function(options) {
 			}
 
 			// Are we the only stream for this BOSH session?
-			if (state.streams.length == 1) {
+			if (state.streams.length === 1) {
 				// Yes, we are. Let's pretend that the stream name came along
 				// with this request. This is mentioned in the XEP.
 				sstate = sn_state[state.streams[0]];
@@ -1316,7 +1333,7 @@ exports.createServer = function(options) {
 			_queued_request_keys.sort(dutil.num_cmp);
 
 			_queued_request_keys.forEach(function(rid) {
-				if (rid == state.rid + 1) {
+				if (rid === state.rid + 1) {
 					// This is the next logical packet to be processed.
 					nodes = nodes.concat(state.queued_requests[rid].children);
 					delete state.queued_requests[rid];
@@ -1415,7 +1432,7 @@ exports.createServer = function(options) {
 
 						delete state.queued_requests[rid];
 
-						if (rid in state.unacked_responses) {
+						if (state.unacked_responses.hasOwnProperty(rid)) {
 							//
 							// Send back the original response on this conection itself
 							//
@@ -1628,13 +1645,13 @@ exports.createServer = function(options) {
 		// 2. The path MUST begin with the 'path' parameter for a POST request
 		// 3. The path MUST be "/" for a GET request
 		//
-		if (req.method == "OPTIONS") {
+		if (req.method === "OPTIONS") {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
 			return;
 		}
 
-		if (req.method == "GET" && u.pathname == "/") {
+		if (req.method === "GET" && u.pathname === "/") {
 			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request", req.method));
 			res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
 			var stats = get_statistics();
@@ -1642,7 +1659,7 @@ exports.createServer = function(options) {
 			return;
 		}
 
-		if (req.method != "POST" || ppos == -1) {
+		if (req.method !== "POST" || ppos === -1) {
 			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
 			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
