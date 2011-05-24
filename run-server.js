@@ -151,8 +151,9 @@ function main() {
 
 	var nxb    = require("./src/main.js");
 
-	var msg = nxb.dutil.sprintf("Starting the BOSH server on 'http://%s:%s%s' at '%s'", 
-								server_options.host, server_options.port, server_options.path, new Date());
+	var msg = nxb.dutil.sprintf("Starting BOSH server 'v%s' on 'http://%s:%s%s' at '%s'", 
+								get_version(), server_options.host, server_options.port, 
+								server_options.path, new Date());
 	var hr  = "+-" + nxb.dutil.repeat('-', msg.length).join('') + "-+";
 	console.log(hr);
 	console.log("| " + msg + " |");

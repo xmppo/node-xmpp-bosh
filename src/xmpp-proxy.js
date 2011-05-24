@@ -33,8 +33,8 @@ var dutil  = require('./dutil.js');
 var us     = require('underscore');
 
 
-var NS_XMPP_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
-var NS_STREAM = 'http://etherx.jabber.org/streams';
+var NS_XMPP_TLS =     'urn:ietf:params:xml:ns:xmpp-tls';
+var NS_STREAM =       'http://etherx.jabber.org/streams';
 var NS_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams';
 
 
