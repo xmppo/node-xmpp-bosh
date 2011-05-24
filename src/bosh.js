@@ -327,7 +327,7 @@ exports.createServer = function(options) {
 
 		options.hold = options.hold > MAX_BOSH_CONNECTIONS ? MAX_BOSH_CONNECTIONS : options.hold;
 
-		// TODO: Figure if res needs to be sorted in 'rid' order.
+		// res needs is sorted in 'rid' order.
 		options.res = [ ];
 
 		//
@@ -354,9 +354,10 @@ exports.createServer = function(options) {
 		options.max_rid_sent = options.rid - 1;
 
 		if (options.inactivity) {
-			options.inactivity = Math.floor(options.inactivity);
-			options.inactivity = options.inactivity < MAX_INACTIVITY_SEC ? options.inactivity : MAX_INACTIVITY_SEC;
-			options.inactivity = options.inactivity > DEFAULT_INACTIVITY_SEC ? options.inactivity : DEFAULT_INACTIVITY_SEC;
+			// We squeeze options.inactivity between the min and max allowable values
+			options.inactivity = [ Math.floor(options.inactivity), 
+								   MAX_INACTIVITY_SEC, 
+								   DEFAULT_INACTIVITY_SEC ].sort(dutil.num_cmp)[1];
 		}
 		else {
 			options.inactivity = DEFAULT_INACTIVITY_SEC;
@@ -642,8 +643,11 @@ exports.createServer = function(options) {
 			state.sid, state.res.length)
 		);
 
-		state.res.push(ro);
+		// Insert into its correct position (in RID order)
+		var pos;
+		for (pos = 0; pos < state.res.length && state.res[pos].rid < ro.rid; ++pos) { }
 
+		state.res.splice(pos, 0, ro);
 		return state;
 	}
 
@@ -945,6 +949,10 @@ exports.createServer = function(options) {
 	}
 
 	function send_immediate(res, response) {
+		/* This function sends 'response' immediately. i.e. It does not 
+		  * queue it up and this response may reach on an RID that is
+		  * not in sequence.
+		  */
 		log_it("DEBUG", sprintfd("BOSH::send_immediate:%s", response));
 		res.on('error', NULL_FUNC);
 		res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);

@@ -39,7 +39,7 @@ exports.lookup    = ls;
 exports.dutil     = dutil;
 exports.start     = function(options) {
 
-// TODO: Try to add all functions in dutil into the _ namespace.
+	// TODO: Try to add all functions in dutil into the _ namespace.
 
 	options = options || { };
 	options = dutil.extend(options, {
@@ -69,13 +69,9 @@ exports.start     = function(options) {
 	// 6. nodes (from user to server)
 	// 7. response (from server to user)
 	// 8. terminate (when the server terminates the stream)
-	// 9. error
+	// 9. error: Will throw an unhandled exception if the 'error' event is not handled
 	//
 
-
-	bosh_server.on('error', function(e) {
-		dutil.log_it("ERROR", "Could not create the BOSH server:", e);
-	});
 
 	bosh_server.on('response-acknowledged', function(wrapped_response, state) {
 		// What to do with this response??
