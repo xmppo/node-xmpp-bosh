@@ -458,6 +458,11 @@ function pluralize(n, suffix) {
 	return n == 1 ? suffix : suffix + 's';
 }
 
+function toNumber(s) {
+	var _n = Number(s);
+	return isNaN(_n) ? 0 : _n;
+}
+
 
 exports.copy               = copy;
 exports.extend             = extend;
@@ -482,3 +487,4 @@ exports.ends_with          = ends_with;
 exports.find_module        = find_module;
 exports.require_again      = require_again;
 exports.pluralize          = pluralize;
+exports.toNumber           = toNumber;

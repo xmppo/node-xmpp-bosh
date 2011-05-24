@@ -38,6 +38,8 @@ var assert = require('assert').ok;
 var sprintf  = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
 var log_it   = dutil.log_it;
+var toNumber = dutil.toNumber;
+
 
 
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
@@ -355,7 +357,7 @@ exports.createServer = function(options) {
 
 		if (options.inactivity) {
 			// We squeeze options.inactivity between the min and max allowable values
-			options.inactivity = [ Math.floor(options.inactivity), 
+			options.inactivity = [ toNumber(options.inactivity), 
 								   MAX_INACTIVITY_SEC, 
 								   DEFAULT_INACTIVITY_SEC ].sort(dutil.num_cmp)[1];
 		}
@@ -386,7 +388,7 @@ exports.createServer = function(options) {
 		log_it("DEBUG", "BOSH::route_parse:", m);
 		if (m && m.length === 4) {
 			return {
-				protocol: m[1], host: m[2], port: Math.floor(m[3])
+				protocol: m[1], host: m[2], port: toNumber(m[3])
 			};
 		}
 		else {
@@ -399,11 +401,11 @@ exports.createServer = function(options) {
 		var sid = uuid();
 		var opt = {
 			sid:        sid, 
-			rid:        Math.floor(node.attrs.rid), 
-			wait:       Math.floor(node.attrs.wait), 
-			hold:       Math.floor(node.attrs.hold),
+			rid:        toNumber(node.attrs.rid), 
+			wait:       toNumber(node.attrs.wait), 
+			hold:       toNumber(node.attrs.hold),
 			// The 'inactivity' attribute is an extension
-			inactivity: Math.floor(node.attrs.inactivity || DEFAULT_INACTIVITY_SEC), 
+			inactivity: toNumber(node.attrs.inactivity || DEFAULT_INACTIVITY_SEC), 
 			content:    "text/xml; charset=utf-8"
 		};
 
@@ -673,7 +675,7 @@ exports.createServer = function(options) {
 			// Raise a no-client event on pending as well as unacked responses.
 			var _p = us.pluck(state.pending, 'response');
 
-			var _uar = Object.keys(state.unacked_responses).map(Math.floor)
+			var _uar = Object.keys(state.unacked_responses).map(toNumber)
 			.map(function(rid) {
 				return state.unacked_responses[rid].response;
 			});
@@ -1337,7 +1339,7 @@ exports.createServer = function(options) {
 			state.queued_requests[node.attrs.rid] = node;
 
 			// Process all queued requests
-			var _queued_request_keys = Object.keys(state.queued_requests).map(Math.floor);
+			var _queued_request_keys = Object.keys(state.queued_requests).map(toNumber);
 			_queued_request_keys.sort(dutil.num_cmp);
 
 			_queued_request_keys.forEach(function(rid) {
@@ -1361,7 +1363,7 @@ exports.createServer = function(options) {
 			if (state.ack) {
 				/* Begin ACK handling */
 
-				var _uar_keys = Object.keys(state.unacked_responses).map(Math.floor);
+				var _uar_keys = Object.keys(state.unacked_responses).map(toNumber);
 				if (_uar_keys.length > WINDOW_SIZE * 4 /* We are fairly generous */) {
 					// The client seems to be buggy. It has not ACKed the
 					// last WINDOW_SIZE * 4 requests. We turn off ACKs.
@@ -1426,7 +1428,7 @@ exports.createServer = function(options) {
 				// something to respond with for any request with an rid that
 				// is less than state.rid + 1
 				//
-				_queued_request_keys = Object.keys(state.queued_requests).map(Math.floor);
+				_queued_request_keys = Object.keys(state.queued_requests).map(toNumber);
 				_queued_request_keys.sort(dutil.num_cmp);
 				var quit_me = false;
 
