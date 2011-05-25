@@ -357,7 +357,7 @@ exports.createServer = function(options) {
 
 		if (options.inactivity) {
 			// We squeeze options.inactivity between the min and max allowable values
-			options.inactivity = [ toNumber(options.inactivity), 
+			options.inactivity = [ Math.floor(toNumber(options.inactivity)), 
 								   MAX_INACTIVITY_SEC, 
 								   DEFAULT_INACTIVITY_SEC ].sort(dutil.num_cmp)[1];
 		}
@@ -401,11 +401,11 @@ exports.createServer = function(options) {
 		var sid = uuid();
 		var opt = {
 			sid:        sid, 
-			rid:        toNumber(node.attrs.rid), 
-			wait:       toNumber(node.attrs.wait), 
-			hold:       toNumber(node.attrs.hold),
+			rid:        Math.floor(toNumber(node.attrs.rid)), 
+			wait:       Math.floor(toNumber(node.attrs.wait)), 
+			hold:       Math.floor(toNumber(node.attrs.hold)),
 			// The 'inactivity' attribute is an extension
-			inactivity: toNumber(node.attrs.inactivity || DEFAULT_INACTIVITY_SEC), 
+			inactivity: Math.floor(toNumber(node.attrs.inactivity || DEFAULT_INACTIVITY_SEC)), 
 			content:    "text/xml; charset=utf-8"
 		};
 
@@ -1653,7 +1653,7 @@ exports.createServer = function(options) {
 		//
 		// 1. Request MUST be either an OPTIONS, GET or a POST request
 		// 2. The path MUST begin with the 'path' parameter for a POST request
-		// 3. The path MUST be "/" for a GET request
+		// 3. The path MUST be '/' or '/favicon.ico' for a GET request
 		//
 		if (req.method === 'OPTIONS') {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
