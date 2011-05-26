@@ -1035,6 +1035,8 @@ exports.createServer = function(options) {
 	function merge_or_push_response(response, sstate) {
 		var state = sstate.state;
 		var merge_index = can_merge(response, state.pending);
+		log_it('DEBUG', sprintfd('BOSH::%s::Merging with response at index: %s', state.sid, merge_index));
+
 		if (merge_index !== -1) {
 			// Yes, it is the same stream. Merge the responses.
 			var _presp = state.pending[merge_index].response;
