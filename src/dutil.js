@@ -427,7 +427,7 @@ function find_module(file_name) {
 	for (mname in require.cache) {
 		if (require.cache.hasOwnProperty(mname)) {
 			if (ends_with(mname, file_name)) {
-				mhandle.handle = require.cache[mname];
+				mhandle.handle = require.cache[mname].exports;
 				mhandle.key    = mname;
 				break;
 			}
