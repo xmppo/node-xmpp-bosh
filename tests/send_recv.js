@@ -69,7 +69,7 @@ function disconnect(conn) {
 
 function connect(username, password, endpoint, route, onStanza, onConnect) {
     var conn = new Strophe.Connection(endpoint);
-	conn.connect(username, password, onConnect, null, null, route);
+	conn.connect(username, password, onConnect, 20 /*null*/, null, route);
 	conn.xmlInput = onStanza;
 	return conn;
 }

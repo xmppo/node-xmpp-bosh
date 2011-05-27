@@ -276,6 +276,8 @@ exports.createServer = function(options) {
 	//     hold:
 	//     res: [ An array of response objects (format is show below) ]
 	//     pending: [ An array of pending responses to send to the client ]
+	//     has_next_tick: true if a nextTick handler for this session has
+	//       been registered, false otherwise
 	//     ... and other jazz ...
 	//   }
 	// }
@@ -370,6 +372,9 @@ exports.createServer = function(options) {
 		// There is just 1 inactivity timeout for the whole BOSH session
 		// (as opposed to for each response as it was earlier)
 		options.timeout = null;
+
+		// This this BOSH session have a pending nextTick() handler?
+		options.has_next_tick = false;
 
 		add_held_http_connection(options, options.rid, res);
 
@@ -1087,6 +1092,9 @@ exports.createServer = function(options) {
 			});
 
 			send_no_requeue(ro, sstate.state, response);
+
+			// We try sending more queued responses
+			send_pending_responses(state);
 		}
 	}
 
@@ -1121,9 +1129,13 @@ exports.createServer = function(options) {
 		// Merge with an existing response, or push it as a new response
 		merge_or_push_response(response, sstate);
 
-		process.nextTick(function() {
-			pop_and_send(state);
-		});
+		if (!state.has_next_tick) {
+			process.nextTick(function() {
+				state.has_next_tick = false;
+				pop_and_send(state);
+			});
+			state.has_next_tick = true;
+		}
 	}
 
 	function handle_client_stream_terminate_request(sstate, state, nodes, condition) {
@@ -1338,6 +1350,7 @@ exports.createServer = function(options) {
 			// Set the current rid to the max. RID we have received till now.
 			// state.rid = Math.max(state.rid, node.attrs.rid);
 
+			node.attrs.rid = toNumber(node.attrs.rid);
 			state.queued_requests[node.attrs.rid] = node;
 
 			// Process all queued requests
