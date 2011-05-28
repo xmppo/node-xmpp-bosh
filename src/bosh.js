@@ -188,9 +188,12 @@ function JSONPResponseProxy(req, res) {
 	this.wrote_ = false;
 
 	var _url = url.parse(req.url, true);
-	this.jsonp_cb_ = _url.query.cb ? _url.query.cb : '';
+	this.jsonp_cb_ = _url.query.callback ? _url.query.callback : '';
 	// console.log("DATA:", _url.query.data);
 	// console.log("JSONP CB:", this.jsonp_cb_);
+	if (!this.jsonp_cb_) {
+		return res;
+	}
 }
 
 JSONPResponseProxy.prototype = {
