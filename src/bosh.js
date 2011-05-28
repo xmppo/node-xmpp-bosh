@@ -33,6 +33,7 @@ var uuid   = require('node-uuid');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 var assert = require('assert').ok;
+var qs     = require('querystring');
 
 
 var sprintf  = dutil.sprintf;
@@ -181,6 +182,48 @@ function add_to_headers(dest, src) {
 	dest['Access-Control-Allow-Headers'] = acah.join(', ');
 }
 
+function JSONPResponseProxy(req, res) {
+	this.req_ = req;
+	this.res_ = res;
+	this.wrote_ = false;
+
+	var _url = url.parse(req.url, true);
+	this.jsonp_cb_ = _url.query.cb ? _url.query.cb : '';
+	// console.log("DATA:", _url.query.data);
+	// console.log("JSONP CB:", this.jsonp_cb_);
+}
+
+JSONPResponseProxy.prototype = {
+	on: function() {
+		return this.res_.on.apply(this.res_, arguments);
+	}, 
+	writeHead: function() {
+		return this.res_.writeHead.apply(this.res_, arguments);
+	}, 
+	write: function(data) {
+		if (!this.wrote_) {
+			if (this.jsonp_cb_) {
+				this.res_.write(this.jsonp_cb_ + '("');
+			}
+			this.wrote_ = true;
+		}
+
+		data = data || '';
+		if (this.jsonp_cb_) {
+			data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
+		}
+
+		this.res_.write(data);
+	}, 
+	end: function(data) {
+		this.write(data);
+		if (this.jsonp_cb_) {
+			this.res_.write('");');
+		}
+		this.res_.end();
+	}
+};
+
 // End HTTP header helpers
 
 
@@ -224,6 +267,7 @@ exports.createServer = function(options) {
 
 	var HTTP_GET_RESPONSE_HEADERS = {
 		'Content-Type': 'application/xhtml+xml; charset=UTF-8', 
+		'Cache-Control': 'no-cache, no-store', 
 		'Access-Control-Allow-Origin': '*', 
 		'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
 		'Access-Control-Allow-Methods': 'OPTIONS, GET, POST', 
@@ -1694,13 +1738,12 @@ exports.createServer = function(options) {
 			}
 		}
 
-		if (req.method !== 'POST' || ppos === -1) {
+		if ((req.method !== 'POST' && req.method !== 'GET') || ppos === -1) {
 			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
 			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
 			res.end();
 			return;
 		}
-
 
 		var data = [];
 		var data_len = 0;
@@ -1715,6 +1758,19 @@ exports.createServer = function(options) {
 				clearTimeout(end_timeout);
 			}
 		});
+
+		if (req.method === 'GET') {
+			// Read off the request from the 'data' parameter
+			var _url = url.parse(req.url, true);
+			_url.query.data = _url.query.data || '';
+
+			data = [ _url.query.data ];
+			// console.log("DATA:", data);
+			res = new JSONPResponseProxy(req, res);
+
+			_on_end_callback();
+			return;
+		}
 
 		// Timeout the request of we don't get an 'end' event within
 		// 20 sec of the request being made.
