@@ -42,6 +42,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     * Custom attributes supported during session creation (passed on to handlers)
     * A client may request a custom inactivity period from the server by setting the
       'inactivity' attribute in the session creation request
+    * HTTP POST & GET (for older browsers) are suported (see README.TXT for details)
     * Benchmarks: http://code.google.com/p/node-xmpp-bosh/wiki/Benchmarks
     * Monitor the BOSH server [http://localhost:5280/] (avaibale only if you 
       have node-xmpp-bosh running on your system)
@@ -159,6 +160,23 @@ The project itself is divided into 4 main components as of now.
       [3] The 'from' attribute (if sent by the client) is echoed back to 
           the client by the server as the 'to' attribute in the session 
           (or stream) creation response.
+
+    * HTTP GET support
+      
+      The URL for the GET handler is the same as that for the post handler.
+      However, instead of passing in the data in the request body, it is 
+      passed in via the 'data=' GET query parameter. JSONP is also supported
+      if the 'callback=' GET query parameter is supplied.
+
+      [1] http://localhost:5280/http-bind/?data=<body/>
+
+      	  Response:
+      	  <body condition="item-not-found" message="Invalid session ID" type="terminate"/>
+
+      [2] http://localhost:5280/http-bind/?data=<body/>&callback=res341
+
+      	  Response:
+	  res341("<body xmlns=\"http://jabber.org/protocol/httpbind\" condition=\"item-not-found\" message=\"Invalid session ID\" type=\"terminate\"/>");
 
 
 [F] References:

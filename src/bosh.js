@@ -191,6 +191,8 @@ function JSONPResponseProxy(req, res) {
 	this.jsonp_cb_ = _url.query.callback ? _url.query.callback : '';
 	// console.log("DATA:", _url.query.data);
 	// console.log("JSONP CB:", this.jsonp_cb_);
+
+	// The proxy is used only if this is a JSONP response
 	if (!this.jsonp_cb_) {
 		return res;
 	}
@@ -200,30 +202,29 @@ JSONPResponseProxy.prototype = {
 	on: function() {
 		return this.res_.on.apply(this.res_, arguments);
 	}, 
-	writeHead: function() {
-		return this.res_.writeHead.apply(this.res_, arguments);
+	writeHead: function(status_code, headers) {
+		var _headers = { };
+		dutil.copy(_headers, headers);
+		_headers['Content-Type'] = 'application/x-javascript; charset=utf-8';
+
+		return this.res_.writeHead(status_code, _headers);
 	}, 
 	write: function(data) {
 		if (!this.wrote_) {
-			if (this.jsonp_cb_) {
-				this.res_.write(this.jsonp_cb_ + '("');
-			}
+			this.res_.write(this.jsonp_cb_ + '("');
 			this.wrote_ = true;
 		}
 
 		data = data || '';
-		if (this.jsonp_cb_) {
-			data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
-		}
-
-		this.res_.write(data);
+		data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
+		return this.res_.write(data);
 	}, 
 	end: function(data) {
 		this.write(data);
 		if (this.jsonp_cb_) {
 			this.res_.write('");');
 		}
-		this.res_.end();
+		return this.res_.end();
 	}
 };
 
