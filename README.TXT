@@ -44,7 +44,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
       'inactivity' attribute in the session creation request
     * HTTP POST & GET (for older browsers) are suported (see README.TXT for details)
     * Benchmarks: http://code.google.com/p/node-xmpp-bosh/wiki/Benchmarks
-    * Monitor the BOSH server [http://localhost:5280/] (avaibale only if you 
+    * Monitor the BOSH server [http://localhost:5280/] (available only if you 
       have node-xmpp-bosh running on your system)
 
 
