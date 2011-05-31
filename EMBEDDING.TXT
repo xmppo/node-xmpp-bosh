@@ -21,3 +21,4 @@ EVENT and HANDLER are defined as follows:
 5. 'error'                 => function(exception)
 6. 'no-client'             => function(response_object)
 7. 'nodes'                 => function([node], stream_state)
+8. 'terminate'             => function(stream_state, had_error)
