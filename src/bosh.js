@@ -1301,7 +1301,7 @@ exports.createServer = function(options) {
 	// This event is raised when the server terminates the connection.
 	// The Connector typically raises this even so that we can tell
 	// the client (user) that such an event has occurred.
-	bee.addListener('terminate', function(sstate) {
+	bee.addListener('terminate', function(sstate, had_error) {
 		// We send a terminate response to the client.
 		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
@@ -1309,11 +1309,12 @@ exports.createServer = function(options) {
 		stream_terminate(sstate, state);
 		enqueue_response(response, sstate);
 
-		send_stream_terminate_response(sstate, "remote-connection-failed");
+		var condition = had_error ? 'remote-connection-failed' : '';
+		send_stream_terminate_response(sstate, condition);
 
 		// Should we terminate the BOSH session as well?
 		if (state.streams.length === 0) {
-			send_session_terminate(get_response_object(state), state);
+			send_session_terminate(get_response_object(state), state, condition);
 			session_terminate(state);
 		}
 	});

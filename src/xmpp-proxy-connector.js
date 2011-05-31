@@ -62,7 +62,7 @@ function XMPPProxyConnector(bosh_server) {
 
 		delete this.streams[sstate.name];
 
-		this.bosh_server.emit('terminate', sstate);
+		this.bosh_server.emit('terminate', sstate, had_error);
 	}, this);
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
