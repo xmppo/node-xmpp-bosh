@@ -340,6 +340,8 @@ exports.createServer = function(options) {
 	//        associated
 	// }
 	//
+	// TODO: Remove length & total from sid_state & sn_state into sid_info & sn_info
+	// 
 	var sid_state = {
 		// Stores the number of active sessions
 		length: 0, 
