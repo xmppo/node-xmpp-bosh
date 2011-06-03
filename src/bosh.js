@@ -1775,7 +1775,6 @@ exports.createServer = function(options) {
 					});
 					res.end();
 					return;
-				}
 			}
 		}
 
