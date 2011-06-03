@@ -1729,19 +1729,32 @@ exports.createServer = function(options) {
 
 		if (req.method === 'GET') {
 			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", req.method, u.pathname));
+			
+			// BOSH connection using GET
+			var _url = url.parse(req.url, true);
+			_url.query.data = _url.query.data || '';
+			
+			if(_url.query.data) {
+				data = [ _url.query.data ];
+				res = new JSONPResponseProxy(req, res);
 
+				_on_end_callback();
+				return;
+			}
+			
+			// Other GET request
 			switch (u.pathname) {
-			case '/':
-				res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
-				var stats = get_statistics();
-				res.end(stats);
-				return;
-			case '/favicon.ico':
-				res.writeHead(303, {
-					'Location': 'http://xmpp.org/favicon.ico'
-				});
-				res.end();
-				return;
+				case '/':
+					res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
+					var stats = get_statistics();
+					res.end(stats);
+					return;
+				case '/favicon.ico':
+					res.writeHead(303, {
+						'Location': 'http://xmpp.org/favicon.ico'
+					});
+					res.end();
+					return;
 			}
 		}
 
@@ -1765,19 +1778,6 @@ exports.createServer = function(options) {
 				clearTimeout(end_timeout);
 			}
 		});
-
-		if (req.method === 'GET') {
-			// Read off the request from the 'data' parameter
-			var _url = url.parse(req.url, true);
-			_url.query.data = _url.query.data || '';
-
-			data = [ _url.query.data ];
-			// console.log("DATA:", data);
-			res = new JSONPResponseProxy(req, res);
-
-			_on_end_callback();
-			return;
-		}
 
 		// Timeout the request of we don't get an 'end' event within
 		// 20 sec of the request being made.
