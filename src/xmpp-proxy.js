@@ -203,7 +203,7 @@ dutil.copy(XMPPProxy.prototype, {
 		dutil.log_it("DEBUG", function() {
 			return dutil.sprintf("XMPP PROXY::received:%s", d.toString('binary'));
 		});
-		this._buff += d.toString('binary');
+		this._buff += d.toString();
 
 		if (this._first) {
 			// Parse and save attribites from the first response
