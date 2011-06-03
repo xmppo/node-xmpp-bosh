@@ -1726,6 +1726,21 @@ exports.createServer = function(options) {
 			res.end();
 			return;
 		}
+		
+		// Common GET & POST function
+		var data = [];
+		var data_len = 0;
+
+		var _on_end_callback = us.once(function(timed_out) {
+			if (timed_out) {
+				log_it("WARN", "BOSH::Timing out (and destroying) connection from '" + req.socket.remoteAddress + "'");
+				req.destroy();
+			}
+			else {
+				_on_data_end(res, data.join(''));
+				clearTimeout(end_timeout);
+			}
+		});
 
 		if (req.method === 'GET') {
 			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", req.method, u.pathname));
@@ -1764,20 +1779,6 @@ exports.createServer = function(options) {
 			res.end();
 			return;
 		}
-
-		var data = [];
-		var data_len = 0;
-
-		var _on_end_callback = us.once(function(timed_out) {
-			if (timed_out) {
-				log_it("WARN", "BOSH::Timing out (and destroying) connection from '" + req.socket.remoteAddress + "'");
-				req.destroy();
-			}
-			else {
-				_on_data_end(res, data.join(''));
-				clearTimeout(end_timeout);
-			}
-		});
 
 		// Timeout the request of we don't get an 'end' event within
 		// 20 sec of the request being made.
