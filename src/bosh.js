@@ -205,7 +205,7 @@ JSONPResponseProxy.prototype = {
 	writeHead: function(status_code, headers) {
 		var _headers = { };
 		dutil.copy(_headers, headers);
-		_headers['Content-Type'] = 'application/x-javascript; charset=utf-8';
+		_headers['Content-Type'] = 'application/json; charset=utf-8';
 
 		return this.res_.writeHead(status_code, _headers);
 	}, 
