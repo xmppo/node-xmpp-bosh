@@ -1726,8 +1726,14 @@ exports.createServer = function(options) {
 			res.end();
 			return;
 		}
-		
-		// Common GET & POST function
+
+		if ((req.method !== 'POST' && req.method !== 'GET') || ppos === -1) {
+			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
+			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
+			res.end();
+			return;
+		}
+
 		var data = [];
 		var data_len = 0;
 
@@ -1744,11 +1750,11 @@ exports.createServer = function(options) {
 
 		if (req.method === 'GET') {
 			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", req.method, u.pathname));
-			
-			// BOSH connection using GET
+
+			// Read off the request from the 'data' parameter
 			var _url = url.parse(req.url, true);
 			_url.query.data = _url.query.data || '';
-			
+
 			if(_url.query.data) {
 				data = [ _url.query.data ];
 				res = new JSONPResponseProxy(req, res);
@@ -1756,8 +1762,7 @@ exports.createServer = function(options) {
 				_on_end_callback();
 				return;
 			}
-			
-			// Other GET request
+
 			switch (u.pathname) {
 				case '/':
 					res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
@@ -1770,14 +1775,8 @@ exports.createServer = function(options) {
 					});
 					res.end();
 					return;
+				}
 			}
-		}
-
-		if ((req.method !== 'POST' && req.method !== 'GET') || ppos === -1) {
-			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
-			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
-			res.end();
-			return;
 		}
 
 		// Timeout the request of we don't get an 'end' event within
