@@ -211,7 +211,7 @@ JSONPResponseProxy.prototype = {
 	}, 
 	write: function(data) {
 		if (!this.wrote_) {
-			this.res_.write(this.jsonp_cb_ + '("');
+			this.res_.write(this.jsonp_cb_ + '({"reply":"');
 			this.wrote_ = true;
 		}
 
@@ -222,7 +222,7 @@ JSONPResponseProxy.prototype = {
 	end: function(data) {
 		this.write(data);
 		if (this.jsonp_cb_) {
-			this.res_.write('");');
+			this.res_.write('"});');
 		}
 		return this.res_.end();
 	}
