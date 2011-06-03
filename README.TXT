@@ -176,7 +176,7 @@ The project itself is divided into 4 main components as of now.
       [2] http://localhost:5280/http-bind/?data=<body/>&callback=res341
 
       	  Response:
-	  res341("<body xmlns=\"http://jabber.org/protocol/httpbind\" condition=\"item-not-found\" message=\"Invalid session ID\" type=\"terminate\"/>");
+	  res341({"reply":"<body xmlns=\"http://jabber.org/protocol/httpbind\" condition=\"item-not-found\" message=\"Invalid session ID\" type=\"terminate\"/>"});
 
 
 [F] References:
@@ -198,6 +198,7 @@ The project itself is divided into 4 main components as of now.
 
     * Servers:
         * jabber.org
+        * jappix.com
         * gmail.com
         * facebook.com
         * Pappu 
