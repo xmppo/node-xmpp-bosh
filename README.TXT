@@ -197,11 +197,10 @@ The project itself is divided into 4 main components as of now.
 [H] Tested with:
 
     * Servers:
-        * jabber.org
-        * jappix.com
-        * gmail.com
-        * facebook.com
-        * Pappu 
+        * Ejabberd ([http://jabber.org/ jabber.org], [http://jappix.com/ jappix.com])
+        * Google Talk ([http://gmail.com/ gmail.com])
+        * Facebook ([http://facebook.com/ facebook.com])
+        * Pappu
 	* Prosody IM
 	* Openfile
 
