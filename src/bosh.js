@@ -1066,16 +1066,12 @@ exports.createServer = function(options) {
 		 * and the position of the first such response in 'pending' 
 		 * is returned.
 		 *
-		 * Note: This *may* cause subtle bugs such as out of order responses.
-		 * Consider the case where you get a normal body followed by a 
-		 * body with a some custom attribute set, followed by a normal body. 
-		 * In this case, the 2nd body will be clubbed with the 1st body. 
-		 * However, such situations should be very rare.
+		 * Since the only *special* <body> tag that is created for a
+		 * stream before sending is the terminate response, we can 
+		 * be sure that any response that has an XMPP payload is a
+		 * plain-ol body tag and we will always merge with the right 
+		 * response and responses will be in-order.
 		 * 
-		 * To be 100% sure, we should just check the last (most recent)
-		 * response which has the same 'stream' as the current 'response'
-		 * and merge the two only if their attributes are equal.
-		 *
 		 */
 		var i;
 		for (i = 0; i < pending.length; ++i) {
@@ -1115,6 +1111,21 @@ exports.createServer = function(options) {
 	}
 
 	function pop_and_send(state) {
+		// There is a subtle bug here. If the sending of this response fails
+		// then it is appended to the queue of pending responses rather than 
+		// being added to the right place. This is because we rely on 
+		// enqueue_response() to append it back to the list of pending 
+		// responses.
+		// 
+		// We hope for this to not occur too frequently.
+		//
+		// The right way to do it would be to always stamp the response
+		// with the 'rid' when sending and add it to the list of buffered
+		// responses. However, in places with a bad network this will
+		// degrade the experience for the client. Hence, we stick with
+		// the current implementation.
+		//
+
 		var ro = get_response_object(state);
 
 		log_it("DEBUG", 
@@ -1167,6 +1178,7 @@ exports.createServer = function(options) {
 		 * so don't even waste your time trying to fix it that way.
 		 *
 		 */
+
 		// if (sstate.terminated) {
 			// @taher.g Disable this check for now
 			// return;
@@ -1223,25 +1235,6 @@ exports.createServer = function(options) {
 	}
 
 	function send_pending_responses(state) {
-		// There is a subtle bug here. If the sending of this response fails
-		// then it is appended to the queue of pending responses rather than 
-		// being added to the right place. This is because we rely on 
-		// enqueue_response() to append it back to the list of pending responses.
-		// We hope for this to not occur too frequently.
-		//
-		// The right way to do it would be to either:
-		// 
-		// [1] Remove it from the pending queue only when it is sent 
-		//     successfully or
-		// [2] Use a priority queue instead of an array so that we can always
-		//     re-insert the failed response in the correct order
-		//
-		// However, due to the async nature of things, we let it be this 
-		// way for now. Additionally, no matter how hard we try, there will 
-		// always be situations which will cause a stream restart, so we 
-		// don't lose our sleep over this.
-		//
-
 		log_it("DEBUG", 
 			sprintfd("BOSH::%s::send_pending_responses::state.pending.length: %s", state.sid, state.pending.length)
 		);
