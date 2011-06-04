@@ -1276,7 +1276,7 @@ exports.createServer = function(options) {
 
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
-	bee.addListener('stream-added', function(sstate) {
+	bee.on('stream-added', function(sstate) {
 		log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.name));
 		var state = sstate.state;
 
@@ -1290,7 +1290,7 @@ exports.createServer = function(options) {
 
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
-	bee.addListener('response', function(connector_response, sstate) {
+	bee.on('response', function(connector_response, sstate) {
 		log_it("DEBUG", sprintfd("BOSH::%s::response: %s", sstate.state.sid, connector_response));
 
 		var response = $body({
@@ -1303,7 +1303,7 @@ exports.createServer = function(options) {
 	// This event is raised when the server terminates the connection.
 	// The Connector typically raises this even so that we can tell
 	// the client (user) that such an event has occurred.
-	bee.addListener('terminate', function(sstate, had_error) {
+	bee.on('terminate', function(sstate, had_error) {
 		// We send a terminate response to the client.
 		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
@@ -1322,7 +1322,7 @@ exports.createServer = function(options) {
 	});
 
 
-	function _handle_incoming_request(res, node) {
+	function process_bosh_request(res, node) {
 		var state  = get_state(node);
 		var sstate = null;
 
@@ -1680,7 +1680,7 @@ exports.createServer = function(options) {
 	}
 
 
-	function _on_data_end(res, data) {
+	function bosh_requst_handler(res, data) {
 		/* Called when the 'end' event for the request is fired by 
 		 * the HTTP request handler
 		 */
@@ -1694,7 +1694,7 @@ exports.createServer = function(options) {
 
 		log_it("DEBUG", sprintfd("BOSH::Processing request: %s", node));
 
-		_handle_incoming_request(res, node);
+		process_bosh_request(res, node);
 	}
 
 	function http_request_handler(req, res) {
@@ -1719,17 +1719,11 @@ exports.createServer = function(options) {
 		//
 		// 1. Request MUST be either an OPTIONS, GET or a POST request
 		// 2. The path MUST begin with the 'path' parameter for a POST request
-		// 3. The path MUST be '/' or '/favicon.ico' for a GET request
+		// 3. The path MUST begin with the 'path' paremeter or be '/favicon.ico' 
+		//    for a GET request
 		//
 		if (req.method === 'OPTIONS') {
-			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
-			res.end();
-			return;
-		}
-
-		if ((req.method !== 'POST' && req.method !== 'GET') || ppos === -1) {
-			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
-			res.writeHead(404, HTTP_POST_RESPONSE_HEADERS);
+			res.writeHead(200, HTTP_OPTIONS_RESPONSE_HEADERS);
 			res.end();
 			return;
 		}
@@ -1743,40 +1737,65 @@ exports.createServer = function(options) {
 				req.destroy();
 			}
 			else {
-				_on_data_end(res, data.join(''));
+				bosh_requst_handler(res, data.join(''));
 				clearTimeout(end_timeout);
 			}
 		});
 
+		// Handle GET requests. We handle 3 type of GET requests:
+		// 1. /favicon.ico
+		// 2. path match without the 'data' query
+		// 3. path match with the 'data' query
+		//
 		if (req.method === 'GET') {
 			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", req.method, u.pathname));
 
-			// Read off the request from the 'data' parameter
-			var _url = url.parse(req.url, true);
-			_url.query.data = _url.query.data || '';
-
-			if(_url.query.data) {
-				data = [ _url.query.data ];
-				res = new JSONPResponseProxy(req, res);
-
-				_on_end_callback();
-				return;
-			}
-
-			switch (u.pathname) {
-				case '/':
-					res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
-					var stats = get_statistics();
-					res.end(stats);
-					return;
-				case '/favicon.ico':
+			if (ppos === -1) {
+				// Did not match 'path'
+				if (u.pathname === '/favicon.ico') {
 					res.writeHead(303, {
 						'Location': 'http://xmpp.org/favicon.ico'
 					});
 					res.end();
 					return;
+				}
 			}
+			else {
+				// Read off the request from the 'data' parameter
+				var _url = url.parse(req.url, true);
+
+				// Pass off to the BOSH handler since this is a BOSH request
+				if(_url.query.hasOwnProperty('data')) {
+					data = [ _url.query.data || '' ];
+					res = new JSONPResponseProxy(req, res);
+					
+					_on_end_callback();
+					return;
+				}
+				else {
+					res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
+					var stats = get_statistics();
+					res.end(stats);
+					return;
+				}
+			}
+
+		} // if (req.method === 'GET')
+
+		// 
+		// The only valid thing that the request can now be is a POST request 
+		// that matches the 'path' parameter.
+		// 
+		if (req.method !== 'POST' || ppos === -1) {
+			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
+			var _headers = { };
+			dutil.copy(_headers, HTTP_POST_RESPONSE_HEADERS);
+			_headers['Content-Type'] = 'text/plain; charset=utf-8';
+			res.writeHead(404, _headers);
+			res.end();
+			return;
 		}
+
 
 		// Timeout the request of we don't get an 'end' event within
 		// 20 sec of the request being made.
