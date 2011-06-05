@@ -37,8 +37,9 @@ var DEFAULT_XMPP_PORT = 5222;
 
 
 
-function XMPPProxyConnector(bosh_server) {
-	this.Proxy = xp.Proxy;
+function XMPPProxyConnector(bosh_server, options) {
+	this.options     = options;
+	this.Proxy       = xp.Proxy;
 	this.bosh_server = bosh_server;
 
 	// {
@@ -137,12 +138,11 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
+		var _ls = new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.route);
 		// Create a new stream.
-		var proxy = new this.Proxy(sstate.to, 
-			new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.route), 
-			sstate.attrs, 
-			sstate
-		);
+		var proxy = new this.Proxy(sstate.to, _ls, 
+								   sstate.attrs, this.options, 
+								   sstate);
 
 		var stream = {
 			sstate: sstate, 

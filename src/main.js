@@ -57,7 +57,7 @@ exports.start     = function(options) {
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
-	var conn = new xpc.Connector(bosh_server);
+	var conn = new xpc.Connector(bosh_server, options);
 
 	//
 	// Responses we may hook on to:

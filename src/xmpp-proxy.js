@@ -38,7 +38,7 @@ var NS_STREAM =       'http://etherx.jabber.org/streams';
 var NS_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams';
 
 
-function XMPPProxy(xmpp_host, lookup_service, stream_attrs, void_star) {
+function XMPPProxy(xmpp_host, lookup_service, stream_attrs, options, void_star) {
 	this._xmpp_host      = xmpp_host;
 	this._void_star      = void_star;
 	this._lookup_service = lookup_service;
@@ -48,6 +48,12 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, void_star) {
 		to:             this._xmpp_host, 
 		version:        '1.0'
 	};
+
+	this._no_tls_domains = { };
+	var _ntd = options.no_tls_domains || [ ];
+	_ntd.forEach(function(domain) {
+		this._no_tls_domains[domain] = 1;
+	}.bind(this));
 
 	this._buff         = '';
 	this._first        = true;
@@ -100,21 +106,36 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_stanza: function(stanza) {
-		// Check if this is a STARTTLS request or response.
 		// TODO: Check for valid Namespaces too.
 
 		// dutil.log_it("DEBUG", "XMPP PROXY::Is stream:features?", stanza.is('features'));
 		// dutil.log_it("DEBUG", "XMPP PROXY::logging starttls:", stanza.getChild('starttls'));
 		if (stanza.is('features') &&
 			stanza.getChild('starttls')) {
-			/* Signal willingness to perform TLS handshake */
-			dutil.log_it("DEBUG", "XMPP PROXY::STARTTLS requested");
-			var _starttls_request = 
-				new ltx.Element('starttls', {
-					xmlns: NS_XMPP_TLS
-				}).toString();
-			dutil.log_it("DEBUG", "XMPP PROXY::Writing out STARTTLS request:", _starttls_request);
-			this.send(_starttls_request);
+
+			// 
+			// We STARTTLS only if TLS is
+			// [a] required or
+			// [b] the domain we are connecting to is not present in 
+			//     this._no_tls_domains
+			// 
+			var starttls_stanza = stanza.getChild('starttls');
+
+			if (starttls_stanza.getChild('required') || !this._no_tls_domains[this._xmpp_host]) {
+				/* Signal willingness to perform TLS handshake */
+				dutil.log_it("DEBUG", "XMPP PROXY::STARTTLS requested");
+				var _starttls_request = 
+					new ltx.Element('starttls', {
+						xmlns: NS_XMPP_TLS
+					}).toString();
+				dutil.log_it("DEBUG", "XMPP PROXY::Writing out STARTTLS request:", _starttls_request);
+				this.send(_starttls_request);
+			}
+			else {
+				stanza.remove(starttls_stanza);
+				this.emit('stanza', stanza, this._void_star);
+			}
+
 		} else if (stanza.is('proceed')) {
 	        /* Server is waiting for TLS handshake */
 		    this._starttls();
@@ -209,10 +230,10 @@ dutil.copy(XMPPProxy.prototype, {
 			// Parse and save attribites from the first response
 			// so that we may replay them in all subsequent responses.
 			var ss_pos = this._buff.search("<stream:stream");
-			if (ss_pos != -1) {
+			if (ss_pos !== -1) {
 				this._buff = this._buff.substring(ss_pos);
 				var gt_pos = this._buff.search(">");
-				if (gt_pos != -1) {
+				if (gt_pos !== -1) {
 					dutil.log_it("DEBUG", "XMPP PROXY::Got stream packet");
 					var _ss_stanza = this._buff.substring(0, gt_pos + 1) + "</stream:stream>";
 					dutil.log_it("DEBUG", "XMPP PROXY::_ss_stanza:", _ss_stanza);
@@ -246,7 +267,7 @@ dutil.copy(XMPPProxy.prototype, {
 		var stream_terminated = false;
 		var st_pos = this._buff.indexOf("</stream:stream>");
 		// Check for the </stream:stream> packet
-		if (st_pos != -1) {
+		if (st_pos !== -1) {
 			stream_terminated = true;
 			this._buff = this._buff.substring(0, st_pos);
 		}
