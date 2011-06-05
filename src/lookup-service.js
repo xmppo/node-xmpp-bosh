@@ -117,14 +117,19 @@ XMPPLookupService.prototype = {
 
 			var _e_triggered = false;
 			attempt.on('error', function(e) {
-
 				// We need to figure out why this callback is being triggered multiple
 				// times. This is just a hack for now.
 				if (!_e_triggered) {
 					return;
 				}
 				_e_triggered = true;
+
+				// Forcefully clear 'error' listeners
 				var _elisteners = socket.listeners('error');
+				console.error("error_listeners.length:", _elisteners.length);
+
+				_elisteners.splice(0);
+
 				errbacks.unshift(0, 0);
 				_elisteners.splice.apply(_elisteners, errbacks);
 
@@ -160,8 +165,10 @@ XMPPLookupService.prototype = {
 
 		function _rollback() {
 			// Remove custom error handlers that we attached on the socket.
-			socket.removeListener('error', _on_socket_error);
-			socket.removeListener('connect', _on_socket_connect);
+			// socket.removeListener('error', _on_socket_error);
+			// socket.removeListener('connect', _on_socket_connect);
+			socket.removeAllListeners('error');
+			socket.removeAllListeners('connect');
 
 			_reattach_socket_listeners();
 		}
