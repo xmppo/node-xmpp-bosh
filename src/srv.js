@@ -90,6 +90,8 @@ function resolveHost(name, cb) {
 
 // connection attempts to multiple addresses in a row
 function tryConnect(socket, addrs, listener) {
+    addrs = addrs.slice(0, 1);
+
     var onConnect = function() {
         socket.removeListener('connect', onConnect);
         socket.removeListener('error', onError);
