@@ -107,6 +107,8 @@ function tryConnect(socket, addrs, listener) {
             socket.connect(addr.port, addr.name);
 	}
         else {
+            socket.removeListener('connect', onConnect);
+            socket.removeListener('error', onError);
             listener.emit('error', error);
 	}
     };
