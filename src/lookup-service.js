@@ -110,6 +110,8 @@ XMPPLookupService.prototype = {
 			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_SRV_lookup");
 			
 			// Then try a normal SRV lookup.
+			var errbacks = socket.listeners('error').splice(0);
+
 			var attempt = SRV.connect(socket, ['_xmpp-client._tcp'], 
 				self._domain_name, self._port);
 
@@ -122,6 +124,10 @@ XMPPLookupService.prototype = {
 					return;
 				}
 				_e_triggered = true;
+				var _elisteners = socket.listeners('error');
+				errbacks.unshift(0, 0);
+				_elisteners.splice.apply(_elisteners, errbacks);
+
 				socket.emit('error', e);
 			});
 		}
