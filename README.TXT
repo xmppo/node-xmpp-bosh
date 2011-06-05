@@ -80,6 +80,8 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
       BOSH server will set for the session inactivity timeout (default: 160)
     * http_headers: A JSON (object) containing HTTP headers to pass on along
       with the response (default: { })
+    * no_tls_domains: A list of Domains for which TLS should NOT be used 
+      if the XMPP server supports STARTTLS but does NOT require it.
 
 
 [E] Architecture:

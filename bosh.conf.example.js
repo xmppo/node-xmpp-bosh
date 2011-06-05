@@ -29,7 +29,15 @@ exports.config = {
 	max_streams_per_session: 8, 
 
 	http_headers: { }, 
-	
+
+	// 
+	// A list of Domains for which TLS should NOT be used 
+	// if the XMPP server supports STARTTLS but does NOT
+	// require it.
+	// 
+	// See this link for details:
+	// http://code.google.com/p/node-xmpp-bosh/issues/detail?id=11
+	// 
 	no_tls_domains: [ /* 'chat.facebook.com' */ ]
 
 };
