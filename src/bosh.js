@@ -1690,35 +1690,61 @@ exports.createServer = function(options) {
 		process_bosh_request(res, node);
 	}
 
-	function http_request_handler(req, res) {
-		var u = url.parse(req.url);
 
-		//
-		// Q. Why not create named functions that express intent 
-		// and call them sequentially?
-		// 
-		// A. Because that significantly complicates code and using 
-		// 'return;' in those function doesn't return control from 
-		// the current function.
-		//
-
-
-		log_it("DEBUG", "BOSH::Someone connected");
-
-		var ppos = u.pathname.search(options.path);
-
-		// 
-		// Validation on HTTP requests:
-		//
-		// 1. Request MUST be either an OPTIONS, GET or a POST request
-		// 2. The path MUST begin with the 'path' parameter for a POST request
-		// 3. The path MUST begin with the 'path' paremeter or be '/favicon.ico' 
-		//    for a GET request
-		//
+	// All request handlers return 'true' on successful handling
+	// of the request and a falsy value if they did NOT handle the
+	// request.
+	function handle_options(req, res, u) {
 		if (req.method === 'OPTIONS') {
 			res.writeHead(200, HTTP_OPTIONS_RESPONSE_HEADERS);
 			res.end();
-			return;
+			return true;
+		}
+	}
+
+	function handle_get_favicon(req, res, u) {
+		if (req.method === 'GET' && u.pathname === '/favicon.ico') {
+			res.writeHead(303, {
+				'Location': 'http://xmpp.org/favicon.ico'
+			});
+			res.end();
+			return true;
+		}
+	}
+
+	function handle_get_statistics(req, res, u) {
+		var ppos = u.pathname.search(options.path);
+		if (req.method === 'GET' && ppos !== -1 && !u.query.hasOwnProperty('data')) {
+			res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
+			var stats = get_statistics();
+			res.end(stats);
+			return true;
+		}
+	}
+
+	function handle_get_bosh_request(req, res, u) {
+		var ppos = u.pathname.search(options.path);
+		if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data')) {
+			res = new JSONPResponseProxy(req, res);
+			bosh_requst_handler(res, u.query.data || '');
+			return true;
+		}
+	}
+
+	function handle_unhandled_request(req, res, u) {
+		log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
+		var _headers = { };
+		dutil.copy(_headers, HTTP_POST_RESPONSE_HEADERS);
+		_headers['Content-Type'] = 'text/plain; charset=utf-8';
+		res.writeHead(404, _headers);
+		res.end();
+		return true;
+	}
+
+	function handle_post_bosh_request(req, res, u) {
+		var ppos = u.pathname.search(options.path);
+		if (req.method !== 'POST' || ppos === -1) {
+			return false;
 		}
 
 		var data = [];
@@ -1734,61 +1760,6 @@ exports.createServer = function(options) {
 				clearTimeout(end_timeout);
 			}
 		});
-
-		// Handle GET requests. We handle 3 type of GET requests:
-		// 1. /favicon.ico
-		// 2. path match without the 'data' query
-		// 3. path match with the 'data' query
-		//
-		if (req.method === 'GET') {
-			log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", req.method, u.pathname));
-
-			if (ppos === -1) {
-				// Did not match 'path'
-				if (u.pathname === '/favicon.ico') {
-					res.writeHead(303, {
-						'Location': 'http://xmpp.org/favicon.ico'
-					});
-					res.end();
-					return;
-				}
-			}
-			else {
-				// Read off the request from the 'data' parameter
-				var _url = url.parse(req.url, true);
-
-				// Pass off to the BOSH handler since this is a BOSH request
-				if(_url.query.hasOwnProperty('data')) {
-					data = [ _url.query.data || '' ];
-					res = new JSONPResponseProxy(req, res);
-					
-					_on_end_callback();
-					return;
-				}
-				else {
-					res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
-					var stats = get_statistics();
-					res.end(stats);
-					return;
-				}
-			}
-
-		} // if (req.method === 'GET')
-
-		// 
-		// The only valid thing that the request can now be is a POST request 
-		// that matches the 'path' parameter.
-		// 
-		if (req.method !== 'POST' || ppos === -1) {
-			log_it("ERROR", "BOSH::Invalid request, method:", req.method, "path:", u.pathname);
-			var _headers = { };
-			dutil.copy(_headers, HTTP_POST_RESPONSE_HEADERS);
-			_headers['Content-Type'] = 'text/plain; charset=utf-8';
-			res.writeHead(404, _headers);
-			res.end();
-			return;
-		}
-
 
 		// Timeout the request of we don't get an 'end' event within
 		// 20 sec of the request being made.
@@ -1830,6 +1801,59 @@ exports.createServer = function(options) {
 			log_it("WARN", "BOSH::Stack Trace:\n", ex.stack);
 		});
 
+		return true;
+	}
+
+	function RequestRouter() {
+		this._handlers = [ ];
+		this._handlers.push.apply(this._handlers, arguments);
+
+		// Only add functions
+		this._handlers = this._handlers.filter(us.isFunction);
+	}
+
+	RequestRouter.prototype = {
+		run: function() {
+			var i;
+			for (i = 0; i < this._handlers.length; ++i) {
+				var handler = this._handlers[i];
+				if (handler.apply(null, arguments)) {
+					break;
+				}
+			}
+		}
+	};
+
+
+	function http_request_handler(req, res) {
+		var u = url.parse(req.url, true);
+
+		//
+		// Q. Why not create named functions that express intent 
+		// and call them sequentially?
+		// 
+		// A. Because that significantly complicates code and using 
+		// 'return;' in those function doesn't return control from 
+		// the current function.
+		// 
+		// @Vishnu Now that this handler has become sufficiently 
+		// complex, this seems to be a really good idea.
+		//
+
+		log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", 
+								 req.method, u.pathname)
+			  );
+
+		var rr = new RequestRouter(
+			handle_post_bosh_request, 
+			handle_get_bosh_request, 
+			handle_options, 
+			handle_get_favicon, 
+			handle_get_statistics, 
+			handle_unhandled_request
+		);
+
+		rr.run(req, res, u);
 	}
 
 	var http_server = http.createServer(http_request_handler);
