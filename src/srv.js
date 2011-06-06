@@ -55,7 +55,9 @@ function resolveSrv(name, cb) {
                     cb(results ? null : error, results);
                 }
             };
-            groupSrvRecords(addrs).forEach(function(addr) {
+	    var gSRV = groupSrvRecords(addrs);
+	    pending = gSRV.length;
+	    gSRV.forEach(function(addr) {
                 resolveHost(addr.name, function(e, a) {
                     if (a) {
                         a = a.map(function(a1) {
@@ -67,7 +69,6 @@ function resolveSrv(name, cb) {
 		    }
                     cb1(e, a);
                 });
-                pending++;
             });
         }
     });
@@ -75,6 +76,7 @@ function resolveSrv(name, cb) {
 
 // one of both A & AAAA, in case of broken tunnels
 function resolveHost(name, cb) {
+    // console.error("resolveHost::", new Error().stack.toString());
     var error, results = [];
     var cb1 = function(e, addr) {
         error = error || e;
@@ -90,20 +92,25 @@ function resolveHost(name, cb) {
 
 // connection attempts to multiple addresses in a row
 function tryConnect(socket, addrs, listener) {
-    addrs = addrs.slice(0, 1);
+    // console.error("tryConnect::", new Error().stack.toString());
+
+    // addrs = addrs.slice(0, 1);
 
     var onConnect = function() {
         socket.removeListener('connect', onConnect);
         socket.removeListener('error', onError);
+	// console.error('srv.js::connected!!');
         // done!
         listener.emit('connect');
     };
     var error;
     var onError = function(e) {
+	// console.error("srv.js::onError, e:", e, addrs);
         error = e;
         connectNext();
     };
     var connectNext = function() {
+	// console.error("srv.js::addrs:", addrs);
         var addr = addrs.shift();
         if (addr) {
             socket.connect(addr.port, addr.name);
@@ -111,7 +118,8 @@ function tryConnect(socket, addrs, listener) {
         else {
             socket.removeListener('connect', onConnect);
             socket.removeListener('error', onError);
-            listener.emit('error', error);
+	    // console.error("Emitting ERROR in srv.js");
+            listener.emit('error', error || new Error('No addresses to connect to'));
 	}
     };
     socket.addListener('connect', onConnect);
@@ -144,7 +152,7 @@ exports.connect = function(socket, services, domain, defaultPort) {
                     tryConnect(socket, addrs, listener);
                 }
 		else {
-                    listener.emit('error', error);
+                    listener.emit('error', error || new Error('No addresses resolved for ' + domain));
 		}
             });
         }

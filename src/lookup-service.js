@@ -26,16 +26,14 @@
 
 var SRV   = require('./srv.js');
 var dutil = require('./dutil.js');
+var us    = require('underscore');
 
 /* The XMPPLookupService tries to resolve the host name to connect to
  * in various ways. The order in which it tries is as follows:
  *
  * 1. Try to directly connect to a host if the route parameter is passed
  *
- * 2. Try to connect using rules for the talk.to chat service. This means
- * connecting to DOMAIN_NAME.chat.pw
- *
- * 3. Try to do an SRV record lookup for _xmpp-client._tcp record on the 
+ * 2. Try to do an SRV record lookup for _xmpp-client._tcp record on the 
  * target domain passed in as domain_name.
  *
  * A 'connect' event is raised on the passed 'socket' if connection succeeds.
@@ -68,24 +66,35 @@ XMPPLookupService.prototype = {
 	connect: function(socket) {
 		var self = this;
 
+		function remove_listeners(emitter, event) {
+			var _l = emitter.listeners(event).splice(0);
+			return function(clear) {
+				if (clear) {
+					emitter.listeners(event).splice(0);
+				}
+				_l.unshift(0, 0);
+				var _listeners = emitter.listeners(event);
+				_listeners.splice.apply(_listeners, _l);
+			};
+		}
+
 		// We first save all the user's handlers.
-		var _error_listeners   = socket.listeners('error').splice(0);
-		var _connect_listeners = socket.listeners('connect').splice(0);
+		var _add_error_listeners   = remove_listeners(socket, 'error');
+		var _add_connect_listeners = remove_listeners(socket, 'connect');
+		var _add_close_listeners   = remove_listeners(socket, 'close');
 
 
 		function _reattach_socket_listeners() {
 			// Reinstall all handlers.
-			_error_listeners.unshift(0, 0);
-			_connect_listeners.unshift(0, 0);
+			// console.error("_reattach_socket_listeners");
 
-			var _el = socket.listeners('error');
-			_el.splice.apply(_el, _error_listeners);
-
-			var _cl = socket.listeners('connect');
-			_cl.splice.apply(_cl, _connect_listeners);
+			_add_error_listeners(true);
+			_add_connect_listeners(true);
+			_add_close_listeners(true);
 		}
 
 		function _on_socket_connect(e) {
+			// console.error("Socket connect");
 			_rollback();
 
 			// Re-trigger the connect event.
@@ -110,51 +119,36 @@ XMPPLookupService.prototype = {
 			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_SRV_lookup");
 			
 			// Then try a normal SRV lookup.
-			var errbacks = socket.listeners('error').splice(0);
+			var add_errbacks = remove_listeners(socket, 'error');
 
 			var attempt = SRV.connect(socket, ['_xmpp-client._tcp'], 
 				self._domain_name, self._port);
 
-			var _e_triggered = false;
-			attempt.on('error', function(e) {
-				// We need to figure out why this callback is being triggered multiple
-				// times. This is just a hack for now.
-				if (!_e_triggered) {
-					return;
-				}
-				_e_triggered = true;
-
+			// 
+			// We need to figure out why this callback is being 
+			// triggered multiple times. The 'once' is just a 
+			// hack for now.
+			// 
+			attempt.once('error', function(e) {
 				// Forcefully clear 'error' listeners
-				var _elisteners = socket.listeners('error');
-				console.error("error_listeners.length:", _elisteners.length);
-
-				_elisteners.splice(0);
-
-				errbacks.unshift(0, 0);
-				_elisteners.splice.apply(_elisteners, errbacks);
+				// console.error("error_listeners.length:", socket.listeners('error').length);
+				add_errbacks(true);
 
 				socket.emit('error', e);
 			});
-		}
-
-		function try_connect_chatpw() {
-			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_chatpw:", self._domain_name + ".chat.pw");
-
-			// Do chat.pw related custom stuff.
-			socket.connect(self._port, self._domain_name + ".chat.pw");
 		}
 
 		function give_up_trying_to_connect(e) {
 			_rollback();
 
 			// Trigger the error event.
+			// console.log("Emitting error:", e.toString());
 			socket.emit('error', e);
 		}
 
 		var cstates = [
 			try_connect_route, 
 			try_connect_SRV_lookup, 
-			try_connect_chatpw, 
 			give_up_trying_to_connect
 		];
 
@@ -165,11 +159,7 @@ XMPPLookupService.prototype = {
 
 		function _rollback() {
 			// Remove custom error handlers that we attached on the socket.
-			// socket.removeListener('error', _on_socket_error);
-			// socket.removeListener('connect', _on_socket_connect);
-			socket.removeAllListeners('error');
-			socket.removeAllListeners('connect');
-
+			// That is already done by _reattach_socket_listeners()
 			_reattach_socket_listeners();
 		}
 

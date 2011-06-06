@@ -73,6 +73,7 @@ dutil.copy(XMPPProxy.prototype, {
 		this._sock.removeAllListeners('connect');
 		this._sock.removeAllListeners('data');
 		this._sock.removeAllListeners('error');
+		this._sock.removeAllListeners('close');
 	}, 
 
 	_attach_handlers: function() {
