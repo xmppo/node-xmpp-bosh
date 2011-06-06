@@ -35,5 +35,7 @@
 		  }
 ]
 ,"licenses": [{"type": "MIT"}]
-,"engine": "node"
+,"engines": {
+	    "node": ">=0.4.1 <=0.4.7"
+	    }
 }
