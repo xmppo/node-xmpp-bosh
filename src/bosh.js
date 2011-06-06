@@ -28,12 +28,12 @@ var http   = require('http');
 var url    = require('url');
 var ltx    = require('ltx');
 var util   = require('util');
-var events = require('events');
 var uuid   = require('node-uuid');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 var assert = require('assert').ok;
 var qs     = require('querystring');
+var EventPipe = require('eventpipe').EventPipe;
 
 
 var sprintf  = dutil.sprintf;
@@ -737,7 +737,7 @@ exports.createServer = function(options) {
 
 			var all = _p.concat(_uar);
 			all.forEach(function(response) {
-				bee.emit('no-client', response);
+				bep.emit('no-client', response);
 			});
 
 			// Pretend as if the client asked to terminate the stream
@@ -969,7 +969,7 @@ exports.createServer = function(options) {
 	}
 
 	function emit_nodes_event(nodes, state, sstate) {
-		/* Raise the 'nodes' event on 'bee' for every node in 'nodes'.
+		/* Raise the 'nodes' event on 'bep' for every node in 'nodes'.
 		 * If 'sstate' is falsy, then the 'nodes' event is raised on 
 		 * every open stream in the BOSH session represented by 'state'.
 		 *
@@ -980,12 +980,12 @@ exports.createServer = function(options) {
 			state.streams.forEach(function(sname) {
 				var ss = sn_state[sname];
 				if (ss) {
-					bee.emit('nodes', nodes, ss);
+					bep.emit('nodes', nodes, ss);
 				}
 			});
 		}
 		else {
-			bee.emit('nodes', nodes, sstate);
+			bep.emit('nodes', nodes, sstate);
 		}
 	}
 
@@ -1216,7 +1216,7 @@ exports.createServer = function(options) {
 			send_stream_terminate_response(sstate, condition);
 
 			stream_terminate(sstate, state);
-			bee.emit('stream-terminate', sstate);
+			bep.emit('stream-terminate', sstate);
 		});
 
 
@@ -1249,12 +1249,12 @@ exports.createServer = function(options) {
 	// The BOSH event emitter. People outside will subscribe to
 	// events from this guy. We return an instance of BoshEventEmitter
 	// to the outside world when anyone calls createServer()
-	function BoshEventEmitter() {
+	function BoshEventPipe() {
 	}
 
-	util.inherits(BoshEventEmitter, events.EventEmitter);
+	util.inherits(BoshEventPipe, EventPipe);
 
-	dutil.copy(BoshEventEmitter.prototype, {
+	dutil.copy(BoshEventPipe.prototype, {
 		stop: function() {
 			// console.log("stop::", http_server);
 			return http_server.close();
@@ -1263,13 +1263,11 @@ exports.createServer = function(options) {
 		sn_state:  sn_state
 	});
 
-	var bee = new BoshEventEmitter();
-
-	// console.log("bee::proto:", bee.prototype, bee.__proto__);
+	var bep = new BoshEventPipe();
 
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
-	bee.on('stream-added', function(sstate) {
+	bep.on('stream-added', function(sstate) {
 		log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", sstate.state.sid, sstate.name));
 		var state = sstate.state;
 
@@ -1283,7 +1281,7 @@ exports.createServer = function(options) {
 
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
-	bee.on('response', function(connector_response, sstate) {
+	bep.on('response', function(connector_response, sstate) {
 		log_it("DEBUG", sprintfd("BOSH::%s::response: %s", sstate.state.sid, connector_response));
 
 		var response = $body({
@@ -1296,7 +1294,7 @@ exports.createServer = function(options) {
 	// This event is raised when the server terminates the connection.
 	// The Connector typically raises this even so that we can tell
 	// the client (user) that such an event has occurred.
-	bee.on('terminate', function(sstate, had_error) {
+	bep.on('terminate', function(sstate, had_error) {
 		// We send a terminate response to the client.
 		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
@@ -1335,7 +1333,7 @@ exports.createServer = function(options) {
 			// Respond to the client.
 			send_session_creation_response(sstate);
 
-			bee.emit('stream-add', sstate);
+			bep.emit('stream-add', sstate);
 		}
 		else {
 			var sname = node.attrs.stream;
@@ -1446,7 +1444,7 @@ exports.createServer = function(options) {
 					_uar_keys.forEach(function(rid) {
 						if (rid <= node.attrs.ack) {
 							// Raise the 'response-acknowledged' event.
-							bee.emit('response-acknowledged', state.unacked_responses[rid], state);
+							bep.emit('response-acknowledged', state.unacked_responses[rid], state);
 							delete state.unacked_responses[rid];
 						}
 					});
@@ -1608,7 +1606,7 @@ exports.createServer = function(options) {
 					delete node.attrs.stream;
 				}
 				else {
-					bee.emit('stream-restart', sstate);
+					bep.emit('stream-restart', sstate);
 				}
 				// According to http://xmpp.org/extensions/xep-0206.html
 				// the XML nodes in a restart request should be ignored.
@@ -1631,7 +1629,7 @@ exports.createServer = function(options) {
 
 					// Don't yet respond to the client. Wait for the 'stream-added' event
 					// from the Connector.
-					bee.emit('stream-add', sstate);
+					bep.emit('stream-add', sstate);
 				}
 			}
 
@@ -1862,7 +1860,7 @@ exports.createServer = function(options) {
 	http_server.on('error', function(ex) {
 		// We enforce similar semantics as the rest of the node.js for the 'error'
 		// event and throw an exception if it is unhandled
-		if (!bee.emit('error', ex)) {
+		if (!bep.emit('error', ex)) {
 			throw new Error(
 				sprintf('ERROR on listener at endpoint: http://%s:%s%s', options.host, options.port, options.path)
 			);
@@ -1877,7 +1875,7 @@ exports.createServer = function(options) {
 	}, 20000);
 */
 
-	return bee;
+	return bep;
 
 };
 

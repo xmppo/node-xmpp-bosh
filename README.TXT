@@ -91,7 +91,7 @@ The project itself is divided into 4 main components as of now.
     1 A BOSH front end (bosh.js). This starts and HTTP server and manages 
       the BOSH sessions and XMPP streams on those sessions. Multiple Streams, 
       message acks, etc... and handled by this component.
-      This is an EventEmitter.
+      This is an EventPipe.
 
     2 An XMPP (Jabber) Proxy that is responsible for making single client
       connections to an XMPP server (xmpp-proxy.js). STARTTLS and any other
@@ -136,6 +136,10 @@ The project itself is divided into 4 main components as of now.
       [6] error: Emitted when there is an irrecoverable error. You should
           typically restart the service when this is emitted.
 
+      [7] response-acknowledged: Emitted when a certain response was
+          acknowledged by the client (i.e. Client sent an ACK for a
+	  certain response that was sent to it).
+
     * Events Understood by the BOSH service:
 
       [1] response: Emitted (typically by the Connector) when the backend
@@ -143,6 +147,10 @@ The project itself is divided into 4 main components as of now.
 
       [2] terminate: Emitted when the backend server wants to terminate
           the client's connection (stream).
+
+      [3] stream-added: Emitted when the backend server starts a new 
+          XMPP stream for the client.
+
 
     * Custom attributes on BOSH streams
 
