@@ -444,7 +444,7 @@ function require_again(file_path) {
 	 * file_path: The complete (full absolute) path of the file to be require()d.
 	 *
 	 * It does this by deleting the older handle to the module from require.cache
-	 * and calling require() in the file_path
+	 * and calling require()ing the file_path
 	 *
 	 */
 	var old_mhandle = find_module(file_path);
@@ -467,7 +467,9 @@ function toNumber(s) {
 // Add the following to underscore.js
 us.mixin({
 	isTruthy: isTruthy, 
-	isFalsy: isFalsy
+	isFalsy: isFalsy, 
+	toNumber: toNumber, 
+	not: not
 });
 
 
@@ -479,7 +481,6 @@ exports.arguments_to_array = arguments_to_array;
 exports.map                = map;
 exports.sprintf            = sprintf;
 exports.sprintfd           = sprintfd;
-exports.not                = not;
 exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
 exports.set_log_level      = set_log_level;
@@ -492,4 +493,3 @@ exports.ends_with          = ends_with;
 exports.find_module        = find_module;
 exports.require_again      = require_again;
 exports.pluralize          = pluralize;
-exports.toNumber           = toNumber;

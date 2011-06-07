@@ -95,7 +95,7 @@ function XMPPProxyConnector(bosh_server, options) {
 
 
 	bosh_server.on('nodes', us.bind(function(nodes, sstate) {
-		nodes = nodes.filter(dutil.not(us.isString));
+		nodes = nodes.filter(us.not(us.isString));
 		nodes.forEach(us.bind(function(stanza) {
 			this.stanza(stanza, sstate);
 		}, this));

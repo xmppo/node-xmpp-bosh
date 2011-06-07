@@ -114,9 +114,6 @@ XMPPLookupService.prototype = {
 				socket.connect(self._route.port, self._route.host);
 			}
 			else {
-				dutil.log_it('INFO', dutil.sprintfd('LOOKUP SERVICE::try_connect_route::%s:%s Failed', 
-													 self._route.host, self._route.port)
-							);
 				// Trigger the 'error' event.
 				socket.emit('error');
 			}

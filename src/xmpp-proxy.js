@@ -288,7 +288,7 @@ dutil.copy(XMPPProxy.prototype, {
 			var self = this;
 
 			node.children
-			.filter(dutil.not(us.isString))
+			.filter(us.not(us.isString))
 			.forEach(function(stanza) {
 				try {
 					// NULL out the parent otherwise ltx will go crazy when we

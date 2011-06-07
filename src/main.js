@@ -39,8 +39,6 @@ exports.lookup    = ls;
 exports.dutil     = dutil;
 exports.start     = function(options) {
 
-	// TODO: Try to add all functions in dutil into the _ namespace.
-
 	options = options || { };
 	options = dutil.extend(options, {
 		path: /^\/http-bind\/$/, 
@@ -53,7 +51,7 @@ exports.start     = function(options) {
 	// Instantiate a bosh server with the connector as a parameter.
 	var bosh_server = bosh.createServer(options);
 
-	dutil.log_it("DEBUG", "bosh_server:", bosh_server);
+	dutil.log_it("DEBUG", "Starting the BOSH server");
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
@@ -61,28 +59,24 @@ exports.start     = function(options) {
 
 	//
 	// Responses we may hook on to:
-	// 1. stream-add
-	// 2. stream-terminate (when the user terminates the stream)
-	// 3. stream-restart
-	// 4. no-client
-	// 5. response-acknowledged
-	// 6. nodes (from user to server)
-	// 7. response (from server to user)
-	// 8. terminate (when the server terminates the stream)
-	// 9. error: Will throw an unhandled exception if the 'error' event is not handled
+	// 01. stream-add
+	// 02. stream-terminate (when the user terminates the stream)
+	// 03. stream-restart
+	// 04. no-client
+	// 05. response-acknowledged
+	// 06. nodes (from user to server)
+	// 07. response (from server to user)
+	// 08. terminate (when the server terminates the stream)
+	// 09. stream-added (when the XMPP server starts a <stream:stream>
+	// 10. error: Will throw an unhandled exception if the 'error' event is not handled
 	//
 
-
+	// Example:
 	bosh_server.on('response-acknowledged', function(wrapped_response, state) {
 		// What to do with this response??
 		dutil.log_it("DEBUG", function() {
 			return [ "XMPP PROXY CONNECTOR::Response Acknowledged:", wrapped_response.rid ];
 		});
-	});
-
-	bosh_server.on('response', function(response, sstate) {
-		// Raised when the XMPP server sends the BOSH server a response to
-		// send back to the client.
 	});
 
 	return bosh_server;

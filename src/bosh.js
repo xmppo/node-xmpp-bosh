@@ -39,8 +39,7 @@ var EventPipe = require('eventpipe').EventPipe;
 var sprintf  = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
 var log_it   = dutil.log_it;
-var toNumber = dutil.toNumber;
-
+var toNumber = us.toNumber;
 
 
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
