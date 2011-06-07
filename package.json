@@ -17,11 +17,11 @@
 		  }]
 ,"homepage": "http://code.google.com/p/node-xmpp-bosh/"
 ,"bugs": "http://code.google.com/p/node-xmpp-bosh/issues/list"
-,"maintainers": [{"name": "Dhruv"
+,"maintainers": [{"name": "Dhruv Matani"
 		 ,"email": "dhruvbird@gmail.com"
 		 ,"web": "http://dhruvbird.com/"
 		 }]
-,"contributors": [{"name":"Vanaryon"
+,"contributors": [{"name":"Valérian Saliou"
 		  ,"email":"vanaryon@gmail.com"
 		  ,"url":"http://vanaryon.eu/"
 		  }
