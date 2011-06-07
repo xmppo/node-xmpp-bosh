@@ -1696,7 +1696,7 @@ exports.createServer = function(options) {
 		if (req.method === 'OPTIONS') {
 			res.writeHead(200, HTTP_OPTIONS_RESPONSE_HEADERS);
 			res.end();
-			return true;
+			return false;
 		}
 	}
 
@@ -1706,7 +1706,7 @@ exports.createServer = function(options) {
 				'Location': 'http://xmpp.org/favicon.ico'
 			});
 			res.end();
-			return true;
+			return false;
 		}
 	}
 
@@ -1716,7 +1716,7 @@ exports.createServer = function(options) {
 			res.writeHead(200, HTTP_GET_RESPONSE_HEADERS);
 			var stats = get_statistics();
 			res.end(stats);
-			return true;
+			return false;
 		}
 	}
 
@@ -1725,7 +1725,7 @@ exports.createServer = function(options) {
 		if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data')) {
 			res = new JSONPResponseProxy(req, res);
 			bosh_requst_handler(res, u.query.data || '');
-			return true;
+			return false;
 		}
 	}
 
@@ -1736,13 +1736,13 @@ exports.createServer = function(options) {
 		_headers['Content-Type'] = 'text/plain; charset=utf-8';
 		res.writeHead(404, _headers);
 		res.end();
-		return true;
+		return false;
 	}
 
 	function handle_post_bosh_request(req, res, u) {
 		var ppos = u.pathname.search(options.path);
 		if (req.method !== 'POST' || ppos === -1) {
-			return false;
+			return;
 		}
 
 		var data = [];
@@ -1799,28 +1799,8 @@ exports.createServer = function(options) {
 			log_it("WARN", "BOSH::Stack Trace:\n", ex.stack);
 		});
 
-		return true;
+		return false;
 	}
-
-	function RequestRouter() {
-		this._handlers = [ ];
-		this._handlers.push.apply(this._handlers, arguments);
-
-		// Only add functions
-		this._handlers = this._handlers.filter(us.isFunction);
-	}
-
-	RequestRouter.prototype = {
-		run: function() {
-			var i;
-			for (i = 0; i < this._handlers.length; ++i) {
-				var handler = this._handlers[i];
-				if (handler.apply(null, arguments)) {
-					break;
-				}
-			}
-		}
-	};
 
 
 	function http_request_handler(req, res) {
@@ -1842,16 +1822,15 @@ exports.createServer = function(options) {
 								 req.method, u.pathname)
 			  );
 
-		var rr = new RequestRouter(
-			handle_post_bosh_request, 
-			handle_get_bosh_request, 
-			handle_options, 
-			handle_get_favicon, 
-			handle_get_statistics, 
-			handle_unhandled_request
-		);
+		var router = new EventPipe();
+		router.on('request', handle_post_bosh_request, 1)
+			.on('request', handle_get_bosh_request, 2)
+			.on('request', handle_options, 3)
+			.on('request', handle_get_favicon, 4)
+			.on('request', handle_get_statistics, 5)
+			.on('request', handle_unhandled_request, 6);
 
-		rr.run(req, res, u);
+		router.emit('request', req, res, u);
 	}
 
 	var http_server = http.createServer(http_request_handler);
