@@ -50,7 +50,7 @@ function XMPPLookupService(domain_name, port, route) {
 		"chat.facebook.com": "chat.facebook.com"
 	};
 
-	if (domain_name in _special) {
+	if (_special.hasOwnProperty(domain_name)) {
 		if (!this._route) {
 			this._route = {
 				protocol: "xmpp", 
@@ -94,7 +94,9 @@ XMPPLookupService.prototype = {
 		}
 
 		function _on_socket_connect(e) {
-			// console.error("Socket connect");
+			dutil.log_it('DEBUG', dutil.sprintfd('LOOKUP SERVICE::Connection to %s succeeded', 
+												 self._domain_name)
+						);
 			_rollback();
 
 			// Re-trigger the connect event.
@@ -104,20 +106,27 @@ XMPPLookupService.prototype = {
 		function try_connect_route() {
 			// First just connect to the server if this._route is defined.
 			if (self._route) {
-				dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_route::", self._route.host, self._route.port);
+				dutil.log_it("DEBUG", dutil.sprintfd('LOOKUP SERVICE::try_connect_route::%s:%s', 
+													 self._route.host, self._route.port)
+							);
 
 				// socket.setTimeout(10000);
 				socket.connect(self._route.port, self._route.host);
 			}
 			else {
+				dutil.log_it('INFO', dutil.sprintfd('LOOKUP SERVICE::try_connect_route::%s:%s Failed', 
+													 self._route.host, self._route.port)
+							);
 				// Trigger the 'error' event.
 				socket.emit('error');
 			}
 		}
 
 		function try_connect_SRV_lookup() {
-			dutil.log_it("DEBUG", "LOOKUP SERVICE::try_connect_SRV_lookup");
-			
+			dutil.log_it('DEBUG', dutil.sprintfd('LOOKUP SERVICE::try_connect_SRV_lookup:%s', 
+												 self._domain_name)
+						);
+
 			// Then try a normal SRV lookup.
 			var add_errbacks = remove_listeners(socket, 'error');
 
@@ -128,8 +137,16 @@ XMPPLookupService.prototype = {
 			// We need to figure out why this callback is being 
 			// triggered multiple times. The 'once' is just a 
 			// hack for now.
+			//
+			// We've fixed the error in srv.js so, the once()
+			// hack should *NOT* be required any more
 			// 
 			attempt.once('error', function(e) {
+				dutil.log_it('INFO', 
+							 dutil.sprintfd('LOOKUP SERVICE::try_connect_SRV_lookup:%s Failed', 
+											self._domain_name)
+							);
+
 				// Forcefully clear 'error' listeners
 				// console.error("error_listeners.length:", socket.listeners('error').length);
 				add_errbacks(true);
@@ -139,10 +156,13 @@ XMPPLookupService.prototype = {
 		}
 
 		function give_up_trying_to_connect(e) {
+			dutil.log_it('INFO', 
+						 dutil.sprintfd('LOOKUP SERVICE::Giving up connection attempts to %s', 
+										self._domain_name)
+						);
 			_rollback();
 
 			// Trigger the error event.
-			// console.log("Emitting error:", e.toString());
 			socket.emit('error', e);
 		}
 
