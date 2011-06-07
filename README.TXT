@@ -202,6 +202,7 @@ The project itself is divided into 4 main components as of now.
     * node-uuid 
     * tav
     * underscore.js
+    * eventpipe
     * jsdom (for tests)
 
 [H] Tested with:
