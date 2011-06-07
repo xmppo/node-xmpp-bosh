@@ -282,3 +282,4 @@ The project itself is divided into 4 main components as of now.
     * v0.1.14 == SVN Commit #233
     * v0.1.15 == SVN Commit #238
     * v0.2.0 == SVN Commit #266
+    * v0.2.2 == SVN Commit #274
