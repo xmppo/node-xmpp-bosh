@@ -577,12 +577,12 @@ exports.createServer = function(options) {
 		// Streams to terminate
 		var stt = streams.map(function(x) {
 			return sn_state[x];
-		}).filter(dutil.isTruthy);
+		}).filter(us.isTruthy);
 
 		// Streams in error
 		var sie = streams.map(function(x) {
 			return sn_state[x];
-		}).filter(dutil.isFalsy);
+		}).filter(us.isFalsy);
 
 		// From streams, remove all entries that are 
 		// null or undefined, and log this condition.
@@ -1018,9 +1018,9 @@ exports.createServer = function(options) {
 
 	function send_no_requeue(ro, state, response) {
 		/* Send a response, but do NOT requeue if it fails */
-		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue, ro valid: %s", state.sid, dutil.isTruthy(ro)));
+		log_it("DEBUG", sprintfd("BOSH::%s::send_no_requeue, ro valid: %s", state.sid, us.isTruthy(ro)));
 
-		if (dutil.isFalsy(ro)) {
+		if (us.isFalsy(ro)) {
 			return;
 		}
 
@@ -1130,7 +1130,7 @@ exports.createServer = function(options) {
 
 		log_it("DEBUG", 
 			   sprintfd("BOSH::%s::pop_and_send: ro:%s, state.pending.length: %s", 
-						state.sid, dutil.isTruthy(ro), state.pending.length)
+						state.sid, us.isTruthy(ro), state.pending.length)
 			  );
 
 		if (ro && state.pending.length > 0) {

@@ -464,6 +464,13 @@ function toNumber(s) {
 }
 
 
+// Add the following to underscore.js
+us.mixin({
+	isTruthy: isTruthy, 
+	isFalsy: isFalsy
+});
+
+
 exports.copy               = copy;
 exports.extend             = extend;
 exports.repeat             = repeat;
@@ -475,8 +482,6 @@ exports.sprintfd           = sprintfd;
 exports.not                = not;
 exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
-exports.isFalsy            = isFalsy;
-exports.isTruthy           = isTruthy;
 exports.set_log_level      = set_log_level;
 exports.log_it             = log_it;
 exports.json_parse         = json_parse;
