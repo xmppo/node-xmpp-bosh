@@ -1801,6 +1801,14 @@ exports.createServer = function(options) {
 		return false;
 	}
 
+	var router = new EventPipe();
+	router.on('request', handle_post_bosh_request, 1)
+		.on('request', handle_get_bosh_request, 2)
+		.on('request', handle_options, 3)
+		.on('request', handle_get_favicon, 4)
+		.on('request', handle_get_statistics, 5)
+		.on('request', handle_unhandled_request, 6);
+
 
 	function http_request_handler(req, res) {
 		var u = url.parse(req.url, true);
@@ -1820,14 +1828,6 @@ exports.createServer = function(options) {
 		log_it("DEBUG", sprintfd("BOSH::Processing '%s' request at location: %s", 
 								 req.method, u.pathname)
 			  );
-
-		var router = new EventPipe();
-		router.on('request', handle_post_bosh_request, 1)
-			.on('request', handle_get_bosh_request, 2)
-			.on('request', handle_options, 3)
-			.on('request', handle_get_favicon, 4)
-			.on('request', handle_get_statistics, 5)
-			.on('request', handle_unhandled_request, 6);
 
 		router.emit('request', req, res, u);
 	}
