@@ -315,11 +315,11 @@ dutil.copy(XMPPProxy.prototype, {
 		}
 		catch (ex) {
 			// Eat the exception.
-			dutil.log_it("ERROR", "XMPP PROXY::Incomplete packet parsed in XMPPProxy::_on_data");
+			dutil.log_it("ERROR", "XMPP PROXY::_on_data:Incomplete packet parsed");
 		}
 
 		if (stream_terminated) {
-			dutil.log_it("DEBUG", "XMPP PROXY::Got a </stream:stream> from the server");
+			dutil.log_it("DEBUG", "XMPP PROXY::Stream terminated by the server");
 			this.terminate();
 		}
 
