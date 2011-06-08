@@ -225,6 +225,8 @@ dutil.copy(XMPPProxy.prototype, {
 		dutil.log_it("DEBUG", function() {
 			return dutil.sprintf("XMPP PROXY::received:%s", d.toString('binary'));
 		});
+
+		// TODO: Terminate if the buffer becomes too big
 		this._buff += d.toString();
 
 		if (this._first) {
