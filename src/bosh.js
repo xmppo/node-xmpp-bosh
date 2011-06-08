@@ -339,13 +339,8 @@ exports.createServer = function(options) {
 	//        associated
 	// }
 	//
-	// TODO: Remove length & total from sid_state & sn_state into sid_info & sn_info
 	// 
 	var sid_state = {
-		// Stores the number of active sessions
-		length: 0, 
-		// Stores the total number of sessions
-		total:  0
 	};
 
 	// This encapsulates the state for the client (xmpp) stream
@@ -363,6 +358,16 @@ exports.createServer = function(options) {
 	// }
 	//
 	var sn_state = {
+	};
+
+	var sid_info = {
+		// Stores the number of active sessions
+		length: 0, 
+		// Stores the total number of sessions
+		total:  0
+	};
+
+	var sn_info = {
 		// Stores the number of active streams
 		length: 0, 
 		// Stores the total number of streams
@@ -490,8 +495,8 @@ exports.createServer = function(options) {
 
 		var state = new_state_object(opt, res);
 		sid_state[sid] = state;
-		++sid_state.length;
-		++sid_state.total;
+		++sid_info.length;
+		++sid_info.total;
 		return state;
 	}
 
@@ -522,7 +527,7 @@ exports.createServer = function(options) {
 		unset_session_inactivity_timeout(state);
 
 		delete sid_state[state.sid];
-		--sid_state.length;
+		--sid_info.length;
 	}
 
 
@@ -557,8 +562,8 @@ exports.createServer = function(options) {
 		state.streams.push(sname);
 
 		sn_state[sname] = sstate;
-		++sn_state.length;
-		++sn_state.total;
+		++sn_info.length;
+		++sn_info.total;
 		return sstate;
 	}
 
@@ -598,7 +603,7 @@ exports.createServer = function(options) {
 		var sstream = sn_state[stream.name];
 		if (sstream) {
 			delete sn_state[stream.name];
-			--sn_state.length;
+			--sn_info.length;
 		}
 		var pos = state.streams.indexOf(stream.name);
 		if (pos !== -1) {
@@ -931,8 +936,10 @@ exports.createServer = function(options) {
 			.up()
 			.c('h3').t('Bidirectional-streams Over Synchronous HTTP').up()
 			.c('p').t(sprintf('Uptime: %s', dutil.time_diff(started, new Date()))).up()
-			.c('p').t(sprintf('%s/%s active %s', sid_state.length, sid_state.total, dutil.pluralize(sid_state.total, 'session'))).up()
-			.c('p').t(sprintf('%s/%s active %s', sn_state.length, sn_state.total, dutil.pluralize(sn_state.total, 'stream'))).up()
+			.c('p').t(sprintf('%s/%s active %s', sid_info.length, sid_info.total, 
+							  dutil.pluralize(sid_info.total, 'session'))).up()
+			.c('p').t(sprintf('%s/%s active %s', sn_info.length, sn_info.total, 
+							  dutil.pluralize(sn_info.total, 'stream'))).up()
 			.tree();
 		stats.push(content.toString());
 		return stats.join('\n');
