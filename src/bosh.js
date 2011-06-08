@@ -1246,7 +1246,7 @@ exports.createServer = function(options) {
 
 
 	// The BOSH event emitter. People outside will subscribe to
-	// events from this guy. We return an instance of BoshEventEmitter
+	// events from this guy. We return an instance of BoshEventPipe
 	// to the outside world when anyone calls createServer()
 	function BoshEventPipe() {
 	}
