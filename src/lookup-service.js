@@ -125,31 +125,9 @@ XMPPLookupService.prototype = {
 						);
 
 			// Then try a normal SRV lookup.
-			var add_errbacks = remove_listeners(socket, 'error');
 
 			var attempt = SRV.connect(socket, ['_xmpp-client._tcp'], 
 				self._domain_name, self._port);
-
-			// 
-			// We need to figure out why this callback is being 
-			// triggered multiple times. The 'once' is just a 
-			// hack for now.
-			//
-			// We've fixed the error in srv.js so, the once()
-			// hack should *NOT* be required any more
-			// 
-			attempt.once('error', function(e) {
-				dutil.log_it('INFO', 
-							 dutil.sprintfd('LOOKUP SERVICE::try_connect_SRV_lookup:%s Failed', 
-											self._domain_name)
-							);
-
-				// Forcefully clear 'error' listeners
-				// console.error("error_listeners.length:", socket.listeners('error').length);
-				add_errbacks(true);
-
-				socket.emit('error', e);
-			});
 		}
 
 		function give_up_trying_to_connect(e) {

@@ -1,5 +1,4 @@
 var dns = require('dns');
-var EventEmitter = require('events').EventEmitter;
 
 function compareNumbers(a, b) {
     a = parseInt(a, 10);
@@ -90,19 +89,39 @@ function resolveHost(name, cb) {
     dns.lookup(name, cb1);
 }
 
+function addListeners(emitter, event, listeners) {
+    var _l = emitter.listeners(event);
+    listeners.unshift(0, 0);
+    _l.splice.apply(_l, listeners);
+}
+
+function extractAllListeners(emitter, event) {
+    var listeners = emitter.listeners(event);
+    listeners = listeners.splice(0, listeners.length);
+    return listeners;
+}
+
+
 // connection attempts to multiple addresses in a row
-function tryConnect(socket, addrs, listener) {
+function tryConnect(socket, addrs) {
     // console.error("tryConnect::", new Error().stack.toString());
 
-    // addrs = addrs.slice(0, 1);
+    // Save original listeners
+    var _c_listeners = extractAllListeners(socket, 'connect');
+    var _e_listeners = extractAllListeners(socket, 'error');
 
     var onConnect = function() {
+	// console.error('srv.js::connected!!');
         socket.removeListener('connect', onConnect);
         socket.removeListener('error', onError);
-	// console.error('srv.js::connected!!');
+
+	addListeners(socket, 'connect', _c_listeners);
+	addListeners(socket, 'error',   _e_listeners);
+
         // done!
-        listener.emit('connect');
+        socket.emit('connect');
     };
+
     var error;
     var onError = function(e) {
 	// console.error("srv.js::onError, e:", e, addrs);
@@ -116,12 +135,19 @@ function tryConnect(socket, addrs, listener) {
             socket.connect(addr.port, addr.name);
 	}
         else {
+	    // console.error("Emitting ERROR in srv.js");
+
             socket.removeListener('connect', onConnect);
             socket.removeListener('error', onError);
-	    // console.error("Emitting ERROR in srv.js");
-            listener.emit('error', error || new Error('No addresses to connect to'));
+
+	    addListeners(socket, 'connect', _c_listeners);
+	    addListeners(socket, 'error',   _e_listeners);
+
+            socket.emit('error', error || new Error('No addresses to connect to'));
 	}
     };
+
+    // Add our listeners
     socket.addListener('connect', onConnect);
     socket.addListener('error', onError);
     connectNext();
@@ -129,14 +155,13 @@ function tryConnect(socket, addrs, listener) {
 
 // returns EventEmitter with 'connect' & 'error'
 exports.connect = function(socket, services, domain, defaultPort) {
-    var listener = new EventEmitter();
 
     var tryServices = function() {
         var service = services.shift();
         if (service) {
             resolveSrv(service + '.' + domain, function(error, addrs) {
                 if (addrs) {
-                    tryConnect(socket, addrs, listener);
+                    tryConnect(socket, addrs);
 		}
                 else {
                     tryServices();
@@ -149,16 +174,16 @@ exports.connect = function(socket, services, domain, defaultPort) {
                         return { name: addr,
                                  port: defaultPort };
                     });
-                    tryConnect(socket, addrs, listener);
+                    tryConnect(socket, addrs);
                 }
 		else {
-                    listener.emit('error', error || new Error('No addresses resolved for ' + domain));
+                    socket.emit('error', error || new Error('No addresses resolved for ' + domain));
 		}
             });
-        }
 
-    };
+        } // if (service)
+
+    }; // tryServices()
+
     tryServices();
-
-    return listener;
 };
