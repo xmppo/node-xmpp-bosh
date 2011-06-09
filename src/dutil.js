@@ -493,3 +493,4 @@ exports.ends_with          = ends_with;
 exports.find_module        = find_module;
 exports.require_again      = require_again;
 exports.pluralize          = pluralize;
+exports.NULL_FUNC          = function() { };

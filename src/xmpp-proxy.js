@@ -49,6 +49,8 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, options, void_star) 
 		version:        '1.0'
 	};
 
+	this._max_xmpp_buffer_bytes = options.max_xmpp_buffer_bytes || 500000;
+
 	this._no_tls_domains = { };
 	var _ntd = options.no_tls_domains || [ ];
 	_ntd.forEach(function(domain) {
@@ -77,11 +79,13 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_attach_handlers: function() {
+		// Ideally, 'connect' and 'close' should be once() listeners
+		// but having them as on() listeners has helped us catch some
+		// nasty bugs, so we let them be.
 		this._sock.on('connect', us.bind(this._on_connect, this));
 		this._sock.on('data',    us.bind(this._on_data, this));
 		this._sock.on('close',   us.bind(this._on_close, this));
-		this._sock.on('error',   function() { });
-		// TODO: Handle the 'end' event.
+		this._sock.on('error',   dutil.NULL_FUNC);
 	}, 
 
 	_starttls: function() {
@@ -226,7 +230,6 @@ dutil.copy(XMPPProxy.prototype, {
 			return dutil.sprintf("XMPP PROXY::received:%s", d.toString('binary'));
 		});
 
-		// TODO: Terminate if the buffer becomes too big
 		this._buff += d.toString();
 
 		if (this._first) {
@@ -273,6 +276,12 @@ dutil.copy(XMPPProxy.prototype, {
 		if (st_pos !== -1) {
 			stream_terminated = true;
 			this._buff = this._buff.substring(0, st_pos);
+		}
+
+		// Terminate if the buffer becomes too big
+		if (this._buff.length > this._max_xmpp_buffer_bytes) {
+			dutil.log_it("DEBUG", "XMPP PROXY::Terminating stream due to buffer size violation");
+			stream_terminated = true;
 		}
 
 		try {

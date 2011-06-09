@@ -43,7 +43,7 @@ var toNumber = us.toNumber;
 
 
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
-var NULL_FUNC  = function() { };
+var NULL_FUNC  = dutil.NULL_FUNC;
 
 
 //

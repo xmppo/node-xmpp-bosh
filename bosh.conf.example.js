@@ -10,6 +10,10 @@ exports.config = {
 	// "hold" from the client
 	max_data_held_bytes: 20000, 
 
+	// Terminate the session if the XMPP buffer for a stream 
+	// exceeds max_xmpp_buffer_bytes bytes
+	max_xmpp_buffer_bytes: 500000, 
+
 	// Don't entertain more than 'max_bosh_connections' simultaneous 
 	// connections on any BOSH session. This is related to the 'hold'
 	// attribute
