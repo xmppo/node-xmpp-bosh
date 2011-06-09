@@ -68,6 +68,9 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     * max_data_held_bytes: The maximum allowable number of bytes that a POST 
       request body may contain. Any request exceeding this value will be dropped
       (default: 20000)
+    * max_xmpp_buffer_bytes: The maximum size of an incoming XMPP buffer in 
+      bytes. If the buffer exceeds this size, then the stream is terminated.
+      (default: 500000)
     * max_bosh_connections: The maximum number of simultaneous connections
       that the BOSH server will entertain for any open BOSH session 
       (default: 2)
