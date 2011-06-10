@@ -185,5 +185,5 @@ exports.connect = function(socket, services, domain, defaultPort) {
 
     }; // tryServices()
 
-    tryServices();
+    process.nextTick(tryServices);
 };
