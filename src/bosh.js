@@ -1677,13 +1677,29 @@ exports.createServer = function(options) {
 	}
 
 
+	function xml_parse_and_get_body_tag(data) {
+		// Wrap data in <dummy> tags to prevent the billion laughs 
+		// (XML entity expansion) attack
+		// http://www.stylusstudio.com/xmldev/200211/post50610.html
+		var node = dutil.xml_parse('<dummy>' + data + '</dummy>');
+
+		if (!node || node.children.length !== 1 || 
+			typeof node.children[0].is !== 'function' || 
+			!node.children[0].is('body')) {
+			return null;
+		}
+		return node.children[0];
+	}
+
+
 	function bosh_requst_handler(res, data) {
 		/* Called when the 'end' event for the request is fired by 
 		 * the HTTP request handler
 		 */
-		var node = dutil.xml_parse(data);
 
-		if (!node || !node.is('body')) {
+		var node = xml_parse_and_get_body_tag(data);
+
+		if (!node) {
 			res.writeHead(200, HTTP_POST_RESPONSE_HEADERS);
 			res.end($terminate({ condition: 'bad-request' }).toString());
 			return;
