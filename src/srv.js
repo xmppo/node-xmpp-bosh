@@ -185,5 +185,9 @@ exports.connect = function(socket, services, domain, defaultPort) {
 
     }; // tryServices()
 
+    // We start the process in the next tick so that if anything happens
+    // synchronously, then the event listeners that the user has added 
+    // on the socket object after calling connect() are also handled
+    // properly.
     process.nextTick(tryServices);
 };
