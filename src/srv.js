@@ -107,6 +107,7 @@ function tryConnect(socket, addrs) {
     // console.error("tryConnect::", new Error().stack.toString());
 
     // Save original listeners
+    // TODO: Also unhook the 'close' event listeners
     var _c_listeners = extractAllListeners(socket, 'connect');
     var _e_listeners = extractAllListeners(socket, 'error');
 
