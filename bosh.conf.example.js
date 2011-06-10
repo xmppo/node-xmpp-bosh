@@ -3,7 +3,7 @@
 exports.config = {
 	port: 5280, 
 	host: '0.0.0.0', 
-	path: /^\/http-bind\/$/, 
+	path: /^\/http-bind(\/+)?$/, 
 	logging: 'INFO', 
 
 	// The maximum number of bytes that the BOSH server will 

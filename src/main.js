@@ -41,7 +41,7 @@ exports.start     = function(options) {
 
 	options = options || { };
 	options = dutil.extend(options, {
-		path: /^\/http-bind\/$/, 
+		path: /^\/http-bind(\/+)?$/, 
 		port: 5280, 
 		logging: "INFO"
 	});

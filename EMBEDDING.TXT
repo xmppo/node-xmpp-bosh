@@ -6,7 +6,7 @@ var nxb    = require('node-xmpp-bosh');
 var server = nxb.start({
   logging: "WARN", 
   port: 5280, 
-  path: /^\/http-bind\/
+  path: /^\/http-bind(\/+)?$/
 });
 
 server.on(EVENT, HANDLER);
