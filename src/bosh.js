@@ -60,52 +60,6 @@ var NULL_FUNC  = dutil.NULL_FUNC;
 //
 
 
-function inflated_attrs(node) {
-	// 
-	// This function expands XML attribute namespaces and helps us 
-	// lookup fully qualified XML attributes
-	//
-	// It returns a list of fully qualified attributes for the node
-	// that is passed to it
-	//
-	var xmlns = { };
-	var attrs = { };
-	var k, m, xk;
-
-	for (k in node.attrs) {
-		if (node.attrs.hasOwnProperty(k)) {
-			m = k.match(/^xmlns:([\S\s]+)$/);
-			if (m && m.length > 0) {
-				xmlns[m[1]] = node.attrs[k];
-				attrs[k] = node.attrs[k];
-			}
-		}
-	}
-
-	for (k in node.attrs) {
-		if (node.attrs.hasOwnProperty(k)) {
-			for (xk in xmlns) {
-				if (xmlns.hasOwnProperty(xk)) {
-					// Looks like a smiley, doesn't it; a sad one at that :-p
-					var re = new RegExp("^" + xk + ":([\\s\\S]+)$");
-					m = k.match(re);
-					
-					if (m && m.length > 0) {
-						attrs[xmlns[xk] + ":" + m[1]] = node.attrs[k];
-					} // if (m && m.length > 0)
-
-				} // if (!node.attrs.hasOwnProperty(xmlns))
-
-			} // for (xk in xmlns)
-
-		} // if (node.attrs.hasOwnProperty(k))
-
-	}
-
-	return attrs;
-}
-
-
 
 // Begin packet type checkers
 function is_session_creation_packet(node) {
@@ -114,11 +68,11 @@ function is_session_creation_packet(node) {
 	// Even though it says SHOULD for everything we expect, we
 	// violate the XEP.
 	//
-	var ia = inflated_attrs(node);
+	var ia = dutil.inflated_attrs(node);
 	return node.attrs.to &&
 		node.attrs.wait &&
 		node.attrs.hold && !node.attrs.sid && 
-		ia["urn:xmpp:xbosh:version"];
+		ia.hasOwnProperty('urn:xmpp:xbosh:version');
 }
 
 
@@ -126,8 +80,8 @@ function is_stream_restart_packet(node) {
 	// Coded according to the rules mentioned here:
 	// http://xmpp.org/extensions/xep-0206.html#create and
 	// http://xmpp.org/extensions/xep-0206.html#preconditions-sasl
-	var ia = inflated_attrs(node);
-	return ia["urn:xmpp:xbosh:restart"] === "true";
+	var ia = dutil.inflated_attrs(node);
+	return ia['urn:xmpp:xbosh:restart'] === 'true';
 }
 
 function is_stream_add_request(node) {
@@ -144,7 +98,7 @@ function is_stream_terminate_request(node) {
 	// http://xmpp.org/extensions/xep-0124.html#terminate
 	return node.attrs.sid && 
 		node.attrs.rid && 
-		node.attrs.type === "terminate";
+		node.attrs.type === 'terminate';
 }
 // End packet type checkers
 

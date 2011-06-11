@@ -463,6 +463,45 @@ function toNumber(s) {
 	return isNaN(_n) ? 0 : _n;
 }
 
+function inflated_attrs(node) {
+	// 
+	// This function expands XML attribute namespaces and helps us 
+	// lookup fully qualified XML attributes
+	//
+	// It returns a list of fully qualified attributes for the node
+	// that is passed to it
+	//
+	var xmlns = { };
+	var attrs = { };
+	var k, m, xk;
+	var re = new RegExp("^([^:]+):([\\s\\S]+)$");
+
+	for (k in node.attrs) {
+		if (node.attrs.hasOwnProperty(k)) {
+			m = k.match(/^xmlns:([\S\s]+)$/);
+			if (m && m.length > 0) {
+				xmlns[m[1]] = node.attrs[k];
+				attrs[k] = node.attrs[k];
+			}
+		}
+	}
+
+	for (k in node.attrs) {
+		if (node.attrs.hasOwnProperty(k)) {
+			// Extract the bit before the : and check if it is present in xmlns
+			var m = k.match(re);
+			// console.log("m:", m);
+			if (m && m.length === 3 && xmlns.hasOwnProperty(m[1])) {
+				attrs[xmlns[m[1]] + ":" + m[2]] = node.attrs[k];
+			}
+
+		} // if (node.attrs.hasOwnProperty(k))
+
+	}
+
+	return attrs;
+}
+
 
 // Add the following to underscore.js
 us.mixin({
@@ -493,4 +532,5 @@ exports.ends_with          = ends_with;
 exports.find_module        = find_module;
 exports.require_again      = require_again;
 exports.pluralize          = pluralize;
+exports.inflated_attrs     = inflated_attrs;
 exports.NULL_FUNC          = function() { };
