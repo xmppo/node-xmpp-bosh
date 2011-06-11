@@ -204,11 +204,11 @@ exports.createServer = function(options) {
 
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client.
-	var MAX_DATA_HELD = options.max_data_held || 30000;
+	var MAX_DATA_HELD = options.max_data_held || 100000;
 
 	// Don't entertain more than 3 (default) simultaneous connections 
 	// on any BOSH session.
-	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 3;
+	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 2;
 
 	// The maximum number of packets on either side of the current 'rid'
 	// that we are willing to accept.
@@ -218,7 +218,7 @@ exports.createServer = function(options) {
 	// before sending and empty response on it?
 	var DEFAULT_INACTIVITY = options.default_inactivity || 70;
 
-	var MAX_INACTIVITY = options.max_inactivity || 3600;
+	var MAX_INACTIVITY = options.max_inactivity || 160;
 
 	var MAX_STREAMS_PER_SESSION = options.max_streams_per_session || 8;
 

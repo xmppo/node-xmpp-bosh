@@ -66,7 +66,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     * host: The host to listen on (default: 0.0.0.0)
     * max_data_held: The maximum allowable number of bytes that a POST 
       request body may contain. Any request exceeding this value will be dropped
-      (default: 20000)
+      (default: 100000)
     * max_xmpp_buffer_size: The maximum size of an incoming XMPP buffer in 
       bytes. If the buffer exceeds this size, then the stream is terminated.
       (default: 500000)
