@@ -190,11 +190,11 @@ JSONPResponseProxy.prototype = {
 // * path
 // * port
 // * host
-// * max_data_held_bytes
+// * max_data_held
 // * max_bosh_connections
 // * window_size
-// * default_inactivity_sec
-// * max_inactivity_sec
+// * default_inactivity
+// * max_inactivity
 // * http_headers
 //
 exports.createServer = function(options) {
@@ -204,7 +204,7 @@ exports.createServer = function(options) {
 
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client.
-	var MAX_DATA_HELD_BYTES = options.max_data_held_bytes || 30000;
+	var MAX_DATA_HELD = options.max_data_held || 30000;
 
 	// Don't entertain more than 3 (default) simultaneous connections 
 	// on any BOSH session.
@@ -214,11 +214,11 @@ exports.createServer = function(options) {
 	// that we are willing to accept.
 	var WINDOW_SIZE = options.window_size || 2;
 
-	// How much time should we hold a response object before sending
-	// and empty response to it?
-	var DEFAULT_INACTIVITY_SEC = options.default_inactivity_sec || 70;
+	// How much time (in second) should we hold a response object 
+	// before sending and empty response on it?
+	var DEFAULT_INACTIVITY = options.default_inactivity || 70;
 
-	var MAX_INACTIVITY_SEC = options.max_inactivity_sec || 3600;
+	var MAX_INACTIVITY = options.max_inactivity || 3600;
 
 	var MAX_STREAMS_PER_SESSION = options.max_streams_per_session || 8;
 
@@ -368,11 +368,11 @@ exports.createServer = function(options) {
 		if (options.inactivity) {
 			// We squeeze options.inactivity between the min and max allowable values
 			options.inactivity = [ Math.floor(toNumber(options.inactivity)), 
-								   MAX_INACTIVITY_SEC, 
-								   DEFAULT_INACTIVITY_SEC ].sort(dutil.num_cmp)[1];
+								   MAX_INACTIVITY, 
+								   DEFAULT_INACTIVITY ].sort(dutil.num_cmp)[1];
 		}
 		else {
-			options.inactivity = DEFAULT_INACTIVITY_SEC;
+			options.inactivity = DEFAULT_INACTIVITY;
 		}
 
 		options.window = WINDOW_SIZE;
@@ -418,7 +418,7 @@ exports.createServer = function(options) {
 			wait:       Math.floor(toNumber(node.attrs.wait)), 
 			hold:       Math.floor(toNumber(node.attrs.hold)),
 			// The 'inactivity' attribute is an extension
-			inactivity: Math.floor(toNumber(node.attrs.inactivity || DEFAULT_INACTIVITY_SEC)), 
+			inactivity: Math.floor(toNumber(node.attrs.inactivity || DEFAULT_INACTIVITY)), 
 			content:    "text/xml; charset=utf-8"
 		};
 
@@ -1756,7 +1756,7 @@ exports.createServer = function(options) {
 
 			// Prevent attacks. If data (in its entirety) gets too big, 
 			// terminate the connection.
-			if (data_len > MAX_DATA_HELD_BYTES) {
+			if (data_len > MAX_DATA_HELD) {
 				// Terminate the connection. We null out 'data' to aid GC
 				data = null;
 				_on_end_callback(true);

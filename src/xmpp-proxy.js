@@ -49,7 +49,7 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, options, void_star) 
 		version:        '1.0'
 	};
 
-	this._max_xmpp_buffer_bytes = options.max_xmpp_buffer_bytes || 500000;
+	this._max_xmpp_buffer_size = options.max_xmpp_buffer_size || 500000;
 
 	this._no_tls_domains = { };
 	var _ntd = options.no_tls_domains || [ ];
@@ -279,7 +279,7 @@ dutil.copy(XMPPProxy.prototype, {
 		}
 
 		// Terminate if the buffer becomes too big
-		if (this._buff.length > this._max_xmpp_buffer_bytes) {
+		if (this._buff.length > this._max_xmpp_buffer_size) {
 			dutil.log_it("DEBUG", "XMPP PROXY::Terminating stream due to buffer size violation");
 			stream_terminated = true;
 		}

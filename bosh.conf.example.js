@@ -8,11 +8,11 @@ exports.config = {
 
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client
-	max_data_held_bytes: 20000, 
+	max_data_held: 20000, 
 
 	// Terminate the session if the XMPP buffer for a stream 
 	// exceeds max_xmpp_buffer_bytes bytes
-	max_xmpp_buffer_bytes: 500000, 
+	max_xmpp_buffer_size: 500000, 
 
 	// Don't entertain more than 'max_bosh_connections' simultaneous 
 	// connections on any BOSH session. This is related to the 'hold'
@@ -23,11 +23,11 @@ exports.config = {
 	// that we are willing to accept.
 	window_size: 2, 
 
-	// How much time should we hold a response object before sending
-	// and empty response to it?
-	default_inactivity_sec: 70, 
+	// How much time (in second) should we hold a response object 
+	// before sending and empty response on it?
+	default_inactivity: 70, 
 
-	max_inactivity_sec: 160, 
+	max_inactivity: 160, 
 
 	// The maximum number of active streams allowed per BOSH session
 	max_streams_per_session: 8, 
