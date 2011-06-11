@@ -204,18 +204,19 @@ The project itself is divided into 4 main components as of now.
     * node-uuid  (https://github.com/broofa/node-uuid)
     * tav (https://github.com/akaspin/tav)
     * underscore.js (https://github.com/documentcloud/underscore)
-    * eventpipe (https://github.com/documentcloud/underscore)
+    * eventpipe (https://github.com/dhruvbird/eventpipe)
     * jsdom, for tests (https://github.com/tmpvar/jsdom)
 
 [H] Tested with:
 
     * Servers:
-        * Ejabberd ([http://www.jabber.org/ jabber.org], [https://www.jappix.com/ jappix.com])
+        * Ejabberd (http://www.process-one.net/en/ejabberd/) 
+	  ([http://www.jabber.org/ jabber.org], [https://www.jappix.com/ jappix.com])
         * Google Talk ([http://gmail.com/ gmail.com])
         * Facebook ([http://www.facebook.com/ chat.facebook.com])
         * Pappu
-	* Prosody IM
-	* Openfire
+	* Prosody IM (http://prosody.im/)
+	* Openfire (http://www.igniterealtime.org/projects/openfire/)
 
     * Clients
         * strophe.js (http://github.com/metajack/strophejs)
