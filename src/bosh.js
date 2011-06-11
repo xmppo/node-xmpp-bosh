@@ -206,7 +206,7 @@ exports.createServer = function(options) {
 	// "hold" from the client.
 	var MAX_DATA_HELD = options.max_data_held || 100000;
 
-	// Don't entertain more than 3 (default) simultaneous connections 
+	// Don't entertain more than 2 (default) simultaneous connections 
 	// on any BOSH session.
 	var MAX_BOSH_CONNECTIONS = options.max_bosh_connections || 2;
 
