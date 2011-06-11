@@ -8,7 +8,7 @@ exports.config = {
 
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client
-	max_data_held: 20000, 
+	max_data_held: 100000, 
 
 	// Terminate the session if the XMPP buffer for a stream 
 	// exceeds max_xmpp_buffer_bytes bytes
