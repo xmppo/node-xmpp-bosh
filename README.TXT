@@ -198,24 +198,24 @@ The project itself is divided into 4 main components as of now.
 
 [G] Dependencies:
 
-    * Node.js
-    * node-expat
-    * ltx
-    * node-uuid 
-    * tav
-    * underscore.js
-    * eventpipe
-    * jsdom (for tests)
+    * Node.js (http://nodejs.org/)
+    * node-expat (https://github.com/astro/node-expat)
+    * ltx (https://github.com/astro/ltx)
+    * node-uuid  (https://github.com/broofa/node-uuid)
+    * tav (https://github.com/akaspin/tav)
+    * underscore.js (https://github.com/documentcloud/underscore)
+    * eventpipe (https://github.com/documentcloud/underscore)
+    * jsdom, for tests (https://github.com/tmpvar/jsdom)
 
 [H] Tested with:
 
     * Servers:
-        * Ejabberd ([http://jabber.org/ jabber.org], [http://jappix.com/ jappix.com])
+        * Ejabberd ([http://www.jabber.org/ jabber.org], [https://www.jappix.com/ jappix.com])
         * Google Talk ([http://gmail.com/ gmail.com])
-        * Facebook ([http://facebook.com/ facebook.com])
+        * Facebook ([http://www.facebook.com/ chat.facebook.com])
         * Pappu
 	* Prosody IM
-	* Openfile
+	* Openfire
 
     * Clients
         * strophe.js (http://github.com/metajack/strophejs)
