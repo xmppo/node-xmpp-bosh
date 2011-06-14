@@ -66,38 +66,14 @@ XMPPLookupService.prototype = {
 	connect: function(socket) {
 		var self = this;
 
-		function remove_listeners(emitter, event) {
-			var _l = emitter.listeners(event).splice(0);
-			return function(clear) {
-				if (clear) {
-					emitter.listeners(event).splice(0);
-				}
-				_l.unshift(0, 0);
-				var _listeners = emitter.listeners(event);
-				_listeners.splice.apply(_listeners, _l);
-			};
-		}
-
 		// We first save all the user's handlers.
-		var _add_error_listeners   = remove_listeners(socket, 'error');
-		var _add_connect_listeners = remove_listeners(socket, 'connect');
-		var _add_close_listeners   = remove_listeners(socket, 'close');
-
-
-		function _reattach_socket_listeners() {
-			// Reinstall all handlers.
-			// console.error("_reattach_socket_listeners");
-
-			_add_error_listeners(true);
-			_add_connect_listeners(true);
-			_add_close_listeners(true);
-		}
+		var _add_all_listeners = SRV.removeListeners(socket);
 
 		function _on_socket_connect(e) {
 			dutil.log_it('DEBUG', dutil.sprintfd('LOOKUP SERVICE::Connection to %s succeeded', 
 												 self._domain_name)
 						);
-			_rollback();
+			_add_all_listeners(true);
 
 			// Re-trigger the connect event.
 			socket.emit('connect', e);
@@ -135,7 +111,7 @@ XMPPLookupService.prototype = {
 						 dutil.sprintfd('LOOKUP SERVICE::Giving up connection attempts to %s', 
 										self._domain_name)
 						);
-			_rollback();
+			_add_all_listeners(true);
 
 			// Trigger the error event.
 			socket.emit('error', e);
@@ -150,12 +126,6 @@ XMPPLookupService.prototype = {
 		function _on_socket_error(e) {
 			var next = cstates.shift();
 			next(e);
-		}
-
-		function _rollback() {
-			// Remove custom error handlers that we attached on the socket.
-			// That is already done by _reattach_socket_listeners()
-			_reattach_socket_listeners();
 		}
 
 		socket.on('error', _on_socket_error);
