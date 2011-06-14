@@ -1540,9 +1540,7 @@ exports.createServer = function(options) {
 
 
 			// Add to held response objects for this BOSH session
-			if (res) {
-				add_held_http_connection(state, node.attrs.rid, res);
-			}
+			add_held_http_connection(state, node.attrs.rid, res);
 
 			// Process pending (queued) responses (if any)
 			send_pending_responses(state);
