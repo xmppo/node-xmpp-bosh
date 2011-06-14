@@ -54,6 +54,8 @@ Then, we get the external modules:
 
 `git clone git://github.com/dhruvbird/eventpipe.git`
 
+`git clone git://github.com/dhruvbird/dns-srv.git`
+
 Then, we build the node-expat library:
 
 `./node-expat/configure`
@@ -73,6 +75,8 @@ Finally, we create symbolic links:
 `ln -s ./.libs/underscore/underscore.js ./underscore.js`
 
 `ln -s ./.libs/eventpipe/eventpipe.js ./eventpipe.js`
+
+`ln -s ./.libs/dns-srv/srv.js ./dns-srv.js`
 
 You can update the external modules from their development repositories using this script (put it in an executable file):
 
