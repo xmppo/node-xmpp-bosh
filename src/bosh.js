@@ -1287,6 +1287,7 @@ exports.createServer = function(options) {
 			log_it("DEBUG", "BOSH::Session creation");
 			state  = session_create(node, res);
 			sstate = stream_add(state, node);
+			nodes  = node.children;
 
 			reset_session_inactivity_timeout(state);
 
