@@ -156,8 +156,19 @@ Paste the following content:
 {{{
 #! /bin/sh
 #
-# NXB        Start/stop NXB BOSH server
+# bosh        Start/stop node-xmpp-bosh server
 #
+
+### BEGIN INIT INFO
+# Provides:          bosh
+# Required-Start:    $remote_fs $network $named $time
+# Required-Stop:     $remote_fs $network $named $time
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Starts node-xmpp-bosh server
+# Description:       Starts node-xmpp-bosh server, an XMPP
+#                    BOSH server written in JavaScript.
+### END INIT INFO
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 NODE_PATH=/usr/local/lib/node
