@@ -1615,7 +1615,12 @@ exports.createServer = function(options) {
 
 		} // else (not session start)
 
+		// 
 		// In any case, we should process the XML nodes.
+		// 
+		// The 'nodes' event will be fired in the same tick as 
+		// the 'stream-add' event
+		// 
 		if (nodes.length > 0) {
 			emit_nodes_event(nodes, state, sstate);
 		}
