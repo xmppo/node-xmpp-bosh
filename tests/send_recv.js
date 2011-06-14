@@ -48,7 +48,7 @@ var $pres   = strophe.$pres;
 var out_queue = [ ];
 
 var SEND_EVERY_MSEC = 1000;
-var MESSAGES_TO_SEND = 1;
+var MESSAGES_TO_SEND = 10;
 var PACKETS_TO_SEND = 7;
 
 
@@ -83,10 +83,14 @@ function start_test(options) {
 
 		function onStanza(stanza) {
 			console.log("Received:", stanza.nodeName);
+			// console.log("Number of Children:", stanza._childNodes.length);
+
 			stanza._childNodes.forEach(function(s) {
+				// console.log("child:", s.nodeName, s._childNodes.length);
 				if (s.nodeName == "MESSAGE" && s._childNodes && s._childNodes.length > 0) {
 					s._childNodes.filter(function(x) {
-						return x.nodeName == "BODY";
+						// console.log("FILTER:", x.nodeName);
+						return x.nodeName === "BODY";
 					}).forEach(function(x) {
 						console.log("Got:", x.innerHTML);
 					});
@@ -110,7 +114,10 @@ function start_test(options) {
 				process.exit(1);
 			}
 			else if (status == Strophe.Status.CONNECTED) {
-				// Send packets to all other users.
+				// Send presence
+				conn.send($pres());
+
+				// Send packets to all users.
 				dutil.repeat(0, MESSAGES_TO_SEND).forEach(function(v, j) {
 					us(options.users).chain()
 					.filter(function(x) { return true; /*x.jid != jid;*/ })	
