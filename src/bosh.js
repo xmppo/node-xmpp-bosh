@@ -571,6 +571,9 @@ exports.createServer = function(options) {
 		/* Check the validity of the packet 'node' wrt the 
 		 * state of the BOSH session 'state'. This mainly checks
 		 * the 'sid' and 'rid' attributes.
+		 * 
+		 * Also limit the number of attributes in the <body> tag to 20
+		 * 
 		 */
 		log_it("DEBUG", 
 			sprintfd("BOSH::%s::is_valid_packet::node.attrs.rid:%s, state.rid:%s", 
@@ -581,7 +584,8 @@ exports.createServer = function(options) {
 		// of the XEP though.
 		return state && node.attrs.sid && node.attrs.rid && 
 			node.attrs.rid > state.rid - state.window - 1 && 
-			node.attrs.rid < state.rid + state.window + 1;
+			node.attrs.rid < state.rid + state.window + 1 && 
+			Object.keys(node.attrs).length < 21;
 	}
 
 	function get_state(node) {
