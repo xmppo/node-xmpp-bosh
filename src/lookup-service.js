@@ -24,7 +24,7 @@
  */
 
 
-var SRV   = require('./srv.js');
+var SRV   = require('dns-srv');
 var dutil = require('./dutil.js');
 var us    = require('underscore');
 

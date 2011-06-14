@@ -11,6 +11,7 @@
 		 ,"jsdom": ">= 0.2.0"
 		 ,"underscore": ">= 1.1.5"
 		 ,"eventpipe": "= 0.0.3"
+		 ,"dns-srv": ">= 0.0.1"
 		 }
 ,"repositories": [{"type": "svn"
 		  ,"path": "http://node-xmpp-bosh.googlecode.com/svn/trunk/"
