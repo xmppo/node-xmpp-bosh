@@ -205,6 +205,7 @@ The project itself is divided into 4 main components as of now.
     * tav (https://github.com/akaspin/tav)
     * underscore.js (https://github.com/documentcloud/underscore)
     * eventpipe (https://github.com/dhruvbird/eventpipe)
+    * dns-srv (https://github.com/dhruvbird/dns-srv)
     * jsdom, for tests (https://github.com/tmpvar/jsdom)
 
 [H] Tested with:
