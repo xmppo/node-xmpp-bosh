@@ -220,6 +220,8 @@ exports.createServer = function(options) {
 
 	var MAX_INACTIVITY = options.max_inactivity || 160;
 
+	var HTTP_SOCKET_KEEPALIVE = options.http_socket_keepalive || 60;
+
 	var MAX_STREAMS_PER_SESSION = options.max_streams_per_session || 8;
 
 	var HTTP_GET_RESPONSE_HEADERS = {
@@ -373,6 +375,10 @@ exports.createServer = function(options) {
 		}
 		else {
 			options.inactivity = DEFAULT_INACTIVITY;
+		}
+
+		if (!options.wait || options.wait > options.inactivity) {
+			options.wait = Math.floor(options.inactivity * 0.8);
 		}
 
 		options.window = WINDOW_SIZE;
@@ -636,6 +642,8 @@ exports.createServer = function(options) {
 		// If a client closes a connection and a response to that HTTP request 
 		// has not yet been sent, then the 'error' event is NOT raised by node.js.
 		// Hence, we need not attach an 'error' event handler yet.
+
+		res.socket.setKeepAlive(true, HTTP_SOCKET_KEEPALIVE);
 
 		var ro;
 		ro = {
@@ -1615,9 +1623,6 @@ exports.createServer = function(options) {
 
 		// 
 		// In any case, we should process the XML nodes.
-		// 
-		// The 'nodes' event will be fired in the same tick as 
-		// the 'stream-add' event
 		// 
 		if (nodes.length > 0) {
 			emit_nodes_event(nodes, state, sstate);

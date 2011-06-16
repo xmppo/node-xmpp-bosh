@@ -29,6 +29,10 @@ exports.config = {
 
 	max_inactivity: 160, 
 
+	// The value (in second) of keepalive to set on the HTTP response 
+	// socket
+	http_socket_keepalive: 60, 
+
 	// The maximum number of active streams allowed per BOSH session
 	max_streams_per_session: 8, 
 
