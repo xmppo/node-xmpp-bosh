@@ -653,6 +653,9 @@ exports.createServer = function(options) {
 		// If a client closes a connection and a response to that HTTP request 
 		// has not yet been sent, then the 'error' event is NOT raised by node.js.
 		// Hence, we need not attach an 'error' event handler yet.
+		
+        /* Incresing the timeout of the underlying socket to allow wait > 120 */
+        res.socket.setTimeout(state.wait * 1000 + 10);
 
 		res.socket.setKeepAlive(true, HTTP_SOCKET_KEEPALIVE);
 
