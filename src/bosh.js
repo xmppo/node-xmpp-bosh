@@ -408,7 +408,7 @@ exports.createServer = function(options) {
 			options.inactivity = DEFAULT_INACTIVITY;
 		}
 
-		if (!options.wait || options.wait > options.inactivity) {
+		if (options.wait <= 0 || options.wait > options.inactivity) {
 			options.wait = Math.floor(options.inactivity * 0.8);
 		}
 
@@ -439,7 +439,7 @@ exports.createServer = function(options) {
 			content:    "text/xml; charset=utf-8"
 		};
 
-		if (!opt.hold || opt.hold < 0) {
+		if (opt.hold <= 0) {
 			// Sanitize hold
 			opt.hold = 1;
 		}
@@ -654,7 +654,8 @@ exports.createServer = function(options) {
 		// has not yet been sent, then the 'error' event is NOT raised by node.js.
 		// Hence, we need not attach an 'error' event handler yet.
 		
-        /* Incresing the timeout of the underlying socket to allow wait > 120 */
+        // Increasing the timeout of the underlying socket to allow 
+		// wait > 120 sec
         res.socket.setTimeout(state.wait * 1000 + 10);
 
 		res.socket.setKeepAlive(true, HTTP_SOCKET_KEEPALIVE);
