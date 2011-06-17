@@ -353,13 +353,21 @@ exports.createServer = function(options) {
 		total:  0
 	};
 
-	// options should have:
+	//
+	// options MUST have:
+	// ------------------
 	// sid:
 	// rid:
 	// wait:
 	// hold:
 	// content: 
+	//
+	// and MAY have:
+	// -------------
+	// inactivity:
+	// 
 	// The stream name is independent of the state
+	// 
 	function new_state_object(options, res) {
 
 		options.hold = options.hold > MAX_BOSH_CONNECTIONS ? MAX_BOSH_CONNECTIONS : options.hold;
