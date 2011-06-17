@@ -217,6 +217,7 @@ function route_parse(route) {
 // * window_size
 // * default_inactivity
 // * max_inactivity
+// * http_socket_keepalive
 // * http_headers
 //
 exports.createServer = function(options) {
