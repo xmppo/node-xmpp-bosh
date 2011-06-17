@@ -180,8 +180,30 @@ JSONPResponseProxy.prototype = {
 		return this.res_.end();
 	}
 };
-
 // End HTTP header helpers
+
+// Begin misc. helpers
+function route_parse(route) {
+	/* Parse the 'route' attribute, which is expected to be of the
+	 * form: xmpp:domain:port.
+	 *
+	 * Returns null or a hash of the form:
+	 * { protocol: <PROTOCOL>, host: <HOST NAME>, port: <PORT> }
+	 *
+	 */
+	var m = route.match(/^(\S+):(\S+):([0-9]+)$/) || [ ];
+	log_it("DEBUG", "BOSH::route_parse:", m);
+	if (m && m.length === 4) {
+		return {
+			protocol: m[1], host: m[2], port: toNumber(m[3])
+		};
+	}
+	else {
+		return null;
+	}
+}
+
+// End misc. helpers
 
 
 //
@@ -393,26 +415,6 @@ exports.createServer = function(options) {
 		add_held_http_connection(options, options.rid, res);
 
 		return options;
-	}
-
-	function route_parse(route) {
-		/* Parse the 'route' attribute, which is expected to be of the
-		 * form: xmpp:domain:port.
-		 *
-		 * Returns null or a hash of the form:
-		 * { protocol: <PROTOCOL>, host: <HOST NAME>, port: <PORT> }
-		 *
-		 */
-		var m = route.match(/^(\S+):(\S+):([0-9]+)$/) || [ ];
-		log_it("DEBUG", "BOSH::route_parse:", m);
-		if (m && m.length === 4) {
-			return {
-				protocol: m[1], host: m[2], port: toNumber(m[3])
-			};
-		}
-		else {
-			return null;
-		}
 	}
 
 	// Begin session handlers
@@ -1678,9 +1680,10 @@ exports.createServer = function(options) {
 	}
 
 
-	// All request handlers return 'true' on successful handling
-	// of the request and a falsy value if they did NOT handle the
-	// request.
+	// All request handlers return 'false' on successful handling
+	// of the request and 'undefined' if they did NOT handle the
+	// request. This is according to the EventPipe listeners API
+	// expectation.
 	function handle_options(req, res, u) {
 		if (req.method === 'OPTIONS') {
 			res.writeHead(200, HTTP_OPTIONS_RESPONSE_HEADERS);
