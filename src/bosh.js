@@ -1763,10 +1763,6 @@ exports.createServer = function(options) {
 		// you can get away with not naming them?
 		//
 		req.on('data', function(d) {
-			// dutil.log_it("DEBUG", "BOSH::onData:", d.toString());
-			// TODO: When we need to work with non ASCII character sets, we will
-			// *probably* need to use Buffer with the 'binary' encoding 
-			// instead of .toString()
 			var _d = d.toString();
 			data_len += _d.length;
 
