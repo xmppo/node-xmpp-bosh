@@ -651,12 +651,12 @@ exports.createServer = function(options) {
 		// If a client closes a connection and a response to that HTTP request 
 		// has not yet been sent, then the 'error' event is NOT raised by node.js.
 		// Hence, we need not attach an 'error' event handler yet.
-		
-		if (!res.socket) {
-			console.error("socket is NULL:\n", new Error().stack);
-			console.error("state:\n", state);
-		}
-		else {
+
+		// res.socket could be undefined if this request's socket is still in the 
+		// process of sending the previous request's response. Either ways, we 
+		// can be sure that setTimeout and setKeepAlive have already been called 
+		// on this socket.
+		if (res.socket) {
 			// Increasing the timeout of the underlying socket to allow 
 			// wait > 120 sec
 			res.socket.setTimeout(state.wait * 1000 + 10);
