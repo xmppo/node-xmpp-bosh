@@ -368,7 +368,7 @@ exports.createServer = function(options) {
 	// 
 	// The stream name is independent of the state
 	// 
-	function new_state_object(options, res) {
+	function new_state_object(options) {
 
 		options.hold = options.hold > MAX_BOSH_CONNECTIONS ? MAX_BOSH_CONNECTIONS : options.hold;
 
@@ -421,13 +421,11 @@ exports.createServer = function(options) {
 		// This this BOSH session have a pending nextTick() handler?
 		options.has_next_tick = false;
 
-		add_held_http_connection(options, options.rid, res);
-
 		return options;
 	}
 
 	// Begin session handlers
-	function session_create(node, res) {
+	function session_create(node) {
 		var sid = uuid();
 		var opt = {
 			sid:        sid, 
@@ -464,7 +462,7 @@ exports.createServer = function(options) {
 			opt.ua = node.attrs.ua;
 		}
 
-		var state = new_state_object(opt, res);
+		var state = new_state_object(opt);
 		sid_state[sid] = state;
 		++sid_info.length;
 		++sid_info.total;
@@ -654,11 +652,16 @@ exports.createServer = function(options) {
 		// has not yet been sent, then the 'error' event is NOT raised by node.js.
 		// Hence, we need not attach an 'error' event handler yet.
 		
-        // Increasing the timeout of the underlying socket to allow 
-		// wait > 120 sec
-        res.socket.setTimeout(state.wait * 1000 + 10);
-
-		res.socket.setKeepAlive(true, HTTP_SOCKET_KEEPALIVE);
+		if (!res.socket) {
+			console.error("socket is NULL:\n", new Error().stack);
+			console.error("state:\n", state);
+		}
+		else {
+			// Increasing the timeout of the underlying socket to allow 
+			// wait > 120 sec
+			res.socket.setTimeout(state.wait * 1000 + 10);
+			res.socket.setKeepAlive(true, HTTP_SOCKET_KEEPALIVE);
+		}
 
 		var ro;
 		ro = {
@@ -1312,7 +1315,9 @@ exports.createServer = function(options) {
 		// Check if this is a session start packet.
 		if (is_session_creation_packet(node)) {
 			log_it("DEBUG", "BOSH::Session creation");
-			state  = session_create(node, res);
+			state  = session_create(node);
+			add_held_http_connection(state, node.attrs.rid, res);
+
 			sstate = stream_add(state, node);
 			nodes  = node.children;
 
@@ -1322,6 +1327,9 @@ exports.createServer = function(options) {
 			send_session_creation_response(sstate);
 
 			bep.emit('stream-add', sstate);
+
+			// NULL out res so that it is not added again
+			res = null;
 		}
 		else {
 			var sname = node.attrs.stream;
