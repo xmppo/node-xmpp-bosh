@@ -50,7 +50,7 @@ var Base64 = (function () {
             var i = 0;
 
             // remove all characters that are not A-Z, a-z, 0-9, +, /, or =
-            input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+            input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
 
             do {
                 enc1 = keyStr.indexOf(input.charAt(i++));

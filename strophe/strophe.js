@@ -65,10 +65,10 @@ var jsdom          = require("jsdom").jsdom;
 document = jsdom("<html><head></head><body></body></html>"),
 
 window = {
-	XMLHttpRequest: XMLHttpRequest, 
+    XMLHttpRequest: XMLHttpRequest, 
     Base64: Base64, 
-	MD5: MD5
-}
+    MD5: MD5
+};
 
 exports.Strophe = window;
 
