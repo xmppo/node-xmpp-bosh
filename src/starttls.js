@@ -13,6 +13,9 @@
 //  });
 //
 //
+
+var semver = require('semver');
+
 module.exports = function starttls(socket, options, cb) {
 
   var sslcontext = require('crypto').createCredentials(options);
@@ -22,16 +25,22 @@ module.exports = function starttls(socket, options, cb) {
   var cleartext = pipe(pair, socket);
 
   pair.on('secure', function() {
-    var verifyError = pair._ssl.verifyError();
+      var verifyError;
+      if (semver.lt(semver.clean(process.version), '0.4.8')) {
+	  verifyError = pair._ssl.verifyError();
+      }
+      else {
+	  verifyError = pair.ssl.verifyError();
+      }
 
-    if (verifyError) {
-      cleartext.authorized = false;
-      cleartext.authorizationError = verifyError;
-    } else {
-      cleartext.authorized = true;
-    }
+      if (verifyError) {
+	  cleartext.authorized = false;
+	  cleartext.authorizationError = verifyError;
+      } else {
+	  cleartext.authorized = true;
+      }
 
-    if (cb) cb();
+      if (cb) cb();
   });
 
   cleartext._controlReleased = true;
