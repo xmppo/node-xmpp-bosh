@@ -38,6 +38,6 @@
 ]
 ,"licenses": [{"type": "MIT"}]
 ,"engines": {
-	    "node": ">=0.4.1 <=0.4.7"
+	    "node": ">=0.4.1"
 	    }
 }
