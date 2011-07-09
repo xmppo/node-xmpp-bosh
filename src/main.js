@@ -24,20 +24,21 @@
  */
 
 
-var bosh  = require('./bosh.js');
-var dutil = require('./dutil.js');
-var xpc   = require('./xmpp-proxy-connector.js');
-var xp    = require('./xmpp-proxy.js');
-var ls    = require('./lookup-service.js');
-var us    = require('underscore');
+var bosh      = require('./bosh.js');
+var websocket = require('./websocket.js');
+var dutil     = require('./dutil.js');
+var xpc       = require('./xmpp-proxy-connector.js');
+var xp        = require('./xmpp-proxy.js');
+var ls        = require('./lookup-service.js');
+var us        = require('underscore');
 
 
-exports.bosh      = bosh;
-exports.connector = xpc;
-exports.proxy     = xp;
-exports.lookup    = ls;
-exports.dutil     = dutil;
-exports.start     = function(options) {
+exports.bosh       = bosh;
+exports.connector  = xpc;
+exports.proxy      = xp;
+exports.lookup     = ls;
+exports.dutil      = dutil;
+exports.start_bosh = function(options) {
 
 	options = options || { };
 	options = dutil.extend(options, {
@@ -80,4 +81,13 @@ exports.start     = function(options) {
 	});
 
 	return bosh_server;
+};
+
+exports.start_websocket = function(bosh_server) {
+	var ws_server = websocket.createServer(bosh_server);
+
+	// The connector is responsible for communicating with the real XMPP server.
+	// We allow different types of connectors to exist.
+	var conn = new xpc.Connector(ws_server, { });
+
 };

@@ -38,7 +38,7 @@ var NS_STREAM =       'http://etherx.jabber.org/streams';
 var NS_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams';
 
 
-function XMPPProxy(xmpp_host, lookup_service, stream_attrs, options, void_star) {
+function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_star) {
 	this._xmpp_host      = xmpp_host;
 	this._void_star      = void_star;
 	this._lookup_service = lookup_service;
@@ -48,6 +48,8 @@ function XMPPProxy(xmpp_host, lookup_service, stream_attrs, options, void_star) 
 		to:             this._xmpp_host, 
 		version:        '1.0'
 	};
+
+	this.stream_start_attrs = stream_start_attrs || { };
 
 	this._max_xmpp_buffer_size = options.max_xmpp_buffer_size || 500000;
 
@@ -106,8 +108,10 @@ dutil.copy(XMPPProxy.prototype, {
 
 	_get_stream_xml_open: function(stream_attrs) {
 		stream_attrs = stream_attrs || { };
-		dutil.extend(stream_attrs, this._default_stream_attrs);
-		return new ltx.Element('stream:stream', stream_attrs).toString().replace(/\/>$/, '>');
+		var _attrs = { };
+		dutil.copy(_attrs, stream_attrs);
+		dutil.extend(_attrs, this._default_stream_attrs);
+		return new ltx.Element('stream:stream', _attrs).toString().replace(/\/>$/, '>');
 	}, 
 
 	_on_stanza: function(stanza) {
@@ -210,7 +214,7 @@ dutil.copy(XMPPProxy.prototype, {
 			this.terminate();
 		}
 		else {
-			var _ss_open = this._get_stream_xml_open({ });
+			var _ss_open = this._get_stream_xml_open(this.stream_start_attrs);
 
 			// Always, we connect on behalf of the real client.
 			this.send(_ss_open);

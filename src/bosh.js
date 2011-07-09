@@ -32,7 +32,6 @@ var uuid   = require('node-uuid');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 var assert = require('assert').ok;
-var qs     = require('querystring');
 var EventPipe = require('eventpipe').EventPipe;
 
 
@@ -353,6 +352,15 @@ exports.createServer = function(options) {
 		total:  0
 	};
 
+	function stat_stream_add() {
+		++sn_info.length;
+		++sn_info.total;
+	}
+
+	function stat_stream_terminate() {
+		--sn_info.length;
+	}
+
 	//
 	// options MUST have:
 	// ------------------
@@ -531,8 +539,7 @@ exports.createServer = function(options) {
 		state.streams.push(sname);
 
 		sn_state[sname] = sstate;
-		++sn_info.length;
-		++sn_info.total;
+		stat_stream_add();
 		return sstate;
 	}
 
@@ -572,7 +579,7 @@ exports.createServer = function(options) {
 		var sstream = sn_state[stream.name];
 		if (sstream) {
 			delete sn_state[stream.name];
-			--sn_info.length;
+			stat_stream_terminate();
 		}
 		var pos = state.streams.indexOf(stream.name);
 		if (pos !== -1) {
@@ -1239,7 +1246,8 @@ exports.createServer = function(options) {
 	// The BOSH event emitter. People outside will subscribe to
 	// events from this guy. We return an instance of BoshEventPipe
 	// to the outside world when anyone calls createServer()
-	function BoshEventPipe() {
+	function BoshEventPipe(http_server) {
+		this.server = http_server;
 	}
 
 	util.inherits(BoshEventPipe, EventPipe);
@@ -1247,13 +1255,32 @@ exports.createServer = function(options) {
 	dutil.copy(BoshEventPipe.prototype, {
 		stop: function() {
 			// console.log("stop::", http_server);
-			return http_server.close();
+			return this.server.close();
 		}, 
 		sid_state: sid_state, 
-		sn_state:  sn_state
+		sn_state:  sn_state, 
+		stat_stream_add: stat_stream_add, 
+		stat_stream_terminate: stat_stream_terminate
 	});
 
-	var bep = new BoshEventPipe();
+
+	// Create the http server
+	var http_server = http.createServer(http_request_handler);
+
+	http_server.on('error', function(ex) {
+		// We enforce similar semantics as the rest of the node.js for the 'error'
+		// event and throw an exception if it is unhandled
+		if (!bep.emit('error', ex)) {
+			throw new Error(
+				sprintf('ERROR on listener at endpoint: http://%s:%s%s', options.host, options.port, options.path)
+			);
+		}
+	});
+
+	http_server.listen(options.port, options.host);
+
+
+	var bep = new BoshEventPipe(http_server);
 
 	// When the Connector is able to add the stream, we too do the same and 
 	// respond to the client accordingly.
@@ -1842,18 +1869,6 @@ exports.createServer = function(options) {
 		router.emit('request', req, res, u);
 	}
 
-	var http_server = http.createServer(http_request_handler);
-	http_server.listen(options.port, options.host);
-
-	http_server.on('error', function(ex) {
-		// We enforce similar semantics as the rest of the node.js for the 'error'
-		// event and throw an exception if it is unhandled
-		if (!bep.emit('error', ex)) {
-			throw new Error(
-				sprintf('ERROR on listener at endpoint: http://%s:%s%s', options.host, options.port, options.path)
-			);
-		}
-	});
 
 /*
 	setInterval(function() {

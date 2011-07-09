@@ -54,7 +54,7 @@ function XMPPProxyConnector(bosh_server, options) {
 
 
 	// Fired when an 'close' event is raised by the XMPP Proxy.
-	this._on_xmpp_proxy_close = us.bind(function(had_error, sstate) {
+	this._on_xmpp_proxy_close = function(had_error, sstate) {
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[sstate.name];
 		if (!ss) {
@@ -64,16 +64,16 @@ function XMPPProxyConnector(bosh_server, options) {
 		delete this.streams[sstate.name];
 
 		this.bosh_server.emit('terminate', sstate, had_error);
-	}, this);
+	}.bind(this);
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.
-	this._on_stanza_received = us.bind(function(stanza, sstate) {
+	this._on_stanza_received = function(stanza, sstate) {
 		dutil.log_it("DEBUG", "XMPP PROXY CONNECTOR::Connector received stanza");
 		this.bosh_server.emit('response', stanza, sstate);
-	}, this);
+	}.bind(this);
 
 	// Fired every time the XMPP proxy fires the 'connect' event.
-	this._on_xmpp_proxy_connected = us.bind(function(sstate) {
+	this._on_xmpp_proxy_connected = function(sstate) {
 		dutil.log_it("DEBUG", 
 					 sprintfd("XMPP PROXY CONNECTOR::%s::Received 'connect' event for stream named: %s", 
 							  sstate.state.sid, sstate.name)
@@ -91,20 +91,19 @@ function XMPPProxyConnector(bosh_server, options) {
 		});
 
 		ss.pending = [ ];
-	}, this);
+	}.bind(this);
 
 
-	bosh_server.on('nodes', us.bind(function(nodes, sstate) {
+	bosh_server.on('nodes', function(nodes, sstate) {
 		nodes = nodes.filter(us.not(us.isString));
-		nodes.forEach(us.bind(function(stanza) {
+		nodes.forEach(function(stanza) {
 			this.stanza(stanza, sstate);
-		}, this));
-	}, this));
+		}.bind(this));
+	}.bind(this));
 
-	bosh_server.on('stream-add',       us.bind(this.stream_add, this));
-	bosh_server.on('stream-restart',   us.bind(this.stream_restart, this));
-	bosh_server.on('stream-terminate', us.bind(this.stream_terminate, this));
-	bosh_server.on('no-client',        us.bind(this.no_client, this));
+	bosh_server.on('stream-add',       this.stream_add.bind(this));
+	bosh_server.on('stream-restart',   this.stream_restart.bind(this));
+	bosh_server.on('stream-terminate', this.stream_terminate.bind(this));
 }
 
 
@@ -132,7 +131,7 @@ XMPPProxyConnector.prototype = {
 
 	}, 
 
-	stream_add: function(sstate) {
+	stream_add: function(sstate, stream_start_attrs) {
 		// Check if this stream name exists
 		if (this.streams[sstate.name]) {
 			return;
@@ -140,9 +139,8 @@ XMPPProxyConnector.prototype = {
 
 		var _ls = new lookup.LookupService(sstate.to, DEFAULT_XMPP_PORT, sstate.route);
 		// Create a new stream.
-		var proxy = new this.Proxy(sstate.to, _ls, 
-								   sstate.attrs, this.options, 
-								   sstate);
+		var proxy = new this.Proxy(sstate.to, _ls, stream_start_attrs, 
+								   this.options, sstate);
 
 		var stream = {
 			sstate: sstate, 
@@ -179,13 +177,6 @@ XMPPProxyConnector.prototype = {
 		ss.proxy.terminate();
 		delete this.streams[sstate.name];
 	}, 
-
-	no_client: function(response) {
-		// What to do with this response??
-		dutil.log_it("DEBUG", function() {
-			return [ "XMPP PROXY CONNECTOR::No Client for this response:", response.toString() ];
-		});
-	}
 
 };
 

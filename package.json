@@ -1,5 +1,5 @@
 { "name": "node-xmpp-bosh"
-,"version": "0.3.3"
+,"version": "0.4.0"
 ,"main": "./src/main"
 ,"bin": { "bosh-server": "./run-server.js" }
 ,"description": "An XMPP BOSH server written for node.js in javascript"
@@ -13,6 +13,7 @@
 		 ,"eventpipe": "= 0.0.3"
 		 ,"dns-srv": ">= 0.0.6"
 		 ,"semver": ">= 1.0.8"
+		 ,"websocket-server": ">= 1.4.04"
 		 }
 ,"repositories": [{"type": "svn"
 		  ,"path": "http://node-xmpp-bosh.googlecode.com/svn/trunk/"
