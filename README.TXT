@@ -42,6 +42,7 @@ Project Home Page: http://code.google.com/p/node-xmpp-bosh/
     * A client may request a custom inactivity period from the server by setting the
       'inactivity' attribute in the session creation request
     * HTTP POST & GET (for older browsers) are suported (see README.TXT for details)
+    * A websocket server on the same port as the BOSH server
     * Benchmarks: http://code.google.com/p/node-xmpp-bosh/wiki/Benchmarks
     * Monitor the BOSH server [http://localhost:5280/] (available only if you 
       have node-xmpp-bosh running on your system)
@@ -195,6 +196,7 @@ The project itself is divided into 4 main components as of now.
 
     * http://xmpp.org/extensions/xep-0124.html
     * http://xmpp.org/extensions/xep-0206.html 
+    * http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00
 
 [G] Dependencies:
 
@@ -207,6 +209,7 @@ The project itself is divided into 4 main components as of now.
     * eventpipe (https://github.com/dhruvbird/eventpipe)
     * dns-srv (https://github.com/dhruvbird/dns-srv)
     * semver (https://github.com/isaacs/node-semver)
+    * websocket-server (https://github.com/miksago/node-websocket-server)
     * jsdom, for tests (https://github.com/tmpvar/jsdom)
 
 [H] Tested with:
@@ -227,6 +230,7 @@ The project itself is divided into 4 main components as of now.
           (modified since node-xmpp-bosh doesn't support the authid attribute)
 	* libpurple - Does NOT work with libpurple since libpurple
 	  expects <stream:features> in the initial BOSH creation response
+	* strophe.js websocket client (https://github.com/superfeedr/strophejs/)
 
 [I] Tested using:
 
@@ -259,6 +263,7 @@ The project itself is divided into 4 main components as of now.
     * [http://blog.jwchat.org/jhb/ JabberHTTPBind - Java]
     * [http://blog.bluendo.com/ff/bosh-connection-manager-update Araneo - Python & Twisted]
     * [http://rubyforge.org/projects/rhb/ rhb - Ruby]
+    * [https://github.com/superfeedr/ejabberd-websockets Ejabberd websocket module]
 
 [M] Releases:
     * v0.0.1 == SVN Commit #39
