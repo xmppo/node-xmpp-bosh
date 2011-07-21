@@ -10,7 +10,7 @@ node.js installation is pretty slow, because it involves compiling it. On some D
 
 Firstly, we install the dependencies:
 
-`apt-get install libssl-dev python subversion git git-core libexpat libexpat1-dev`
+`apt-get install libssl-dev python subversion git git-core libexpat1 libexpat1-dev`
 
 Then, we get nodejs v0.4.7 (node-xmpp-bosh does not work with the newer versions of node.js since the TLS API from v0.4.8 has been changed):
 

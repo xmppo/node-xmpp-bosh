@@ -215,13 +215,13 @@ The project itself is divided into 4 main components as of now.
 [H] Tested with:
 
     * Servers:
-        * Ejabberd (http://www.process-one.net/en/ejabberd/) 
-	  ([http://www.jabber.org/ jabber.org], [https://www.jappix.com/ jappix.com])
-        * Google Talk ([http://gmail.com/ gmail.com])
-        * Facebook ([http://www.facebook.com/ chat.facebook.com])
-        * Pappu
-	* Prosody IM (http://prosody.im/)
-	* Openfire (http://www.igniterealtime.org/projects/openfire/)
+        || [http://ejabberd.im/ ejabberd] || [https://www.jappix.com/ jappix.com] ||
+        || [http://www.isode.com/products/m-link.html M-Link] || [http://www.jabber.org/ jabber.org] ||
+        || [http://www.google.com/talk/ Google Talk] || [http://gmail.com/ gmail.com] ||
+        || [http://www.facebook.com/sitetour/chat.php Facebook] || [http://facebook.com/ chat.facebook.com] ||
+        || Pappu || [https://talk.to/ talk.to] ||
+        || [http://prosody.im/ Prosody] || [https://duck.co/#topic/28469000000637077 dukgo.com] ||
+        || [http://www.igniterealtime.org/projects/openfire/ Openfire] || [http://chatme.im/ ChatMe.im] ||
 
     * Clients
         * strophe.js (http://github.com/metajack/strophejs)
