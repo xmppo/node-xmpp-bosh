@@ -39,7 +39,7 @@ $ node node_modules/node-xmpp-bosh/run-server.js
 
 8. Install globally and run
 $ npm install node-xmpp-bosh -g
-$ bosh-proxy
+$ bosh-server
 
 9. Report any bugs to dhruvbird@gmail.com
 
