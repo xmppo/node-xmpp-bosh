@@ -163,12 +163,20 @@ function main() {
 
 	var bosh_server = nxb.start_bosh(server_options);
 
-	print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET server 'v%s' on ws://%s:%s' at '%s'", 
+    // print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET server 'v%s' on ws://%s:%s' at '%s'", 
+    //                                    get_version(), server_options.host, server_options.port, 
+    //                                    new Date())
+    //                 );
+    // 
+    // var ws_server   = nxb.start_websocket(bosh_server);
+
+	print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET DRAFT 10 server 'v%s' on ws://%s:%s' at '%s'", 
 										  get_version(), server_options.host, server_options.port, 
 										  new Date())
 					   );
 
-	var ws_server   = nxb.start_websocket(bosh_server);
+	var ws10_server   = nxb.start_websocket_draft10(bosh_server);
+
 
 }
 
