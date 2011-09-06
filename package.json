@@ -14,6 +14,7 @@
 		 ,"dns-srv": ">= 0.0.6"
 		 ,"semver": ">= 1.0.8"
 		 ,"websocket-server": ">= 1.4.04"
+		 ,"websocket": ">= 0.0.16"
 		 }
 ,"repositories": [{"type": "svn"
 		  ,"path": "http://node-xmpp-bosh.googlecode.com/svn/trunk/"
