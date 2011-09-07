@@ -1404,7 +1404,8 @@ exports.createServer = function(options) {
 
 				var attrs = {
 					condition: 'item-not-found', 
-					message: 'Invalid packet'
+					message: 'Invalid packet',
+                    sid: state.sid
 				};
 				if (node.attrs.stream) {
 					attrs.stream = node.attrs.stream;
@@ -1412,7 +1413,8 @@ exports.createServer = function(options) {
 
 				// Terminate the session (thanks @satyam.s). The XEP mentions this as
 				// a MUST, so we humbly comply
-				handle_client_stream_terminate_request(null, state, [ ], 'item-not-found');
+                send_termination_stanza(res, attrs);
+                session_terminate(state);
 				return;
 			}
 
