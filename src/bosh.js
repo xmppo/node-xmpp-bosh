@@ -352,6 +352,19 @@ exports.createServer = function(options) {
 		total:  0
 	};
 
+	
+	// This holds the terminate condition for terminated sessions. Both this,
+	// and terminated_streams are used when the connection between nxb and xmpp 
+	// server breaks and all the session related info is wiped out. We preserve 
+	// the condition in this case to let the client know why was its connection 
+	// broken.
+	var terminated_sessions = {
+	};
+	
+	// This keeps in memory the terminate condition for a terminated stream.
+	var terminated_streams = {
+	};
+
 	function stat_stream_add() {
 		++sn_info.length;
 		++sn_info.total;
@@ -1323,17 +1336,31 @@ exports.createServer = function(options) {
 		// We send a terminate response to the client.
 		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
-
+		
+		var condition = had_error ? 'remote-connection-failed' : '';
+		
 		stream_terminate(sstate, state);
 		enqueue_response(response, sstate);
 
-		var condition = had_error ? 'remote-connection-failed' : '';
+		function save_terminate_condition_for_wait_time (obj, attr) {
+			obj[attr] = {
+				condition: condition,
+				timer: setTimeout(function () {
+					if (obj[attr]) {
+						delete obj[attr];
+					}
+				}, (state.wait + 5) * 1000)
+			};
+		}
+
 		send_stream_terminate_response(sstate, condition);
+		save_terminate_condition_for_wait_time(terminated_streams, sstate.name, condition);
 
 		// Should we terminate the BOSH session as well?
 		if (state.streams.length === 0) {
 			send_session_terminate(get_response_object(state), state, condition);
 			session_terminate(state);
+			save_terminate_condition_for_wait_time(terminated_sessions, state.sid, condition);
 		}
 	});
 
@@ -1381,10 +1408,16 @@ exports.createServer = function(options) {
 
 			if (!state) {
 				// No (valid) session ID in BOSH request. Not phare enuph.
+				var terminate_condition;
+				if (terminated_sessions[node.attrs.sid]) {
+					terminate_condition = terminated_sessions[node.attrs.sid].condition;
+				}
+				
 				send_termination_stanza(res, {
-					condition: 'item-not-found', 
-					message:   'Invalid session ID'
+					condition: terminate_condition || 'item-not-found', 
+					message:   terminate_condition ? '' : 'Invalid session ID'
 				});
+				
 				return;
 			}
 
@@ -1596,9 +1629,15 @@ exports.createServer = function(options) {
 				if (!sstate) {
 					// FIXME: Subtle bug alert: We have implicitly ACKed all 
 					// 'rids' till now since we didn't send an 'ack'
+
+					var terminate_condition;
+					if (terminated_streams[sname]) {
+						terminated_condition = terminated_streams[sname].condition;
+					}
+
 					send_termination_stanza(res, {
-						condition: 'item-not-found', 
-						message: 'Invalid stream name', 
+						condition: terminate_condition || 'item-not-found', 
+						message: terminate_condition? '' : 'Invalid stream name', 
 						stream: sname
 					});
 					return;
