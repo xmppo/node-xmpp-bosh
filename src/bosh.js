@@ -487,14 +487,14 @@ exports.createServer = function(options) {
 			log_it("DEBUG", sprintfd("BOSH::%s::Terminating potentially non-empty BOSH session", state.sid));
 		}
         
-        // We terminate all the streams, since there is no point holding on
-        // to them.
-        var streams = get_streams_to_terminate(null, state);
-        streams.forEach(function (stream) {
-            stream_terminate(stream, state);
-            bep.emit('stream-terminate', stream);
-        });
-
+		// We terminate all the streams, since there is no point holding on
+		// to them.
+		var streams = get_streams_to_terminate(null, state);
+		streams.forEach(function (stream) {
+			stream_terminate(stream, state);
+			bep.emit('stream-terminate', stream);
+		});
+		
 		// We use get_response_object() since it also calls clearTimeout, etc...
 		// for us for free.
 		var ro = get_response_object(state);
@@ -1413,8 +1413,8 @@ exports.createServer = function(options) {
 
 				// Terminate the session (thanks @satyam.s). The XEP mentions this as
 				// a MUST, so we humbly comply
-                send_termination_stanza(res, attrs);
-                session_terminate(state);
+				send_termination_stanza(res, attrs);
+				session_terminate(state);
 				return;
 			}
 
