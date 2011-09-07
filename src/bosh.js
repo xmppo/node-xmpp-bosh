@@ -1405,7 +1405,6 @@ exports.createServer = function(options) {
 				var attrs = {
 					condition: 'item-not-found', 
 					message: 'Invalid packet',
-                    sid: state.sid
 				};
 				if (node.attrs.stream) {
 					attrs.stream = node.attrs.stream;
