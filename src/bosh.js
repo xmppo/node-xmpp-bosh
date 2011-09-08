@@ -1202,6 +1202,7 @@ exports.createServer = function(options) {
 		// It assumes that the client sent a stream terminate request.
 
 		var streams_to_terminate = get_streams_to_terminate(sstate, state);
+		var will_terminate_all_streams = streams_to_terminate.length == state.streams.length;
 
 		streams_to_terminate.forEach(function(sstate) {
 			if (nodes.length > 0) {
@@ -1210,7 +1211,9 @@ exports.createServer = function(options) {
 
 			// Send stream termination response
 			// http://xmpp.org/extensions/xep-0124.html#terminate
-			send_stream_terminate_response(sstate, condition);
+			if (!will_terminate_all_streams) {
+				send_stream_terminate_response(sstate, condition);
+			}
 
 			stream_terminate(sstate, state);
 			bep.emit('stream-terminate', sstate);
@@ -1405,6 +1408,7 @@ exports.createServer = function(options) {
 				// Terminate the session (thanks @satyam.s). The XEP mentions this as
 				// a MUST, so we humbly comply
 				handle_client_stream_terminate_request(null, state, [ ], 'item-not-found');
+				send_termination_stanza(res, attrs);
 				return;
 			}
 
