@@ -84,7 +84,8 @@ dutil.copy(XMPPProxy.prototype, {
 		// Ideally, 'connect' and 'close' should be once() listeners
 		// but having them as on() listeners has helped us catch some
 		// nasty bugs, so we let them be.
-		this._sock.on('connect', us.bind(this._on_connect, this));
+		this._lookup_service.on('connect', us.bind(this._on_connect, this));
+		this._lookup_service.on('host-unreachable', us.bind(this._on_host_unreachable, this)); 
 		this._sock.on('data',    us.bind(this._on_data, this));
 		this._sock.on('close',   us.bind(this._on_close, this));
 		this._sock.on('error',   dutil.NULL_FUNC);
@@ -342,9 +343,18 @@ dutil.copy(XMPPProxy.prototype, {
 		// this._sock.destroy();
 	}, 
 
-	_on_close: function(had_error) {
-		had_error = had_error || false;
-		dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", had_error);
-		this.emit('close', had_error, this._void_star);
+	_close_connection: function(error) {
+		dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", !!error);
+		this.emit('close', error, this._void_star);
+	},
+	
+	_on_close: function(error) {
+		if (this._is_connected) {
+			this._close_connection(error?'remote-connection-failed':null);
+		}
+	},
+
+	_on_host_unreachable: function() {
+		this._close_connection('host-unknown');
 	}
 });

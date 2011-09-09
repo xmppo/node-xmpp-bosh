@@ -54,7 +54,7 @@ function XMPPProxyConnector(bosh_server, options) {
 
 
 	// Fired when an 'close' event is raised by the XMPP Proxy.
-	this._on_xmpp_proxy_close = function(had_error, sstate) {
+	this._on_xmpp_proxy_close = function(error, sstate) {
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[sstate.name];
 		if (!ss) {
@@ -63,7 +63,7 @@ function XMPPProxyConnector(bosh_server, options) {
 
 		delete this.streams[sstate.name];
 
-		this.bosh_server.emit('terminate', sstate, had_error);
+		this.bosh_server.emit('terminate', sstate, error);
 	}.bind(this);
 
 	// Fired every time the XMPP proxy fires the 'stanza' event.

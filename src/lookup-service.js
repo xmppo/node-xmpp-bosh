@@ -23,10 +23,11 @@
  *
  */
 
-
-var SRV   = require('dns-srv');
-var dutil = require('./dutil.js');
-var us    = require('underscore');
+var util   = require('util');
+var SRV    = require('dns-srv');
+var dutil  = require('./dutil.js');
+var us     = require('underscore');
+var events = require('events');
 
 /* The XMPPLookupService tries to resolve the host name to connect to
  * in various ways. The order in which it tries is as follows:
@@ -61,8 +62,9 @@ function XMPPLookupService(domain_name, port, route) {
 	}
 }
 
+util.inherits(XMPPLookupService, events.EventEmitter);
 
-XMPPLookupService.prototype = {
+dutil.copy(XMPPLookupService.prototype, {
 	connect: function(socket) {
 		var self = this;
 
@@ -76,7 +78,8 @@ XMPPLookupService.prototype = {
 			_add_all_listeners(true);
 
 			// Re-trigger the connect event.
-			socket.emit('connect', e);
+			// socket.emit('connect', e);
+			self.emit('connect', e);
 		}
 
 		function try_connect_route() {
@@ -114,7 +117,8 @@ XMPPLookupService.prototype = {
 			_add_all_listeners(true);
 
 			// Trigger the error event.
-			socket.emit('error', e);
+			// socket.emit('error', e);
+			self.emit('host-unreachable');
 		}
 
 		var cstates = [
@@ -135,8 +139,6 @@ XMPPLookupService.prototype = {
 		_on_socket_error();
 
 	}
-};
-
-
+});
 
 exports.LookupService = XMPPLookupService;

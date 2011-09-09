@@ -1343,12 +1343,12 @@ exports.createServer = function(options) {
 	// This event is raised when the server terminates the connection.
 	// The Connector typically raises this even so that we can tell
 	// the client (user) that such an event has occurred.
-	bep.on('terminate', function(sstate, had_error) {
+	bep.on('terminate', function(sstate, error) {
 		// We send a terminate response to the client.
 		var response = $terminate({ stream: sstate.name });
 		var state = sstate.state;
 		
-		var condition = had_error ? 'remote-connection-failed' : '';
+		var condition = error ? error : '';
 		
 		stream_terminate(sstate, state, condition);
 		enqueue_response(response, sstate);
