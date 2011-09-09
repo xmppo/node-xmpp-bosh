@@ -349,6 +349,9 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 	
 	_on_close: function(error) {
+		// handling error on socket only after it is connected since,
+		// even if, tomorrow the lookup service decides to not remove
+		// all the listeners on the socket, we won't misbehave.
 		if (this._is_connected) {
 			this._close_connection(error?'remote-connection-failed':null);
 		}
