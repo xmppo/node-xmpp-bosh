@@ -1229,11 +1229,11 @@ exports.createServer = function(options) {
 	function handle_client_stream_terminate_request(sstate, state, nodes, condition) {
 		// This function handles a stream terminate request from the client.
 		// It assumes that the client sent a stream terminate request. 
-    // i.e. That the request is valid. If we use this to respond to an 
-    // invalid request, we need to respond to that request separately.
-    //
-    // 'condition' is an optional parameter. If not specified, no condition
-    // (reason) shall be sent in the terminate response
+		// i.e. That the request is valid. If we use this to respond to an 
+		// invalid request, we need to respond to that request separately.
+		//
+		// 'condition' is an optional parameter. If not specified, no condition
+		// (reason) shall be sent in the terminate response
     
 		var streams_to_terminate = get_streams_to_terminate(sstate, state);
 		var will_terminate_all_streams = streams_to_terminate.length === state.streams.length;
