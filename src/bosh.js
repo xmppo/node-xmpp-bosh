@@ -189,6 +189,7 @@ function route_parse(route) {
 	 * Returns null or a hash of the form:
 	 * { protocol: <PROTOCOL>, host: <HOST NAME>, port: <PORT> }
 	 *
+	 * TODO: Move this out of bosh.js and into lookup_service.js
 	 */
 	var m = route.match(/^(\S+):(\S+):([0-9]+)$/) || [ ];
 	log_it("DEBUG", "BOSH::route_parse:", m);
@@ -457,6 +458,13 @@ exports.createServer = function(options) {
 	}
 
 	// Begin session handlers
+	// 
+	// Ideally, the session_* functions shouldn't worry about anything except for 
+	// session state maintenance. They should specifically NOT know about streams.
+	// There may be some exceptions where the abstractions leak into one another, 
+	// but they should be the exceptions (and there should be a good reason for 
+	// such an occurence) and not the rule.
+	// 
 	function session_create(node) {
 		var sid = uuid();
 		var opt = {
