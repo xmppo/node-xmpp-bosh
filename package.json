@@ -1,5 +1,5 @@
 { "name": "node-xmpp-bosh"
-,"version": "0.4.1"
+,"version": "0.4.2"
 ,"main": "./src/main"
 ,"bin": { "bosh-server": "./run-server.js" }
 ,"description": "An XMPP BOSH server written for node.js in javascript"
