@@ -197,6 +197,9 @@ dutil.copy(XMPPProxy.prototype, {
 	send: function(data) {
 		if (this._is_connected) {
 			try {
+				dutil.log_it("DEBUG", function() {
+					return dutil.sprintf("XMPP PROXY::sending:%s", data.toString('binary'));
+				});
 				this._sock.write(data);
 			}
 			catch (ex) {

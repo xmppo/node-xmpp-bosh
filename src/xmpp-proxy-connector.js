@@ -110,6 +110,9 @@ function XMPPProxyConnector(bosh_server, options) {
 XMPPProxyConnector.prototype = {
 
 	stanza: function(stanza, sstate) {
+		dutil.log_it("DEBUG", function() {
+			return dutil.sprintf("XMPP PROXY CONNECTOR::stanza:%s::%s", sstate.name, stanza);
+		});
 		var ss = this.streams[sstate.name];
 		if (!ss) {
 			return;

@@ -785,6 +785,10 @@ exports.createServer = function(options) {
 		 *
 		 */
 		while (state.res.length > state.hold) {
+			log_it("DEBUG", 
+				sprintfd("BOSH::In respond_to_extra_held_response_objects %s:: state res length: %s::state hold:%s", 
+					state.sid, state.res.length, state.hold)
+			);
 			var ro = get_response_object(state);
 			send_no_requeue(ro, state, $body());
 		}
@@ -1011,6 +1015,9 @@ exports.createServer = function(options) {
 		if (!sstate) {
 			// No stream name specified. This packet needs to be
 			// broadcast to all open streams on this BOSH session.
+			dutil.log_it("DEBUG", function() {
+				return dutil.sprintf("BOSH::emitting nodes to all streams:No Stream Name specified:%s",nodes);
+			});
 			state.streams.forEach(function(sname) {
 				var ss = sn_state[sname];
 				if (ss) {
@@ -1019,6 +1026,9 @@ exports.createServer = function(options) {
 			});
 		}
 		else {
+			dutil.log_it("DEBUG", function() {
+				return dutil.sprintf("BOSH::%s:emitting nodes:%s",sstate.name, nodes);
+			});			
 			bep.emit('nodes', nodes, sstate);
 		}
 	}
@@ -1344,8 +1354,7 @@ exports.createServer = function(options) {
 	// When a respone is received from the connector, try to send it out to the 
 	// real client if possible.
 	bep.on('response', function(connector_response, sstate) {
-		log_it("DEBUG", sprintfd("BOSH::%s::response: %s", sstate.state.sid, connector_response));
-
+		log_it("DEBUG", sprintfd("BOSH::%s::%s::response: %s", sstate.state.sid, sstate.name, connector_response));
 		var response = $body({
 			stream:     sstate.name
 		}).cnode(connector_response).tree();
