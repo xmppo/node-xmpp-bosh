@@ -78,7 +78,6 @@ dutil.copy(XMPPLookupService.prototype, {
 			_add_all_listeners(true);
 
 			// Re-trigger the connect event.
-			// socket.emit('connect', e);
 			self.emit('connect', e);
 		}
 
@@ -117,8 +116,7 @@ dutil.copy(XMPPLookupService.prototype, {
 			_add_all_listeners(true);
 
 			// Trigger the error event.
-			// socket.emit('error', e);
-			self.emit('host-unreachable');
+			self.emit('error', 'host-unknown');
 		}
 
 		var cstates = [

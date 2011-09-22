@@ -74,7 +74,8 @@ exports.Proxy = XMPPProxy;
 
 dutil.copy(XMPPProxy.prototype, {
 	_detach_handlers: function() {
-		this._sock.removeAllListeners('connect');
+		this._lookup_service.removeAllListeners('connect');
+		this._lookup_service.removeAllListeners('error');
 		this._sock.removeAllListeners('data');
 		this._sock.removeAllListeners('error');
 		this._sock.removeAllListeners('close');
@@ -85,7 +86,7 @@ dutil.copy(XMPPProxy.prototype, {
 		// but having them as on() listeners has helped us catch some
 		// nasty bugs, so we let them be.
 		this._lookup_service.on('connect', us.bind(this._on_connect, this));
-		this._lookup_service.on('host-unreachable', us.bind(this._on_host_unreachable, this)); 
+		this._lookup_service.on('error', us.bind(this._on_lookup_error, this)); 
 		this._sock.on('data',    us.bind(this._on_data, this));
 		this._sock.on('close',   us.bind(this._on_close, this));
 		this._sock.on('error',   dutil.NULL_FUNC);
@@ -344,20 +345,22 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_close_connection: function(error) {
-		dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", !!error);
+		dutil.log_it("WARN", "XMPP PROXY::_close_connection:had_error:", !!error);
 		this.emit('close', error, this._void_star);
 	},
 	
-	_on_close: function(error) {
+	_on_close: function(had_error) {
 		// handling error on socket only after it is connected since,
 		// even if, tomorrow the lookup service decides to not remove
 		// all the listeners on the socket, we won't misbehave.
 		if (this._is_connected) {
-			this._close_connection(error?'remote-connection-failed':null);
+			had_error = had_error || false;
+			dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", had_error);
+			this._close_connection(had_error?'remote-connection-failed':null);
 		}
 	},
 
-	_on_host_unreachable: function() {
-		this._close_connection('host-unknown');
+	_on_lookup_error: function(error) {
+		this._close_connection(error);
 	}
 });
