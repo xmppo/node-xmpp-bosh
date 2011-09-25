@@ -20,8 +20,8 @@ if [[ $PWD == $PREVDIR ]]; then
 fi
 
 rm tests/sr_users.js
-find -name "*~" | xargs rm -Rf
-find -name ".svn" | xargs rm -Rf
+find . -name "*~" | xargs rm -Rf
+find . -name ".svn" | xargs rm -Rf
 
 cd ..
 
