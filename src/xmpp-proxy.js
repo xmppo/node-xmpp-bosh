@@ -198,7 +198,7 @@ dutil.copy(XMPPProxy.prototype, {
 		if (this._is_connected) {
 			try {
 				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("XMPP PROXY::sending:%s", data.toString('binary'));
+					return dutil.sprintf("XMPP PROXY::sending:%s", data.toString());
 				});
 				this._sock.write(data);
 			}
@@ -236,7 +236,7 @@ dutil.copy(XMPPProxy.prototype, {
 		// packet. The SAX based parser will handle that very well.
 		//
 		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("XMPP PROXY::received:%s", d.toString('binary'));
+			return dutil.sprintf("XMPP PROXY::received:%s", d.toString());
 		});
 
 		this._buff += d.toString();
