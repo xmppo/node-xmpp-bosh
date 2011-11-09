@@ -87,9 +87,9 @@ dutil.copy(XMPPProxy.prototype, {
 		// nasty bugs, so we let them be.
 		this._lookup_service.on('connect', us.bind(this._on_connect, this));
 		this._lookup_service.on('error', us.bind(this._on_lookup_error, this)); 
-		this._sock.on('data',    us.bind(this._on_data, this));
-		this._sock.on('close',   us.bind(this._on_close, this));
-		this._sock.on('error',   dutil.NULL_FUNC);
+		this._sock.on  ('data',    us.bind(this._on_data, this));
+		this._sock.once('close',   us.bind(this._on_close, this));
+		this._sock.on  ('error',   dutil.NULL_FUNC);
 	}, 
 
 	_starttls: function() {
@@ -353,14 +353,9 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 	
 	_on_close: function(had_error) {
-		// handling error on socket only after it is connected since,
-		// even if, tomorrow the lookup service decides to not remove
-		// all the listeners on the socket, we won't misbehave.
-		if (this._is_connected) {
-			had_error = had_error || false;
-			dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", had_error);
-			this._close_connection(had_error?'remote-connection-failed':null);
-		}
+		had_error = had_error || false;
+		dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", had_error);
+		this._close_connection(had_error ? 'remote-connection-failed' : null);
 	},
 
 	_on_lookup_error: function(error) {

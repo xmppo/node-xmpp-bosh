@@ -169,7 +169,7 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
-		ss.proxy.restart(sstate.stream_attrs);
+		ss.proxy.restart(sstate.attrs);
 	}, 
 
 	stream_terminate: function(sstate) {
@@ -181,7 +181,7 @@ XMPPProxyConnector.prototype = {
 
 		ss.proxy.terminate();
 		delete this.streams[sstate.name];
-	}, 
+	}
 
 };
 
