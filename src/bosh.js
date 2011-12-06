@@ -173,7 +173,7 @@ exports.createServer = function (options) {
             session.reset_inactivity_timeout();
 
             if (session.add_request_for_processing(node, res, stream_store)){
-                session.process_requests(stream_store)
+                session.process_requests(stream_store);
             }
         } // else (not session start)
 
