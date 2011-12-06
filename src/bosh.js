@@ -248,11 +248,8 @@ exports.createServer = function (options) {
     function _on_repsponse(connector_response, stream) {
         log_it("DEBUG", sprintfd("BOSH::%s::%s::response: %s", stream.state.sid,
             stream.name, connector_response));
-        var response = helper.$body({
-            stream: stream.name
-        }).cnode(connector_response).tree();
         var session = stream.session;
-        session.enqueue_response(response, stream);
+        session.enqueue_stanza(connector_response, stream);
     }
 
     // This event is raised when the server terminates the connection.

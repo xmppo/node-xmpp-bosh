@@ -75,8 +75,8 @@ Stream.prototype = {
             attrs.condition  = condition;
         }
 
-        var msg = $terminate(attrs);
-        session.enqueue_response(msg, this);
+        attrs.type = 'terminate';
+        session.enqueue_bosh_response(attrs, this);
 
         // Mark the stream as terminated AFTER the terminate response has been queued.
         this.terminated = true;
@@ -101,8 +101,8 @@ Stream.prototype = {
             // This isn't mentioned in the spec.
             attrs.to = this.from;
         }
-        var response = $body(attrs);
-        session.enqueue_response(response, this);
+
+        session.enqueue_bosh_response(attrs, this);
     }
 };
 

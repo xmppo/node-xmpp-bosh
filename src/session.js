@@ -107,8 +107,18 @@ function Session(node, options, bep, call_on_terminate) {
     this.res = [ ]; // res needs is sorted in 'rid' order.
 
     // Contains objects of the form:
-    // { response: <The body element>, sstate: <The stream state object> }
-    this.pending = [ ];
+    // { "stream-name": [ stanzas ] }
+    this.pending_stanzas = { };
+    
+    // Contains objects of the form:
+    // { "stream-name": [ body element attrs obj] }
+    this.pending_bosh_responses = { };
+
+    // Once the response is stitched 
+    this.pending_stitched_responses = [ ];
+    
+    // index of the next stream to responsd to
+    this.next_stream = 0;
 
     // This is just an array of strings holding the stream names
     this.streams = [ ];
@@ -159,9 +169,16 @@ Session.prototype = {
 
     add_stream: function (stream) {
         this.streams.push(stream);
+        this.pending_bosh_responses[stream.name] = [ ];
+        this.pending_stanzas[stream.name] = [ ];
     },
 
     delete_stream: function (stream) {
+        if (this.pending_stanzas[stream.name]) {
+            delete this.pending_stanzas[stream.name];
+            delete this.pending_bosh_responses[stream.name];
+        }
+
         var pos = this.streams.indexOf(stream);
         if (pos !== -1) {
             this.streams.splice(pos, 1);
@@ -454,15 +471,22 @@ Session.prototype = {
                 sprintfd("SESSION::%s::terminating BOSH session due to inactivity",
                     self.sid));
 
-            // Raise a no-client event on pending as well as unacked responses.
-            var _p = us.pluck(self.pending, 'response');
+            // Raise a no-client event on pending, unstitched as well as unacked 
+            // responses.
+            var _p = us.pluck(self.pending_stitched_responses, 'response');
 
             var _uar = Object.keys(self.unacked_responses).map(toNumber)
                 .map(function (rid) {
                     return self.unacked_responses[rid].response;
                 });
 
-            var all = _p.concat(_uar);
+            var _usr = [ ];
+            self.streams.forEach(function (stream) {
+                var _response = self._stitch_response_for_stream(stream.name);
+                _usr.push(_response);
+            });
+
+            var all = _p.concat(_uar).concat(_usr);
             all.forEach(function (response) {
                 self._bep.emit('no-client', response);
             });
@@ -544,7 +568,7 @@ Session.prototype = {
         }
 
         var msg = $body(attrs);
-        this.enqueue_response(msg, stream);
+        this.enqueue_bosh_response(attrs, stream);
     },
 
     // The streams to terminate. We start off by assuming that
@@ -623,11 +647,59 @@ Session.prototype = {
         return ro;
     },
 
+    _stitch_response_for_stream: function (stream_name) {
+        var stitched = this.pending_stanzas[stream_name].length || this.pending_bosh_responses[stream_name].length;
+
+        if (!stitched) {
+            return false;
+        }
+
+        var attr = {stream: stream_name};
+
+        if (this.pending_bosh_responses[stream_name].length) {
+            attr = this.pending_bosh_responses[stream_name].shift();
+            attr.stream = stream_name;
+        }
+
+        var response = $body(attr);
+        
+        this.pending_stanzas[stream_name].forEach(function (stanza) {
+            response = response.cnode(stanza).tree();
+        });
+        
+        return response;
+    },
+    
+    _stitch_new_response: function () {
+        var len = this.streams.length;
+
+        if(!len) {
+            return;
+        }
+
+        var next_stream = this.next_stream % len;
+
+        do {
+            var stream = this.streams[this.next_stream];
+            this.next_stream = (this.next_stream + 1) % len;
+            
+            var response = this._stitch_response_for_stream(stream.name);
+            
+            if (response) {
+                this.pending_stanzas[stream.name] = [ ];
+                this.pending_stitched_responses.push({
+                    response: response,
+                    stream: stream
+                });
+                break;
+            }
+        } while (this.next_stream !== next_stream);
+    },
+
     // There is a subtle bug here. If the sending of this response fails
     // then it is appended to the queue of pending responses rather than
-    // being added to the right place. This is because we rely on
-    // enqueue_response() to append it back to the list of pending
-    // responses.
+    // being added to the right place. This is because we push it again
+    // in pending_stitched_responses.
     //
     // We hope for this to not occur too frequently.
     //
@@ -638,13 +710,17 @@ Session.prototype = {
     // the current implementation.
     //
     _pop_and_send: function () {
-        if (this.res.length > 0 && this.pending.length > 0) {
+        if (!this.pending_stitched_responses.length) {
+            this._stitch_new_response();
+        }
+
+        if (this.res.length > 0 && this.pending_stitched_responses.length) {
             var ro = this.get_response_object();
             log_it("DEBUG",
                 sprintfd("SESSION::%s::pop_and_send: ro:%s, this._pending.length: %s",
-                    this.sid, us.isTruthy(ro), this.pending.length));
-
-            var _p = this.pending.shift();
+                    this.sid, us.isTruthy(ro), this.pending_stitched_responses.length));
+            
+            var _p = this.pending_stitched_responses.shift();
             var response = _p.response;
             var stream = _p.stream;
 
@@ -657,7 +733,8 @@ Session.prototype = {
                         self.sid, ro.rid));
                 if (self.res.length > 0) {
                     // Try the next one
-                    self.enqueue_response(response, stream);
+                    self.pending_stitched_responses.push(_p);
+                    self.try_sending();
                 } else {
                     self._on_no_client_found(response, stream);
                 }
@@ -669,11 +746,11 @@ Session.prototype = {
             if (this.res.length === 0){ //Can happen frequently.
                 log_it("DEBUG",
                     sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
-                        this.sid, this.res.length, this.pending.length));
+                        this.sid, this.res.length, this.pending_stitched_responses.length));
             } else { //Should rarely happen.
                 log_it("INFO",
                     sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
-                        this.sid, this.res.length, this.pending.length));
+                        this.sid, this.res.length, this.pending_stitched_responses.length));
             }
         }
     },
@@ -687,7 +764,7 @@ Session.prototype = {
             response: response,
             stream: stream
         };
-        this.pending.push(_po);
+        this.pending_stitched_responses.push(_po);
     },
 
     /* Check if we can merge the XML stanzas in 'response' and some
@@ -745,15 +822,19 @@ Session.prototype = {
         }
     },
 
+    try_sending: function () {
+        if (!this.has_next_tick) {
+            var self = this;
+            process.nextTick(function () {
+                self.has_next_tick = false;
+                self._pop_and_send();
+            });
+            this.has_next_tick = true;
+        }
+    },
+
+
     /* Enqueue a response. Requeue if the sending fails.
-     *
-     * This function tries to merge the response with an existing
-     * queued response to be sent on this stream (if merging them
-     * is feasible). Subsequently, it will pop the first queued
-     * response to be sent on this BOSH session and try to send it.
-     * In the unfortunate event that it can NOT be sent, it will be
-     * added to the back to the queue (not the front). This can be
-     * the cause of very rare unordered responses.
      *
      * If you see unordered responses, this bit needs to be fixed
      * to maintain state.pending as a priority queue rather than
@@ -763,21 +844,17 @@ Session.prototype = {
      * so don't even waste your time trying to fix it that way.
      *
      */
-    enqueue_response: function (response, stream) { //TODO: Correct Logic
 
-        log_it("DEBUG", sprintfd("SESSION::%s::enqueue_response", this.sid));
+    enqueue_bosh_response: function (attrs, stream) {
+        log_it("DEBUG", sprintfd("SESSION::%s::STREAM::%s::enqueue_bosh_response", this.sid, stream.name));
+        this.pending_bosh_responses[stream.name].push(attrs);
+        this.try_sending();
+    },
 
-        // Merge with an existing response, or push it as a new response
-        this._merge_or_push_response(response, stream);
-
-        if (!this.has_next_tick) {
-            var self = this;
-            process.nextTick(function () {
-                self.has_next_tick = false;
-                self._pop_and_send();
-            });
-            this.has_next_tick = true;
-        }
+    enqueue_stanza: function (stanza, stream) {
+        log_it("DEBUG", sprintfd("SESSION::%s::STREAM::%s::enqueue_stanza", this.sid, stream.name));
+        this.pending_stanzas[stream.name].push(stanza);
+        this.try_sending();
     },
 
     // If the client has enabled ACKs, then acknowledge the highest request
@@ -819,8 +896,13 @@ Session.prototype = {
     send_pending_responses: function () {
         log_it("DEBUG",
             sprintfd("SESSION::%s::send_pending_responses::state.pending.length: %s",
-                this.sid, this.pending.length));
-        if (this.pending.length > 0 && this.res.length > 0) {
+                this.sid, this.pending_stitched_responses.length));
+
+        if (!this.pending_stitched_responses.length) {
+            this._stitch_new_response();
+        }
+
+        if (this.pending_stitched_responses.length > 0 && this.res.length > 0) {
             this._pop_and_send();
         }
     },
@@ -933,7 +1015,7 @@ Session.prototype = {
                 } else {
                     // We inject a response packet into the pending queue to
                     // notify the client that it _may_ have missed something.
-                    this.pending.push({
+                    this.pending_stitched_responses.push({
                         response: $body({
                             report: node.attrs.ack + 1,
                             time: new Date() - _ts
@@ -1090,6 +1172,7 @@ SessionStore.prototype = {
     },
 
     send_invalid_session_terminate_response: function (res, node) {
+        log_it("DEBUG", sprintf("SESSION::Sending invalid sid"));
         var terminate_condition;
         if (this._terminated_sessions[node.attrs.sid]) {
             terminate_condition = this._terminated_sessions[node.attrs.sid].condition;
