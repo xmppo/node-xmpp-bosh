@@ -276,6 +276,8 @@ Session.prototype = {
         if (nodes.length > 0) {
             this.emit_nodes_event(nodes, stream);
         }
+
+        this.send_pending_responses();
     },
 
     //
@@ -358,7 +360,7 @@ Session.prototype = {
             this.add_held_http_connection(node.attrs.rid, res);
 
             // Process pending (queued) responses (if any)
-            this.send_pending_responses();
+            // this.send_pending_responses();
         } else {
             log_it("INFO", sprintfd("SESSION::%s::cannot handle ack::session RID: %s", this.sid, this.rid));
             should_process = false;
