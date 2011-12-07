@@ -181,6 +181,9 @@ Session.prototype = {
 
         var pos = this.streams.indexOf(stream);
         if (pos !== -1) {
+            if (pos < this.next_stream) {
+                --this.next_stream;
+            }
             this.streams.splice(pos, 1);
         }
     },
