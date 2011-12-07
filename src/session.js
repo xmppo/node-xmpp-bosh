@@ -902,11 +902,15 @@ Session.prototype = {
             sprintfd("SESSION::%s::send_pending_responses::state.pending.length: %s",
                 this.sid, this.pending_stitched_responses.length));
 
+        if (this.res.length === 0) {
+            return;
+        }
+        
         if (!this.pending_stitched_responses.length) {
             this._stitch_new_response();
         }
 
-        if (this.pending_stitched_responses.length > 0 && this.res.length > 0) {
+        if (this.pending_stitched_responses.length > 0) {
             this._pop_and_send();
         }
     },
