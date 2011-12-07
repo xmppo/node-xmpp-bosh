@@ -712,11 +712,19 @@ Session.prototype = {
     // the current implementation.
     //
     _pop_and_send: function () {
+        if (this.res.length === 0) {
+            // dont stitch responses as well.
+            log_it("DEBUG",
+                   sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
+                            this.sid, this.res.length, this.pending_stitched_responses.length));
+            return;
+        }
+        
         if (!this.pending_stitched_responses.length) {
             this._stitch_new_response();
         }
 
-        if (this.res.length > 0 && this.pending_stitched_responses.length) {
+        if (this.pending_stitched_responses.length) {
             var ro = this.get_response_object();
             log_it("DEBUG",
                 sprintfd("SESSION::%s::pop_and_send: ro:%s, this._pending.length: %s",
@@ -745,15 +753,9 @@ Session.prototype = {
             // We try sending more queued responses
             this.send_pending_responses();
         } else {
-            if (this.res.length === 0){ //Can happen frequently.
-                log_it("DEBUG",
-                    sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
-                        this.sid, this.res.length, this.pending_stitched_responses.length));
-            } else { //Should rarely happen.
-                log_it("INFO",
-                    sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
-                        this.sid, this.res.length, this.pending_stitched_responses.length));
-            }
+            log_it("INFO",
+                   sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
+                            this.sid, this.res.length, this.pending_stitched_responses.length));
         }
     },
 
