@@ -774,61 +774,6 @@ Session.prototype = {
         this.pending_stitched_responses.push(_po);
     },
 
-    /* Check if we can merge the XML stanzas in 'response' and some
-     * response in 'pending'.
-     *
-     * The way this check is made is that all the attributes of the
-     * outer (body) element are checked, and if found equal, the
-     * two are said to be the equal.
-     *
-     * When 2 body tags are found to be equal, they can be merged,
-     * and the position of the first such response in 'pending'
-     * is returned.
-     *
-     * Since the only *special* <body> tag that is created for a
-     * stream before sending is the terminate response, we can
-     * be sure that any response that has an XMPP payload is a
-     * plain-ol body tag and we will always merge with the right
-     * response and responses will be in-order.
-     *
-     */
-    _can_merge: function (response) {
-        var i;
-        for (i = 0; i < this.pending.length; ++i) {
-            if (us.isEqual(response.attrs, this.pending[i].response.attrs)) {
-                return i;
-            }
-        }
-        return -1;
-    },
-
-    _merge_or_push_response: function (response, stream) {
-        var merge_index = this._can_merge(response);
-        log_it('DEBUG',
-            sprintfd('SESSION::%s::Merging with response at index: %s',
-                this.sid, merge_index));
-
-        if (merge_index !== -1) {
-            // Yes, it is the same stream. Merge the responses.
-            var _presp = this.pending[merge_index].response;
-
-            response.children.forEach(function (child) {
-                //
-                // Don't forget to reset 'parent' since reassigning
-                // children w/o assigning the 'parent' can be
-                // DISASTROUS!! You'll never know what hit you
-                //
-                child.parent = _presp;
-                _presp.children.push(child);
-            });
-        } else {
-            this.pending.push({
-                response: response,
-                stream: stream
-            });
-        }
-    },
-
     try_sending: function () {
         if (!this.has_next_tick) {
             var self = this;
