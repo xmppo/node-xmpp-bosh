@@ -737,22 +737,11 @@ Session.prototype = {
             var response = _p.response;
             var stream = _p.stream;
 
-            // On error, try the next one or start the timer if there
-            // is nothing left to try.
-            var self = this;
-            ro.set_error(function () {
-                log_it("DEBUG",
-                    sprintfd("SESSION::%s::error sending response on rid: %s",
-                        self.sid, ro.rid));
-                if (self.res.length > 0) {
-                    // Try the next one
-                    self.pending_stitched_responses.push(_p);
-                    self.try_sending();
-                } else {
-                    self._on_no_client_found(response, stream);
-                }
-            });
+            // We dont do anything on error, we assume
+            // that the client will request the missing
+            // RID. 
             this._send_no_requeue(ro, response);
+
             // We try sending more queued responses
             this.send_pending_responses();
         } else {
