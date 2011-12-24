@@ -150,7 +150,11 @@ function Session(node, options, bep, call_on_terminate) {
         this.wait = Math.floor(this.inactivity * 0.8);
     }
 
+    // The number of responses to cache so that re-requests for these
+    // RIDs can be safely satisfied.
     this.window = options.WINDOW_SIZE;
+
+    this.ver = node.attrs.ver || '1.6';
 
     // There is just 1 inactivity timeout for the whole BOSH session
     // (as opposed to for each response as it was earlier)
@@ -158,6 +162,10 @@ function Session(node, options, bep, call_on_terminate) {
 
     // This BOSH session have a pending nextTick() handler?
     this.has_next_tick = false;
+
+    // Is this the first response? Helpful only if
+    // options.FAT_SESSION_CREATION_RESPONSE is true.
+    this.first_response = true;
 
     this.__defineGetter__("no_of_streams", function () {
         return this.streams.length;
@@ -245,7 +253,7 @@ Session.prototype = {
             // the XML nodes in a restart request should be ignored.
             // Hence, we comply.
             nodes = [ ];
-        } else if (helper.is_stream_add_request(node)) {
+        } else if (helper.is_stream_add_request(node, this._options)) {
             // Check if this is a new stream start packet (multiple streams)
 
             log_it("DEBUG", sprintfd("SESSION::%s::Stream Add", this.sid));
@@ -369,7 +377,8 @@ Session.prototype = {
             should_process = false;
         }
         if (this.queued_requests.hasOwnProperty(node.attrs.rid)) {
-        //This check is required because the cannot_handle_ack deletes the requests for broken connections.
+            // This check is required because the cannot_handle_ack
+            // deletes the requests for broken connections.
             this.queued_requests[node.attrs.rid].stream = stream;
         }
         return should_process;
@@ -545,17 +554,17 @@ Session.prototype = {
         }
 
         var attrs = {
-            stream              : stream.name,
+            stream              : stream.name, 
             sid                 : this.sid,
             wait                : this.wait,
-            ver                 : this.ver, //TODO: This needs to be properly assigned.
+            ver                 : this.ver, 
             polling             : this.inactivity / 2,
             inactivity          : this.inactivity,
             requests            : this._options.WINDOW_SIZE,
             hold                : this.hold,
             from                : stream.to,
             content             : this.content,
-            "xmpp:restartlogic" : "true",
+            "xmpp:restartlogic" : "true", 
             "xmlns:xmpp"        : 'urn:xmpp:xbosh',
             // secure:     'false', // TODO
             // 'ack' is set by the client. If the client sets 'ack', then we also
@@ -682,6 +691,8 @@ Session.prototype = {
             return;
         }
 
+        // Processing streams one after another avoids starvation of
+        // any one stream.
         var next_stream = this.next_stream % len;
 
         do {
@@ -691,6 +702,7 @@ Session.prototype = {
             var response = this._stitch_response_for_stream(stream.name);
             
             if (response) {
+                // Q. Why does the caller clear the pending stazas?
                 this.pending_stanzas[stream.name] = [ ];
                 this.pending_stitched_responses.push({
                     response: response,
@@ -789,7 +801,13 @@ Session.prototype = {
     enqueue_bosh_response: function (attrs, stream) {
         log_it("DEBUG", sprintfd("SESSION::%s::STREAM::%s::enqueue_bosh_response", this.sid, stream.name));
         this.pending_bosh_responses[stream.name].push(attrs);
-        this.try_sending();
+
+        if (this._options.PIDGIN_COMPATIBLE && this.first_response) {
+            this.first_response = false;
+        }
+        else {
+            this.try_sending();
+        }
     },
 
     enqueue_stanza: function (stanza, stream) {

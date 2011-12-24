@@ -46,6 +46,17 @@ exports.config = {
 	// See this link for details:
 	// http://code.google.com/p/node-xmpp-bosh/issues/detail?id=11
 	// 
-	no_tls_domains: [ /* 'chat.facebook.com' */ ]
+	no_tls_domains: [ /* 'chat.facebook.com' */ ], 
+
+
+    // Set to 'true' if you want:
+    // 
+    // 1. The session creation response to contain the <stream:features/> tag.
+    // 2. NO multiple streams support (only supports a single stream
+    // per session in this mode).
+    // 
+    // Useful to work around a pidgin (libpurple) bug.
+    // 
+    pidgin_compatible: true
 
 };

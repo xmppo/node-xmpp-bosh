@@ -66,8 +66,10 @@ Response.prototype = {
 	send_response: function (msg, dont_set_error_null) {
 		// To prevent an unhandled exception later
 		if (!dont_set_error_null) {
-            this._res.on('error', NULL_FUNC);
+            this.set_error(NULL_FUNC);
         }
+        // According to the spec. we need to send a Content-Length header
+        this._res.setHeader("Content-Length", msg.length);
 		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
 		this._res.end(msg);
 	},

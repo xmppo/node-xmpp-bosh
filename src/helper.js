@@ -155,7 +155,10 @@ function is_stream_restart_packet(node) {
 
 // Coded according to the rules mentioned here:
 // http://xmpp.org/extensions/xep-0124.html#multi-add
-function is_stream_add_request(node) {
+function is_stream_add_request(node, options) {
+    if (options.PIDGIN_COMPATIBLE) {
+        return false;
+    }
     return node.attrs.to && node.attrs.sid && node.attrs.rid &&
         !node.attrs.ver && !node.attrs.hold && !node.attrs.wait;
 }
@@ -179,14 +182,14 @@ function is_session_creation_packet(node) {
 
 // End misc. helpers
 
-exports.add_to_headers = add_to_headers;
-exports.JSONPResponseProxy = JSONPResponseProxy;
-exports.route_parse = route_parse;
+exports.add_to_headers              = add_to_headers;
+exports.JSONPResponseProxy          = JSONPResponseProxy;
+exports.route_parse                 = route_parse;
 exports.save_terminate_condition_for_wait_time = save_terminate_condition_for_wait_time;
-exports.$terminate = $terminate;
-exports.$body = $body;
-exports.get_stream_name = get_stream_name;
-exports.is_stream_restart_packet = is_stream_restart_packet;
-exports.is_stream_add_request = is_stream_add_request;
+exports.$terminate                  = $terminate;
+exports.$body                       = $body;
+exports.get_stream_name             = get_stream_name;
+exports.is_stream_restart_packet    = is_stream_restart_packet;
+exports.is_stream_add_request       = is_stream_add_request;
 exports.is_stream_terminate_request = is_stream_terminate_request;
-exports.is_session_creation_packet = is_session_creation_packet;
+exports.is_session_creation_packet  = is_session_creation_packet;

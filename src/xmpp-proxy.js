@@ -317,7 +317,7 @@ dutil.copy(XMPPProxy.prototype, {
 
 					// Populate the attributes of this packet from those of the 
 					// stream:stream stanza.
-					dutil.copy(stanza.attrs, self._stream_attrs);
+					dutil.extend(stanza.attrs, self._stream_attrs);
 
 					// console.log("self._stream_attrs:", self._stream_attrs);
 

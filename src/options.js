@@ -82,6 +82,8 @@ function BOSH_Options(opts) {
     this.HTTP_SOCKET_KEEPALIVE = _opts.http_socket_keepalive || 60;
 
     this.MAX_STREAMS_PER_SESSION = _opts.max_streams_per_session || 8;
+
+    this.PIDGIN_COMPATIBLE = _opts.pidgin_compatible || false;
 }
 
 exports.BOSH_Options = BOSH_Options;
