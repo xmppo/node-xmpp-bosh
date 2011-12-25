@@ -821,16 +821,14 @@ Session.prototype = {
     // If the client has enabled ACKs, then acknowledge the highest request
     // that we have received till now -- if it is not the current request.
     _get_highest_rid_to_ack: function (rid, msg) {
-        if (this.ack) {
-            this.unacked_responses[rid] = {
-                response: msg,
-                ts: new Date(),
-                rid: rid
-            };
-            this.max_rid_sent = Math.max(this.max_rid_sent, rid);
-            if (rid < this.rid) {
-                return this.rid;
-            }
+        this.unacked_responses[rid] = {
+            response: msg,
+            ts: new Date(),
+            rid: rid
+        };
+        this.max_rid_sent = Math.max(this.max_rid_sent, rid);
+        if (rid < this.rid) {
+            return this.rid;
         }
     },
 
@@ -845,7 +843,7 @@ Session.prototype = {
         log_it("DEBUG",
             sprintfd("SESSION::%s::send_no_requeue, rid: %s", this.sid, ro.rid));
         var ack = this._get_highest_rid_to_ack(ro.rid, msg);
-        if (ack) {
+        if (this.ack && ack) {
             msg.attrs.ack = ack;
         }
         var res_str = msg.toString();
@@ -939,128 +937,137 @@ Session.prototype = {
     //
     cannot_handle_ack: function (node, res) {
         var self = this;
-        if (this.ack) { // Has the client enabled ACKs?
-            /* Begin ACK handling */
-            var _uar_keys = Object.keys(this.unacked_responses).map(toNumber);
-            //We are fairly generous
-            if (_uar_keys.length > this._options.WINDOW_SIZE * 4) {
-                // The client seems to be buggy. It has not ACKed the
-                // last WINDOW_SIZE * 4 requests. We turn off ACKs.
-                delete this.ack;
-                log_it("WARN", sprintfd("SESSION::%s::disabling ACKs", this.sid));
-                this.unacked_responses = { };
+        
+        if (!this.ack) {
+            node.attrs.ack = node.attrs.rid - this.window;
+        }
+
+        /* Begin ACK handling */
+        var _uar_keys = Object.keys(this.unacked_responses).map(toNumber);
+        _uar_keys.sort(dutil.num_cmp);
+
+        //We are fairly generous
+        if (_uar_keys.length > this._options.WINDOW_SIZE * 4) {
+            // The client seems to be buggy. It has not ACKed the
+            // last WINDOW_SIZE * 4 requests. We turn off ACKs.
+            delete this.ack;
+            log_it("WARN", sprintfd("SESSION::%s::disabling ACKs", this.sid));
+            // will not emit response-acknowledged for these
+            // responses. consider them to be lost.
+            while (_uar_keys.length > this.window) {
+                var key = _uar_keys.unshift();
+                delete this.unacked_responses[key];
             }
-            if (!node.attrs.ack) {
-                // Assume that all requests up to rid-1 have been responded to
-                // http://xmpp.org/extensions/xep-0124.html#rids-broken
-                node.attrs.ack = this.rid - 1;
+        }
+
+        if (!node.attrs.ack) {
+            // Assume that all requests up to rid-1 have been responded to
+            // http://xmpp.org/extensions/xep-0124.html#rids-broken
+            node.attrs.ack = this.rid - 1;
+        }
+
+        // If the request from the client includes an ACK, we delete all
+        // packets with an 'rid' less than or equal to this value since
+        // the client has seen all those packets.
+        _uar_keys.forEach(function (rid) {
+            if (rid <= node.attrs.ack) {
+                // Raise the 'response-acknowledged' event.
+                log_it("INFO", sprintf("SESSION::%s::received ack for rid::%s", self.sid, rid));
+                self._bep.emit('response-acknowledged',
+                               self.unacked_responses[rid], self);
+                delete self.unacked_responses[rid];
             }
-            if (node.attrs.ack) {
-                // If the request from the client includes an ACK, we delete all
-                // packets with an 'rid' less than or equal to this value since
-                // the client has seen all those packets.
-                _uar_keys.forEach(function (rid) {
-                    if (rid <= node.attrs.ack) {
-                        // Raise the 'response-acknowledged' event.
-                        self._bep.emit('response-acknowledged',
-                            self.unacked_responses[rid], self);
-                        delete self.unacked_responses[rid];
-                    }
+        });
+
+        // Client has not acknowledged the receipt of the last message we sent it.
+        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack]) {
+            var _ts = this.unacked_responses[node.attrs.ack].ts;
+            var ss = this._get_random_stream();
+            if (!ss) {
+                var estr = sprintf("BOSH::%s::ss is invalid", this.sid);
+                log_it("ERROR", estr);
+            } else {
+                // We inject a response packet into the pending queue to
+                // notify the client that it _may_ have missed something.
+                // TODO: we should also have a check which ensures that 
+                // time > RTT has passed. 
+                this.pending_stitched_responses.push({
+                    response: $body({
+                        report: node.attrs.ack + 1,
+                        time: new Date() - _ts
+                    }),
+                    stream: ss
                 });
             }
+        }
 
-            // Client has not acknowledged the receipt of the last message we sent it.
-            if (node.attrs.ack && node.attrs.ack < this.max_rid_sent &&
-                    this.unacked_responses[node.attrs.ack]) {
-                var _ts = this.unacked_responses[node.attrs.ack].ts;
-                var ss = this._get_random_stream();
-                if (!ss) {
-                    var estr = sprintf("BOSH::%s::ss is invalid", this.sid);
-                    log_it("ERROR", estr);
+        //
+        // Handle the condition of broken connections
+        // http://xmpp.org/extensions/xep-0124.html#rids-broken
+        //
+        // We MUST respond on this same connection - We always have
+        // something to respond with for any request with an rid that
+        // is less than state.rid + 1
+        //
+        var _queued_request_keys = Object.keys(this.queued_requests).map(toNumber);
+        _queued_request_keys.sort(dutil.num_cmp);
+        var quit_me = false;
+        _queued_request_keys.forEach(function (rid) {
+            //
+            // There should be exactly 1 'rid' in state.queued_requests that is
+            // less than state.rid+1
+            //
+            if (rid < self.rid + 1) {
+                log_it("DEBUG", sprintfd("SESSION::%s::qr-rid: %s, state.rid: %s",
+                                         self.sid, rid, self.rid));
+
+                delete self.queued_requests[rid];
+
+                if (self.unacked_responses.hasOwnProperty(rid)) {
+                    //
+                    // Send back the original response on this conection itself
+                    //
+                    log_it("DEBUG",
+                           sprintfd("SESSION::%s::re-sending unacked response: %s",
+                                    self.sid, rid));
+                    self._send_immediate(res, self.unacked_responses[rid].response);
+                    quit_me = true;
+                } else if (rid >= self.rid - self.window - 2) {
+                    //
+                    // Send back an empty body since it is within the range. We assume
+                    // that we didn't send anything on this rid the first time around.
+                    //
+                    // There is a small issue here. If a client re-sends a request for
+                    // an 'rid' that it has already acknowledged, it will get an empty
+                    // body the second time around. The client is to be blamed for its
+                    // stupidity and not us.
+                    //
+                    log_it("DEBUG", sprintfd("SESSION::%s::sending empty BODY for: %s",
+                                             self.sid, rid));
+                    self._send_immediate(res, $body());
+
+                    quit_me = true;
                 } else {
-                    // We inject a response packet into the pending queue to
-                    // notify the client that it _may_ have missed something.
-                    this.pending_stitched_responses.push({
-                        response: $body({
-                            report: node.attrs.ack + 1,
-                            time: new Date() - _ts
-                        }),
-                        stream: ss
+                    //
+                    // Terminate this session. We make the rest of the code believe
+                    // that the client asked for termination.
+                    //
+                    // I don't think that control will ever reach here since the
+                    // validation for the 'rid' being in a permissible range has
+                    // already been made.
+                    //
+                    // Note: Control DOES reach here. We need to figure out WHY.
+                    //
+                    dutil.copy(node.attrs, { //TODO: Might be moved to helper.
+                        type: 'terminate',
+                        condition: 'item-not-found',
+                        xmlns: BOSH_XMLNS
                     });
                 }
             }
+        });
 
-            //
-            // Handle the condition of broken connections
-            // http://xmpp.org/extensions/xep-0124.html#rids-broken
-            //
-            // We only handle broken connections for streams that have
-            // acknowledgements enabled.
-            //
-            // We MUST respond on this same connection - We always have
-            // something to respond with for any request with an rid that
-            // is less than state.rid + 1
-            //
-            var _queued_request_keys = Object.keys(this.queued_requests).map(toNumber);
-            _queued_request_keys.sort(dutil.num_cmp);
-            var quit_me = false;
-            _queued_request_keys.forEach(function (rid) {
-                //
-                // There should be exactly 1 'rid' in state.queued_requests that is
-                // less than state.rid+1
-                //
-                if (rid < self.rid + 1) {
-                    log_it("DEBUG", sprintfd("SESSION::%s::qr-rid: %s, state.rid: %s",
-                        self.sid, rid, self.rid));
-
-                    delete self.queued_requests[rid];
-
-                    if (self.unacked_responses.hasOwnProperty(rid)) {
-                        //
-                        // Send back the original response on this conection itself
-                        //
-                        log_it("DEBUG",
-                            sprintfd("SESSION::%s::re-sending unacked response: %s",
-                                self.sid, rid));
-                        self._send_immediate(res, self.unacked_responses[rid].response);
-                        quit_me = true;
-                    } else if (rid >= self.rid - self.window - 2) {
-                        //
-                        // Send back an empty body since it is within the range. We assume
-                        // that we didn't send anything on this rid the first time around.
-                        //
-                        // There is a small issue here. If a client re-sends a request for
-                        // an 'rid' that it has already acknowledged, it will get an empty
-                        // body the second time around. The client is to be blamed for its
-                        // stupidity and not us.
-                        //
-                        log_it("DEBUG", sprintfd("SESSION::%s::sending empty BODY for: %s",
-                            self.sid, rid));
-                        self._send_immediate(res, $body());
-
-                        quit_me = true;
-                    } else {
-                        //
-                        // Terminate this session. We make the rest of the code believe
-                        // that the client asked for termination.
-                        //
-                        // I don't think that control will ever reach here since the
-                        // validation for the 'rid' being in a permissible range has
-                        // already been made.
-                        //
-                        // Note: Control DOES reach here. We need to figure out WHY.
-                        //
-                        dutil.copy(node.attrs, { //TODO: Might be moved to helper.
-                            type: 'terminate',
-                            condition: 'item-not-found',
-                            xmlns: BOSH_XMLNS
-                        });
-                    }
-                }
-            });
-
-            return quit_me;
-        }
+        return quit_me;
     },
 
     is_max_streams_violation: function () {
