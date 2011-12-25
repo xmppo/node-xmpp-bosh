@@ -497,7 +497,9 @@ Session.prototype = {
             var _usr = [ ];
             self.streams.forEach(function (stream) {
                 var _response = self._stitch_response_for_stream(stream.name);
-                _usr.push(_response);
+                if (_response) {
+                    _usr.push(_response);
+                }
             });
 
             var all = _p.concat(_uar).concat(_usr);
