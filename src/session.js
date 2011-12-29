@@ -827,7 +827,8 @@ Session.prototype = {
             rid: rid
         };
         this.max_rid_sent = Math.max(this.max_rid_sent, rid);
-        if (rid < this.rid) {
+
+        if (rid !== this.rid) {
             return this.rid;
         }
     },
