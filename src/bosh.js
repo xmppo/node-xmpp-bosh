@@ -174,6 +174,8 @@ exports.createServer = function (options) {
 
             if (session.add_request_for_processing(node, res, stream_store)){
                 session.process_requests(stream_store);
+            } else {
+                session.send_pending_responses();
             }
         } // else (not session start)
 
