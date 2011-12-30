@@ -966,7 +966,7 @@ Session.prototype = {
         if (!node.attrs.ack) {
             // Assume that all requests up to rid-1 have been responded to
             // http://xmpp.org/extensions/xep-0124.html#rids-broken
-            node.attrs.ack = this.rid - 1;
+            node.attrs.ack = node.attrs.rid - 1;
         }
 
         // If the request from the client includes an ACK, we delete all
