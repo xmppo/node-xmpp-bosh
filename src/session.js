@@ -688,7 +688,8 @@ Session.prototype = {
     
     _stitch_new_response: function () {
         var len = this.streams.length;
-
+        log_it("DEBUG", sprintf("SESSION::%s::_stitch_new_response::len::%s::next_stream::%s", this.sid, len, this.next_stream));
+        
         if(!len) {
             return;
         }
@@ -704,6 +705,7 @@ Session.prototype = {
             var response = this._stitch_response_for_stream(stream.name);
             
             if (response) {
+                log_it("INFO", sprintf("SESSION::%s::_stitch_new_response::stream::%s::stitched", this.sid, stream.name));
                 // Q. Why does the caller clear the pending stazas?
                 this.pending_stanzas[stream.name] = [ ];
                 this.pending_stitched_responses.push({
@@ -842,7 +844,7 @@ Session.prototype = {
             return;
         }
         log_it("DEBUG",
-            sprintfd("SESSION::%s::send_no_requeue, rid: %s", this.sid, ro.rid));
+               sprintfd("SESSION::%s::send_no_requeue, ro rid: %s, this.rid: %s", this.sid, ro.rid, this.rid));
         var ack = this._get_highest_rid_to_ack(ro.rid, msg);
         if (this.ack && ack) {
             msg.attrs.ack = ack;
