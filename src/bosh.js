@@ -32,6 +32,8 @@ var helper      = require('./helper.js');
 var opt         = require('./options.js');
 var bee         = require('./bosh-event-emitter.js');
 var http        = require('./http-server.js');
+
+var toNumber    = us.toNumber;
 var sprintf     = dutil.sprintf;
 var sprintfd    = dutil.sprintfd;
 var log_it      = dutil.log_it;
@@ -122,6 +124,10 @@ exports.createServer = function (options) {
 
         var session = null;
         var stream = null;
+
+        // In case node doesn't have attrs.rid
+        // it will be set to 0, which is alright.
+        node.attrs.rid = toNumber(node.attrs.rid);
 
         // Check if this is a session start packet.
         if (helper.is_session_creation_packet(node)) {

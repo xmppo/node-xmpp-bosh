@@ -338,7 +338,6 @@ Session.prototype = {
     //
     add_request_for_processing: function (node, res, stream_store) {
         log_it("DEBUG", sprintfd("SESSION::%s::add_request_for_processing::session RID: %s", this.sid, this.rid));
-        node.attrs.rid = toNumber(node.attrs.rid);
         this.queued_requests[node.attrs.rid] = {node: node, stream: null};
 
         var stream;
@@ -830,7 +829,7 @@ Session.prototype = {
         };
         this.max_rid_sent = Math.max(this.max_rid_sent, rid);
 
-        if (Math.floor(rid) !== this.rid) {
+        if (rid !== this.rid) {
             return this.rid;
         }
     },
