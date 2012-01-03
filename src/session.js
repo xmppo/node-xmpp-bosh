@@ -687,6 +687,7 @@ Session.prototype = {
     
     _stitch_new_response: function () {
         var len = this.streams.length;
+        this.next_stream = this.next_stream % len;
         log_it("DEBUG", sprintfd("SESSION::%s::_stitch_new_response::len::%s::next_stream::%s", this.sid, len, this.next_stream));
         
         if(!len) {
@@ -695,7 +696,7 @@ Session.prototype = {
 
         // Processing streams one after another avoids starvation of
         // any one stream.
-        var next_stream = this.next_stream % len;
+        var next_stream = this.next_stream;
 
         do {
             var stream = this.streams[this.next_stream];
