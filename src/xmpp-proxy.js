@@ -187,7 +187,7 @@ dutil.copy(XMPPProxy.prototype, {
 			//
 			// http://code.google.com/p/node-xmpp-bosh/issues/detail?id=5
 
-			this._sock.destroy();
+			this._sock.end();
 		}
 		else {
 			this._terminate_on_connect = true;
