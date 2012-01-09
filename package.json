@@ -24,7 +24,11 @@
 ,"maintainers": [{"name": "Dhruv Matani"
 		 ,"email": "dhruvbird@gmail.com"
 		 ,"web": "http://dhruvbird.com/"
-		 }]
+		 }
+		 ,{"name": "Anup Kalbalia"
+		 ,"email": "anup.kalbalia@gmail.com"
+		 }
+]
 ,"contributors": [{"name":"Vanaryon"
 		  ,"email":"val.saliou@gmail.com"
 		  ,"url":"http://jappix.com/"
