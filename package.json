@@ -41,6 +41,10 @@
 		  ,"email":"satyamshekhar@gmail.com"
 		  ,"url":"http://satyamshekhar.com/"
 		  }
+		  ,{"name":"Julien Genestoux"
+		  ,"email":"julien.genestoux@gmail.com"
+		  ,"url":"http://ouvre-boite.com/"
+		  }
 ]
 ,"licenses": [{"type": "MIT"}]
 ,"engines": {
