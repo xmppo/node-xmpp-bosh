@@ -155,8 +155,8 @@ function do_test(domain, route) {
 
 function start_test(options) {
     var u = url.parse(options.endpoint);
-    var agent = http.getAgent(u.hostname, u.port);
-    agent.maxSockets = options.nconn;
+    //var agent = http.getAgent(u.hostname, u.port);
+    http.globalAgent.maxSockets = options.nconn;
 
 	var i;
     for (i = 0; i < options.nsess; ++i) {
