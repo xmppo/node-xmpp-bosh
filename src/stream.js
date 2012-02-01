@@ -133,11 +133,11 @@ function StreamStore(bosh_options, bep) {
         total	: 0	// Stores the total number of streams
     };
 
-    // This keeps in memory the terminate condition for a terminated stream. Both
-    // this, and terminated_sessions are used when the connection between nxb and
-    // xmpp server breaks and all the session related info is wiped out. We
-    // preserve the condition in this case to let the client know why was its
-    // connection broken.
+    // This keeps in memory the terminate condition for a terminated
+    // stream. Both this, and terminated_sessions are used when the
+    // connection between nxb and xmpp server breaks and all the
+    // session related info is wiped out. We preserve the condition in
+    // this case to let the client know why its connection broke.
     this._terminated_streams = {
     };
 }
