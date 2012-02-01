@@ -129,7 +129,7 @@ function Session(node, options, bep, call_on_terminate) {
     // ts: new Date() } }
     this.unacked_responses = { };
 
-    // A set of queued requests that will become complete when "hasoles" in the
+    // A set of queued requests that will become complete when "holes" in the
     // request queue are filled in by packets with the right 'rids'
     this.queued_requests = { };
 
