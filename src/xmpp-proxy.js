@@ -32,6 +32,9 @@ var util   = require('util');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 
+var path        = require('path');
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 var NS_XMPP_TLS =     'urn:ietf:params:xml:ns:xmpp-tls';
 var NS_STREAM =       'http://etherx.jabber.org/streams';
@@ -45,7 +48,7 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
 	this._default_stream_attrs = {
 		'xmlns:stream': 'http://etherx.jabber.org/streams', 
 		xmlns:          'jabber:client',
-		to:             this._xmpp_host, 
+		to:             this._xmpp_host,
 		version:        '1.0'
 	};
 
@@ -93,11 +96,13 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_starttls: function() {
+		log.debug("%s %s _starttls", this._void_star.session.sid, this._void_star.name);
 		// Vishnu hates 'self'
 		var self = this;
 		this._detach_handlers();
 
 		var ct = require('./starttls.js')(this._sock, { }, function() {
+			log.debug("%s %s _starttls - restart the stream", self._void_star.session.sid, self._void_star.name);
 			// Restart the stream.
 			self.restart();
 	    });
@@ -134,12 +139,12 @@ dutil.copy(XMPPProxy.prototype, {
 
 			if (starttls_stanza.getChild('required') || !this._no_tls_domains[this._xmpp_host]) {
 				/* Signal willingness to perform TLS handshake */
-				dutil.log_it("DEBUG", "XMPP PROXY::STARTTLS requested");
+				log.debug("%s %s _on_stanza starttls requested", this._void_star.session.sid, this._void_star.name);
 				var _starttls_request = 
 					new ltx.Element('starttls', {
 						xmlns: NS_XMPP_TLS
 					}).toString();
-				dutil.log_it("DEBUG", "XMPP PROXY::Writing out STARTTLS request:", _starttls_request);
+				log.debug("%s %s Writing out starttls", this._void_star.session.sid, this._void_star.name);
 				this.send(_starttls_request);
 			}
 			else {
@@ -174,6 +179,7 @@ dutil.copy(XMPPProxy.prototype, {
 
 	terminate: function() {
 		if (this._is_connected) {
+			log.debug("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
 			// Detach the 'data' handler so that we don't get any more events.
 			this._sock.removeAllListeners('data');
 
@@ -197,13 +203,12 @@ dutil.copy(XMPPProxy.prototype, {
 	send: function(data) {
 		if (this._is_connected) {
 			try {
-				dutil.log_it("DEBUG", function() {
-					return dutil.sprintf("XMPP PROXY::sending:%s", data.toString());
-				});
 				this._sock.write(data);
+				log.info("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data.toString());
 			}
 			catch (ex) {
 				this._is_connected = false;
+				log.error("%s %s Couldnot send: %s", this._void_star.session.sid, this._void_star.name, data.toString());
 				// this.on_close(true, ex);
 			}
 		}
@@ -211,7 +216,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_connect: function() {
-		dutil.log_it('DEBUG', 'XMPP PROXY::connected');
+		log.debug("%s %s connected", this._void_star.session.sid, this._void_star.name);
 
 		this._is_connected = true;
 
@@ -235,9 +240,7 @@ dutil.copy(XMPPProxy.prototype, {
 		// The current implementation will fail if we get a <stream:stream/> 
 		// packet. The SAX based parser will handle that very well.
 		//
-		dutil.log_it("DEBUG", function() {
-			return dutil.sprintf("XMPP PROXY::received:%s", d.toString());
-		});
+		log.info("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
 
 		this._buff += d.toString();
 
@@ -249,9 +252,8 @@ dutil.copy(XMPPProxy.prototype, {
 				this._buff = this._buff.substring(ss_pos);
 				var gt_pos = this._buff.search(">");
 				if (gt_pos !== -1) {
-					dutil.log_it("DEBUG", "XMPP PROXY::Got stream packet");
+					log.trace("Got stream packet");
 					var _ss_stanza = this._buff.substring(0, gt_pos + 1) + "</stream:stream>";
-					dutil.log_it("DEBUG", "XMPP PROXY::_ss_stanza:", _ss_stanza);
 
 					// Parse _ss_stanza and extract the attributes.
 					var _ss_node = dutil.xml_parse(_ss_stanza);
@@ -289,7 +291,7 @@ dutil.copy(XMPPProxy.prototype, {
 
 		// Terminate if the buffer becomes too big
 		if (this._buff.length > this._max_xmpp_buffer_size) {
-			dutil.log_it("DEBUG", "XMPP PROXY::Terminating stream due to buffer size violation");
+			log.warn("%s %s _on_data Terminating due to buffer size violation", this._void_star.session.sid, this._void_star.name);
 			stream_terminated = true;
 		}
 
@@ -321,25 +323,21 @@ dutil.copy(XMPPProxy.prototype, {
 
 					// console.log("self._stream_attrs:", self._stream_attrs);
 
-					dutil.log_it("DEBUG", function() {
-						return [ "XMPP PROXY::Emiting stanza:", stanza.toString() ];
-					});
+					log.info("%s %s _on_data emitting stanza: %s", self._void_star.session.sid, self._void_star.name, stanza.toString());
 					self._on_stanza(stanza);
 				}
 				catch (ex) {
-					dutil.log_it("WARN", function() {
-						return [ "XMPP PROXY::Exception handling stanza:", stanza.toString(), ex.stack ];
-					});
+					log.error("%s %s _on_data Exception handling stanza: %s %s", this._void_star.session.name, this._void_star.name, stanza.toString(), ex.stack);
 				}
 			});
 		}
 		catch (ex) {
 			// Eat the exception.
-			dutil.log_it("ERROR", "XMPP PROXY::_on_data:Incomplete packet parsed");
+			log.trace("%s %s _on_data: Incomplete packet: %s", this._void_star.session.sid, this._void_star.name, ex);
 		}
 
 		if (stream_terminated) {
-			dutil.log_it("DEBUG", "XMPP PROXY::Stream terminated by the server");
+			log.debug("%s %s _on_data: stream terminated", this._void_star.session.sid, this._void_star.name);
 			this.terminate();
 		}
 
@@ -348,17 +346,18 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_close_connection: function(error) {
-		dutil.log_it("WARN", "XMPP PROXY::_close_connection:had_error:", !!error);
+		log.debug("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
 		this.emit('close', error, this._void_star);
 	},
 	
 	_on_close: function(had_error) {
 		had_error = had_error || false;
-		dutil.log_it("WARN", "XMPP PROXY::CLOSE event:had_error:", had_error);
+		log.debug("%s %s _on_close error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
 		this._close_connection(had_error ? 'remote-connection-failed' : null);
 	},
 
 	_on_lookup_error: function(error) {
+		log.warn("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name);
 		this._close_connection(error);
 	}
 });
