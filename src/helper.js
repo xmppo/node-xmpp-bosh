@@ -27,12 +27,13 @@ var url   = require('url');
 var ltx   = require('ltx');
 var dutil = require('./dutil.js');
 var us    = require('underscore');
-
+var path  = require('path');
 
 var toNumber   = us.toNumber;
-var log        = require('./log.js').getLogger("[helper.js]");
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 // Begin packet builders
 function $body(attrs) {
