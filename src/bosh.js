@@ -162,7 +162,7 @@ exports.createServer = function (options) {
             try {
                 // This is enclosed in a try/catch block since invalid requests
                 // at this point MAY not have these attributes
-                log.debug("%s %s req.rid = %s,  session.rid = %s", session.sid, node.attrs.stream || "NO Stream", node.attrs.rid, session.rid);
+                log.debug("%s %s req.rid: %s,  session.rid: %s", session.sid, node.attrs.stream || "NO Stream", node.attrs.rid, session.rid);
             } catch (ex) { }
 
             // Check the validity of the packet and the BOSH session
