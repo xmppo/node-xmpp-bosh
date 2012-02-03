@@ -26,9 +26,11 @@
 var us          = require('underscore');
 var dutil       = require('./dutil.js');
 var helper      = require('./helper.js');
-var log_it      = dutil.log_it;
 var NULL_FUNC   = dutil.NULL_FUNC;
+var path        = require('path');
 
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 function Response(res, request_id, options) {
     this.rid        = request_id;
@@ -58,6 +60,7 @@ Response.prototype = {
 	// This method is generally used to terminate rogue connections.
 	send_termination_stanza: function (attrs) {
 		attrs = attrs || { };
+		// why this set to true??
 		this.send_response(helper.$terminate(attrs).toString(), true);
 	},
 
@@ -72,6 +75,7 @@ Response.prototype = {
         this._res.setHeader("Content-Length", Buffer.byteLength(msg, 'utf8'));
 		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
 		this._res.end(msg);
+		log.info("SENT: %s", msg);
 	},
 
 	// If a client closes a connection and a response to that HTTP request
