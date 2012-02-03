@@ -28,6 +28,10 @@ var SRV    = require('dns-srv');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
 var events = require('events');
+var path   = require('path');
+
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 /* The XMPPLookupService tries to resolve the host name to connect to
  * in various ways. The order in which it tries is as follows:
@@ -72,9 +76,7 @@ dutil.copy(XMPPLookupService.prototype, {
         var _add_all_listeners = SRV.removeListeners(socket);
 
         function _on_socket_connect(e) {
-            dutil.log_it('DEBUG', dutil.sprintfd('LOOKUP SERVICE::Connection to %s succeeded',
-                                                 self._domain_name)
-                        );
+            log.debug('Connection to %s succeeded',self._domain_name);
             _add_all_listeners(true);
 
             // Re-trigger the connect event.
@@ -84,10 +86,7 @@ dutil.copy(XMPPLookupService.prototype, {
         function try_connect_route() {
             // First just connect to the server if this._route is defined.
             if (self._route) {
-                dutil.log_it("DEBUG", dutil.sprintfd('LOOKUP SERVICE::try_connect_route::%s:%s',
-                                                     self._route.host, self._route.port)
-                            );
-
+                log.debug('try_connect_route - %s:%s', self._route.host, self._route.port);
                 // socket.setTimeout(10000);
                 socket.connect(self._route.port, self._route.host);
             }
@@ -98,9 +97,7 @@ dutil.copy(XMPPLookupService.prototype, {
         }
 
         function try_connect_SRV_lookup() {
-            dutil.log_it('DEBUG', dutil.sprintfd('LOOKUP SERVICE::try_connect_SRV_lookup:%s',
-                                                 self._domain_name)
-                        );
+            log.debug('try_connect_SRV_lookup - %s',self._domain_name);
 
             // Then try a normal SRV lookup.
 
@@ -109,10 +106,7 @@ dutil.copy(XMPPLookupService.prototype, {
         }
 
         function give_up_trying_to_connect(e) {
-            dutil.log_it('INFO',
-                         dutil.sprintfd('LOOKUP SERVICE::Giving up connection attempts to %s',
-                                        self._domain_name)
-                        );
+            log.warn('Giving up connection attempts to %s',self._domain_name);
             _add_all_listeners(true);
 
             // Trigger the error event.
