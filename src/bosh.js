@@ -30,13 +30,16 @@ var sess        = require('./session.js');
 var strm        = require('./stream.js');
 var helper      = require('./helper.js');
 var opt         = require('./options.js');
+var path        = require('path');
 var bee         = require('./bosh-event-emitter.js');
 var http        = require('./http-server.js');
 
 var toNumber    = us.toNumber;
 var sprintf     = dutil.sprintf;
 var sprintfd    = dutil.sprintfd;
-var log_it      = dutil.log_it;
+
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 //
 // Important links:
@@ -131,7 +134,7 @@ exports.createServer = function (options) {
 
         // Check if this is a session start packet.
         if (helper.is_session_creation_packet(node)) {
-            log_it("DEBUG", "BOSH::Session creation");
+            log.debug("Session Creation");
             session = session_store.add_session(node, res);
             stream = stream_store.add_stream(session, node);
 
@@ -152,25 +155,19 @@ exports.createServer = function (options) {
         } else {
             session = session_store.get_session(node);
             if (!session) { //No (valid) session ID in BOSH request. Not phare enuph.
-                log_it("INFO", "BOSH::Invalid Session.");
-                if (node.attrs.sid) {
-                    log_it("INFO", sprintfd("BOSH::%s::Session Id.", node.attrs.sid));
-                } else {
-                    log_it("INFO", sprintfd("BOSH::No Session Id."));
-                }
+                log.info("Invalid Session: %s", node.attrs.sid || "No Session Id");
                 session_store.send_invalid_session_terminate_response(res, node);
                 return;
             }
             try {
                 // This is enclosed in a try/catch block since invalid requests
                 // at this point MAY not have these attributes
-                log_it("DEBUG", sprintfd("BOSH::%s::RID: %s, state.RID: %s",
-                    session.sid, node.attrs.rid, session.rid));
+                log.debug("%s %s req.rid = %s,  session.rid = %s", session.sid, node.attrs.stream || "NO Stream", node.attrs.rid, session.rid);
             } catch (ex) { }
 
             // Check the validity of the packet and the BOSH session
             if (!session.is_valid_packet(node)) {
-                log_it("INFO", sprintfd("BOSH::%s::Invalid Packet.", session.sid));
+                log.info("%s Invalid Packet", session.sid);
                 session.send_invalid_packet_terminate_response(res, node);
                 return;
             }
@@ -233,15 +230,14 @@ exports.createServer = function (options) {
             res.end(helper.$terminate({ condition: 'bad-request' }).toString());
             return;
         }
-        log_it("DEBUG", sprintfd("BOSH::Processing request: %s", node));
+        log.trace("Processing Request");
         process_bosh_request(res, node);
     }
 
     // When the Connector is able to add the stream, we too do the same and
     // respond to the client accordingly.
     function _on_stream_added(stream) {
-        log_it("DEBUG", sprintfd("BOSH::%s::stream-added: %s", stream.state.sid,
-            stream.name));
+        log.debug("%s %s stream-added", stream.state.sid, stream.name);
         // Send only if this is the 2nd (or more) stream on this BOSH session.
         // This should work all the time. If anyone finds a case where it will
         // NOT work, please do let me know.
@@ -254,8 +250,7 @@ exports.createServer = function (options) {
     // When a response is received from the connector, try to send it out to the
     // real client if possible.
     function _on_repsponse(connector_response, stream) {
-        log_it("DEBUG", sprintfd("BOSH::%s::%s::response: %s", stream.state.sid,
-            stream.name, connector_response));
+        log.debug("%s %s response: %s", stream.state.sid, stream.name, connector_response);
         var session = stream.session;
         session.enqueue_stanza(connector_response, stream);
     }
