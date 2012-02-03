@@ -28,10 +28,11 @@ var us          = require('underscore');
 var helper      = require('./helper.js');
 var http        = require('http');
 var url         = require('url');
+var path        = require('path');
 var EventPipe   = require('eventpipe').EventPipe;
 
-var sprintfd    = dutil.sprintfd;
-var log         = require('./log.js').getLogger("[http-server.js]");
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_handler,
                     bosh_options) {
@@ -63,7 +64,9 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 log.warn("Timed out - destroying connection from '%s'", req.socket.remoteAddress);
                 req.destroy();
             } else {
-                bosh_request_handler(res, data.join(''));
+                var _d = data.join('');
+                log.info("%s", _d);
+                bosh_request_handler(res, _d);
                 clearTimeout(end_timeout);
             }
         });
@@ -148,7 +151,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     }
 
     function handle_unhandled_request(req, res, u) {
-        log.warn("Invalid request, method: %s path: %s", req.method, u.pathname);
+        log.debug("Invalid request, method: %s path: %s", req.method, u.pathname);
         var _headers = { };
         dutil.copy(_headers, bosh_options.HTTP_POST_RESPONSE_HEADERS);
         _headers['Content-Type'] = 'text/plain; charset=utf-8';
@@ -171,7 +174,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
     function http_request_handler(req, res) {
         var u = url.parse(req.url, true);
-        log.debug("Processing %s request at location: %s", req.method, u.pathname);
+        log.trace("Processing %s request at location: %s", req.method, u.pathname);
         router.emit('request', req, res, u);
     }
 
