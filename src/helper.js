@@ -23,14 +23,14 @@
  *
  */
 
-var url = require('url');
-var ltx = require('ltx');
+var url   = require('url');
+var ltx   = require('ltx');
 var dutil = require('./dutil.js');
-var us = require('underscore');
+var us    = require('underscore');
 
 
-var toNumber = us.toNumber;
-var log_it = dutil.log_it;
+var toNumber   = us.toNumber;
+var log        = require('./log.js').getLogger("[helper.js]");
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
 
@@ -122,7 +122,7 @@ function route_parse(route) {
      * TODO: Move this out of bosh.js and into lookup_service.js
      */
     var m = route.match(/^(\S+):(\S+):([0-9]+)$/) || [ ];
-    log_it("DEBUG", "BOSH::route_parse:", m);
+    log.debug("route_parse: %s", m);
     if (m && m.length === 4) {
         return {protocol: m[1], host: m[2], port: toNumber(m[3])};
     } else {
