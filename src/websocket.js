@@ -34,6 +34,9 @@ var us     = require('underscore');
 var assert = require('assert').ok;
 var EventPipe = require('eventpipe').EventPipe;
 
+var path        = require('path');
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 var sprintf  = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
@@ -131,13 +134,12 @@ exports.createServer = function(bosh_server) {
 
 		conn.on('message', function(message) {
 			message = '<dummy>' + message + '</dummy>';
-			log_it('DEBUG', sprintfd('WEBSOCKET::%s::Processing Message:%s', stream_name, message));
+			log.debug("%s - Processing: %s", stream_name, message);
 
 			// XML parse the message
 			var nodes = dutil.xml_parse(message);
 			if (!nodes) {
-				log_it('WARN', sprintfd('WEBSOCKET::%s::Closing connection due to invalid packet', 
-										stream_name));
+				log.warn("%s Closing connection due to invalid packet", stream_name);
 				sstate.conn.close();
 				return;
 			}
@@ -181,7 +183,7 @@ exports.createServer = function(bosh_server) {
 		});
 
 		conn.on('close', function() {
-			log_it('DEBUG', sprintfd('WEBSOCKET::%s::Stream close requested', stream_name));
+			log.debug("%s Stream close requested");
 
 			if (!sn_state.hasOwnProperty(stream_name)) {
 				// Already terminated
