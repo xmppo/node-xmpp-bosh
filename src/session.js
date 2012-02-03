@@ -23,18 +23,20 @@
  *
  */
 
-var uuid = require('node-uuid');
-var us = require('underscore');
-var dutil = require('./dutil.js');
-var helper = require('./helper.js');
-var responsejs = require('./response.js');
-var assert = require('assert').ok;
+var uuid        = require('node-uuid');
+var us          = require('underscore');
+var dutil       = require('./dutil.js');
+var helper      = require('./helper.js');
+var responsejs  = require('./response.js');
+var assert      = require('assert').ok;
+var path        = require('path');
 
+var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var log         = require('./log.js').getLogger(filename);
 
 var toNumber = us.toNumber;
 var sprintf = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
-var log_it = dutil.log_it;
 var $terminate = helper.$terminate;
 var $body = helper.$body;
 
@@ -212,9 +214,7 @@ Session.prototype = {
     // the 'sid' and 'rid' attributes.
     // Also limit the number of attributes in the <body> tag to 20
     is_valid_packet: function (node) {
-        log_it("DEBUG",
-            sprintfd("SESSION::%s::is_valid_packet::node.attrs.rid:%s, state.rid:%s",
-                this.sid, node.attrs.rid, this.rid));
+        log.trace("%s is_valid_packet - node.attrs.rid: %s, state.rid: %s", this.sid, node.attrs.sid, this.rid);
 
         // Allow variance of "window" rids on either side. This is in violation
         // of the XEP though.
@@ -230,12 +230,12 @@ Session.prototype = {
     // It processes the request node. uses the stream_store for adding stream to it in case of stream add.
     //
     _process_one_request: function (node, stream, stream_store) {
-        log_it("DEBUG", sprintfd("SESSION::%s::_process_one_request::session RID: %s, stream: %s", this.sid,
-            this.rid, !!stream));
+        var stream_log_name = (stream && stream.name) || "No/All Stream"
+        log.debug("%s %s _process_one_request - session.rid: %s, valid_stream: %s", this.sid, stream_log_name, this.rid, !!stream);
         var nodes = node.children;
         // Check if this is a stream restart packet.
         if (helper.is_stream_restart_packet(node)) {
-            log_it("DEBUG", sprintfd("SESSION::%s::Stream Restart", this.sid));
+            log.debug("%s %s Stream Restart", this.sid, stream_log_name);
             // Check if stream is valid
             if (!stream) {
                 // Make this a session terminate request.
@@ -255,9 +255,7 @@ Session.prototype = {
             nodes = [ ];
         } else if (helper.is_stream_add_request(node, this._options)) {
             // Check if this is a new stream start packet (multiple streams)
-
-            log_it("DEBUG", sprintfd("SESSION::%s::Stream Add", this.sid));
-
+            log.debug("%s: Stream Add", this.sid);
             if (this.is_max_streams_violation(node)) {
                 // Make this a session terminate request.
                 node.attrs.type = 'terminate';
@@ -270,7 +268,7 @@ Session.prototype = {
 
         // Check for stream terminate
         if (helper.is_stream_terminate_request(node)) {
-            log_it("DEBUG", sprintfd('SESSION::%s::Stream Terminate', this.sid));
+            log.debug("%s Stream Terminate", this.sid);
             // We may be required to terminate one stream, or all
             // the open streams on this BOSH session.
             this.handle_client_stream_terminate_request(stream, nodes,
@@ -297,7 +295,7 @@ Session.prototype = {
     // exhausts the queued requests.
     //
     process_requests: function (stream_store) {
-        log_it("DEBUG", sprintfd("SESSION::%s::process_requests::session RID: %s", this.sid, this.rid));
+        log.debug("%s process_requests - session.rid: %s", this.sid, this.rid);
         // Process all queued requests
         var _queued_request_keys = Object.keys(this.queued_requests).map(toNumber);
         _queued_request_keys.sort(dutil.num_cmp);
@@ -316,7 +314,7 @@ Session.prototype = {
                 delete this.queued_requests[rid];
                 // Increment the 'rid'
                 this.rid += 1;
-                log_it("DEBUG", sprintfd("SESSION::%s::updated RID to: %s", this.sid, this.rid));
+                log.debug("%s - updated session.rid to %s", this.sid, this.rid);
                 this._process_one_request(node, stream, stream_store);
             }
         }
@@ -337,7 +335,7 @@ Session.prototype = {
     // processing.
     //
     add_request_for_processing: function (node, res, stream_store) {
-        log_it("DEBUG", sprintfd("SESSION::%s::add_request_for_processing::session RID: %s", this.sid, this.rid));
+        log.debug("%s - add_request_for_processing - session.rid: %s", this.sid, this.rid);
         this.queued_requests[node.attrs.rid] = {node: node, stream: null};
 
         var stream;
@@ -372,7 +370,7 @@ Session.prototype = {
             // Process pending (queued) responses (if any)
             // this.send_pending_responses();
         } else {
-            log_it("INFO", sprintfd("SESSION::%s::cannot handle ack::session RID: %s", this.sid, this.rid));
+            log.debug("%s cannot_handle_ack - no-need-to-process - session.rid: %s", this.sid, this.rid);
             should_process = false;
         }
         if (this.queued_requests.hasOwnProperty(node.attrs.rid)) {
@@ -424,9 +422,7 @@ Session.prototype = {
             self._send_no_requeue(ro, $body());
         }, this.wait * 1000);
 
-        log_it("DEBUG",
-            sprintfd("SESSION::%s::adding a response object. Holding %s response objects",
-                this.sid, this.res.length));
+        log.debug("%s add_held_http_connection - holding %s res obj", this.sid, this.res.length);
 
         // Insert into its correct position (in RID order)
         var pos;
@@ -440,9 +436,7 @@ Session.prototype = {
     // all open streams (on the XMPP server side)
     terminate: function (condition) {
         if (this.streams.length !== 0) {
-            log_it("DEBUG",
-                sprintfd("SESSION::%s::Terminating potentially non-empty BOSH session",
-                    this.sid));
+            log.debug("%s - terminate - Terminating potentially non-empty BOSH session", this.sid);
         }
 
         // We use get_response_object() since it also calls clearTimeout, etc...
@@ -475,15 +469,11 @@ Session.prototype = {
             clearTimeout(this.timeout);
         }
 
-        log_it("DEBUG", sprintfd("SESSION::%s::setting a timeout of '%s' sec",
-            this.sid, this.inactivity + 10));
+        log.debug("%s reset_inactivity_timeout - %s sec", this.sid, this.inactivity + 10);
 
         var self = this;
         this.timeout = setTimeout(function () {
-            log_it("DEBUG",
-                sprintfd("SESSION::%s::terminating BOSH session due to inactivity",
-                    self.sid));
-
+            log.debug("%s - terminating Session due to inactivity", this.sid);
             // Raise a no-client event on pending, unstitched as well as unacked 
             // responses.
             var _p = us.pluck(self.pending_stitched_responses, 'response');
@@ -515,7 +505,7 @@ Session.prototype = {
     // These functions actually send responses to the client
 
     send_invalid_packet_terminate_response: function (res, node) {
-        log_it("WARN", sprintfd("SESSION::%s::NOT a Valid packet", this.sid));
+        log.debug("%s - send_invalid_packet_terminate_response", this.sid);
         var attrs = {
             condition   : 'item-not-found',
             message     : 'Invalid packet'
@@ -534,8 +524,7 @@ Session.prototype = {
     // condition: (optional) A string which specifies the condition to
     //     send to the client as to why the session was closed.
     send_terminate_response: function (ro, condition) {
-        log_it('DEBUG', sprintfd("SESSION::%s::send_terminate_response(%s, %s)",
-            this.sid, (!!ro), condition || ''));
+        log.debug("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
         var attrs = { };
         if (condition) {
             attrs.condition = condition;
@@ -548,9 +537,7 @@ Session.prototype = {
         // We _must_ get a response object. If we don't, there is something
         // seriously messed up. Log this.
         if (this.res.length === 0) {
-            log_it('DEBUG',
-                sprintfd("SESSION::%s::s_c_r::Could not find a response object for stream:%s",
-                    this.sid, stream.name));
+            log.warn("%s - send_creation_response - No response object to send creation response for stream: %s", this.sid, stream.name);
             return false;
         }
 
@@ -602,9 +589,7 @@ Session.prototype = {
         // From streams, remove all entries that are
         // null or undefined, and log this condition.
         if (sie.length > 0) {
-            log_it("WARN",
-                sprintfd("SESSION::%s::get_streams_to_terminate::%s streams are in error",
-                    this.sid, sie.length));
+            log.warn("%s - get_streams_to_terminate - %s streams in error", this.sid, sie.length);
         }
         return stt;
     },
@@ -654,11 +639,10 @@ Session.prototype = {
         var ro = res.length > 0 ? res.shift() : null;
         if (ro) {
             ro.clear_timeout();
-            log_it("DEBUG", sprintfd("SESSION::%s::Returning response object with rid: %s",
-                this.sid, ro.rid));
+            log.debug("%s - get_response_object - return ro with rid: %s", this.sid, ro.rid);
         }
-        log_it("DEBUG", sprintfd("SESSION::%s::Holding %s response objects",
-            this.sid, (res ? res.length : 0)));
+
+        log.debug("%s - get_response_object - holding %s ro", this.sid, (res ? res.length : 0));
         return ro;
     },
 
@@ -688,7 +672,7 @@ Session.prototype = {
     _stitch_new_response: function () {
         var len = this.streams.length;
         this.next_stream = this.next_stream % len;
-        log_it("DEBUG", sprintfd("SESSION::%s::_stitch_new_response::len::%s::next_stream::%s", this.sid, len, this.next_stream));
+        log.debug("%s - _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
         
         if(!len) {
             return;
@@ -705,7 +689,7 @@ Session.prototype = {
             var response = this._stitch_response_for_stream(stream.name);
             
             if (response) {
-                log_it("INFO", sprintfd("SESSION::%s::_stitch_new_response::stream::%s::stitched", this.sid, stream.name));
+                log.debug("%s %s _stitch_response_for_stream - stitched", this.sid, stream.name);
                 // Q. Why does the caller clear the pending stazas?
                 this.pending_stanzas[stream.name] = [ ];
                 this.pending_stitched_responses.push({
@@ -733,9 +717,7 @@ Session.prototype = {
     _pop_and_send: function () {
         if (this.res.length === 0) {
             // dont stitch responses as well.
-            log_it("DEBUG",
-                   sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
-                            this.sid, this.res.length, this.pending_stitched_responses.length));
+            log.debug("%s pop_and_send - Holding 0 ro - return");
             return;
         }
         
@@ -745,9 +727,7 @@ Session.prototype = {
 
         if (this.pending_stitched_responses.length) {
             var ro = this.get_response_object();
-            log_it("DEBUG",
-                sprintfd("SESSION::%s::pop_and_send: ro:%s, this._pending.length: %s",
-                    this.sid, us.isTruthy(ro), this.pending_stitched_responses.length));
+            log.debug("%s pop_and_send - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
             
             var _p = this.pending_stitched_responses.shift();
             var response = _p.response;
@@ -761,9 +741,7 @@ Session.prototype = {
             // We try sending more queued responses
             this.send_pending_responses();
         } else {
-            log_it("INFO",
-                   sprintfd("SESSION::%s::pop_and_send: res.length: %s, pending.length: %s",
-                            this.sid, this.res.length, this.pending_stitched_responses.length));
+            log.debug("%s - pop_and_send - nothing to send, 0 pending - return");
         }
     },
 
@@ -803,7 +781,7 @@ Session.prototype = {
      */
 
     enqueue_bosh_response: function (attrs, stream) {
-        log_it("DEBUG", sprintfd("SESSION::%s::STREAM::%s::enqueue_bosh_response", this.sid, stream.name));
+        log.debug("%s %s enqueue_bosh_response", this.sid, stream.name);
         this.pending_bosh_responses[stream.name].push(attrs);
 
         if (this._options.PIDGIN_COMPATIBLE && this.first_response) {
@@ -815,7 +793,7 @@ Session.prototype = {
     },
 
     enqueue_stanza: function (stanza, stream) {
-        log_it("DEBUG", sprintfd("SESSION::%s::STREAM::%s::enqueue_stanza", this.sid, stream.name));
+        log.debug("%s %s enqueue_stanza", this.sid, stream.name);
         this.pending_stanzas[stream.name].push(stanza);
         this.try_sending();
     },
@@ -837,28 +815,24 @@ Session.prototype = {
 
     // Send a response, but do NOT requeue if it fails
     _send_no_requeue: function (ro, msg) {
-        log_it("DEBUG",
-            sprintfd("SESSION::%s::send_no_requeue, ro valid: %s",
-                this.sid, !!ro));
+        log.debug("%s _send_pending_responses - ro: %s", this.sid, !!ro);
         if (us.isFalsy(ro)) {
             return;
         }
-        log_it("DEBUG",
-               sprintfd("SESSION::%s::send_no_requeue, ro rid: %s, this.rid: %s", this.sid, ro.rid, this.rid));
+
+        log.debug("%s _send_pending_responses - ro.rid: %s, this.rid: %s", this.sid, ro.rid, this.rid);
+
         var ack = this._get_highest_rid_to_ack(ro.rid, msg);
         if (this.ack && ack) {
             msg.attrs.ack = ack;
         }
         var res_str = msg.toString();
-        log_it("DEBUG", sprintfd("SESSION::%s::send_no_requeue:writing response: %s",
-            this.sid, res_str));
+
         ro.send_response(res_str);
     },
 
     send_pending_responses: function () {
-        log_it("DEBUG",
-            sprintfd("SESSION::%s::send_pending_responses::state.pending.length: %s",
-                this.sid, this.pending_stitched_responses.length));
+        log.debug("%s send_pending_responses - pending.length: %s", this.sid, this.pending_stitched_responses.length);
 
         if (this.res.length === 0) {
             return;
@@ -880,9 +854,7 @@ Session.prototype = {
         if (!stream) {
             // No stream name specified. This packet needs to be
             // broadcast to all open streams on this BOSH session.
-            log_it("DEBUG",
-                sprintfd("SESSION::%s::emitting nodes to all streams:No Stream Name specified:%s",
-                    this.sid, nodes));
+            log.debug("%s - emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
             var self = this;
             this.streams.forEach(function (stream) {
                 if (stream) {
@@ -890,8 +862,7 @@ Session.prototype = {
                 }
             });
         } else {
-            log_it("DEBUG", sprintfd("SESSION::%s::stream::%s::emitting nodes:%s",
-                this.sid, stream.name, nodes));
+            log.debug("%s %s emit_nodes_event - emitting: %s", this.sid, stream.name, nodes);
             this._bep.emit('nodes', nodes, stream);
         }
     },
@@ -900,9 +871,7 @@ Session.prototype = {
     // to us, then we relinquish the rest of the connections
     respond_to_extra_held_response_objects: function () {
         while (this.res.length > this.hold) {
-            log_it("DEBUG",
-                sprintfd("Session::In RTEHRO %s:: state res length: %s::state hold:%s",
-                    this.sid, this.res.length, this.hold));
+            log.debug("%s - respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
             var ro = this.get_response_object();
             this._send_no_requeue(ro, $body());
         }
@@ -915,8 +884,7 @@ Session.prototype = {
      */
     _get_random_stream: function () {
         if (this.streams.length === 0) {
-            var estr = sprintf("SESSION::%s::session object has no streams", this.sid);
-            log_it("ERROR", estr);
+            log.error("%s get_random_stream - session has no streams", this.sid);
             return null;
         }
         var stream = this.streams[0];
@@ -928,7 +896,7 @@ Session.prototype = {
      * not in sequence.
      */
     _send_immediate: function (res, response_obj) {
-        log_it("DEBUG", sprintfd("SESSION::%s::send_immediate:%s", this.sid, response_obj));
+        log.debug("%s send_immediate - ro: %s", this.sid, response_obj);
         var ro = new responsejs.Response(res, null, this._options);
         ro.send_response(response_obj.toString());
     },
@@ -954,7 +922,7 @@ Session.prototype = {
             // The client seems to be buggy. It has not ACKed the
             // last WINDOW_SIZE * 4 requests. We turn off ACKs.
             delete this.ack;
-            log_it("WARN", sprintfd("SESSION::%s::disabling ACKs", this.sid));
+            log.info("%s cannot_handle_ack - disabling ACKs", this.sid);
             // will not emit response-acknowledged for these
             // responses. consider them to be lost.
             while (_uar_keys.length > this.window) {
@@ -975,7 +943,7 @@ Session.prototype = {
         _uar_keys.forEach(function (rid) {
             if (rid <= node.attrs.ack) {
                 // Raise the 'response-acknowledged' event.
-                log_it("INFO", sprintf("SESSION::%s::received ack for rid::%s", self.sid, rid));
+                log.debug("%s - cannot_handle_ack - received ack: %s", self.sid, rid);
                 self._bep.emit('response-acknowledged',
                                self.unacked_responses[rid], self);
                 delete self.unacked_responses[rid];
@@ -987,13 +955,13 @@ Session.prototype = {
             var _ts = this.unacked_responses[node.attrs.ack].ts;
             var ss = this._get_random_stream();
             if (!ss) {
-                var estr = sprintf("BOSH::%s::ss is invalid", this.sid);
-                log_it("ERROR", estr);
+                log.error("%s - cannot_handle_ack - couldnt get random stream", this.sid);
             } else {
                 // We inject a response packet into the pending queue to
                 // notify the client that it _may_ have missed something.
                 // TODO: we should also have a check which ensures that 
                 // time > RTT has passed. 
+                log.debug("%s - cannot_handle_ack - sending report", this.sid);
                 this.pending_stitched_responses.push({
                     response: $body({
                         report: node.attrs.ack + 1,
@@ -1021,18 +989,14 @@ Session.prototype = {
             // less than state.rid+1
             //
             if (rid < self.rid + 1) {
-                log_it("DEBUG", sprintfd("SESSION::%s::qr-rid: %s, state.rid: %s",
-                                         self.sid, rid, self.rid));
-
+                log.debug("%s - cannot_handle_ack - queued_req.rid: %s, state.rid: %s", self.sid, rid, self.rid);
                 delete self.queued_requests[rid];
 
                 if (self.unacked_responses.hasOwnProperty(rid)) {
                     //
                     // Send back the original response on this conection itself
                     //
-                    log_it("DEBUG",
-                           sprintfd("SESSION::%s::re-sending unacked response: %s",
-                                    self.sid, rid));
+                    log.debug("%s - resending unacked response: %s", self.sid, rid);
                     self._send_immediate(res, self.unacked_responses[rid].response);
                     quit_me = true;
                 } else if (rid >= self.rid - self.window - 2) {
@@ -1045,8 +1009,7 @@ Session.prototype = {
                     // body the second time around. The client is to be blamed for its
                     // stupidity and not us.
                     //
-                    log_it("DEBUG", sprintfd("SESSION::%s::sending empty BODY for: %s",
-                                             self.sid, rid));
+                    log.debug("%s sending empty body for rid: %s", self.sid, rid);
                     self._send_immediate(res, $body());
 
                     quit_me = true;
@@ -1147,7 +1110,7 @@ SessionStore.prototype = {
     },
 
     send_invalid_session_terminate_response: function (res, node) {
-        log_it("DEBUG", sprintf("SESSION::Sending invalid sid"));
+        log.debug("Sending invalid sid");
         var terminate_condition;
         if (this._terminated_sessions[node.attrs.sid]) {
             terminate_condition = this._terminated_sessions[node.attrs.sid].condition;
