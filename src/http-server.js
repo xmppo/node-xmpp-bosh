@@ -31,9 +31,7 @@ var url         = require('url');
 var EventPipe   = require('eventpipe').EventPipe;
 
 var sprintfd    = dutil.sprintfd;
-var log_it      = dutil.log_it;
-
-
+var log         = require('./log.js').getLogger("[http-server.js]");
 
 function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_handler,
                     bosh_options) {
@@ -62,8 +60,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         var end_timeout;
         var _on_end_callback = us.once(function (timed_out) {
             if (timed_out) {
-                log_it("WARN", "HTTPSERVER::Timing out (and destroying) connection from '" +
-                    req.socket.remoteAddress + "'");
+                log.warn("Timed out - destroying connection from '%s'", req.socket.remoteAddress);
                 req.destroy();
             } else {
                 bosh_request_handler(res, data.join(''));
@@ -91,14 +88,13 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             }
             data.push(_d);
         })
-
             .on('end', function () {
                 _on_end_callback(false);
             })
 
             .on('error', function (ex) {
-                log_it("WARN", "HTTPSERVER::Exception '" + ex.toString() + "' while processing request");
-                log_it("WARN", "HTTPSERVER::Stack Trace:\n", ex.stack);
+                log.error("Exception '" + ex.toString() + "' while processing request");
+                log.error("Stack Trace: %s\n", ex.stack);
             });
         return false;
     }
@@ -152,8 +148,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     }
 
     function handle_unhandled_request(req, res, u) {
-        log_it("ERROR", "HTTPSERVER::Invalid request, method:", req.method, "path:",
-            u.pathname);
+        log.warn("Invalid request, method: %s path: %s", req.method, u.pathname);
         var _headers = { };
         dutil.copy(_headers, bosh_options.HTTP_POST_RESPONSE_HEADERS);
         _headers['Content-Type'] = 'text/plain; charset=utf-8';
@@ -176,8 +171,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
     function http_request_handler(req, res) {
         var u = url.parse(req.url, true);
-        log_it("DEBUG", sprintfd("HTTPSERVER::Processing '%s' request at location: %s",
-            req.method, u.pathname));
+        log.debug("Processing %s request at location: %s", req.method, u.pathname);
         router.emit('request', req, res, u);
     }
 
