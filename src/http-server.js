@@ -65,7 +65,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 req.destroy();
             } else {
                 var _d = data.join('');
-                log.info("%s", _d);
+                log.info("RECD: %s", _d);
                 bosh_request_handler(res, _d);
                 clearTimeout(end_timeout);
             }
