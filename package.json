@@ -16,6 +16,8 @@
 		 ,"websocket": ">= 0.0.16"
 		 ,"log4js": ">= 0.4.1"
 		 }
+,"devDependencies": {"jsdom": ">= 0.2.0"
+}
 ,"repositories": [{"type": "svn"
 		  ,"path": "http://node-xmpp-bosh.googlecode.com/svn/trunk/"
 		  }]
