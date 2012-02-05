@@ -35,7 +35,8 @@ var us        = require('underscore');
 var path   = require('path');
 
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
-var log         = require('./log.js').getLogger(filename);
+var logger      = require('./log.js');
+var log         = logger.getLogger(filename);
 
 exports.bosh       = bosh;
 exports.connector  = xpc;
@@ -51,7 +52,8 @@ exports.start_bosh = function(options) {
 		logging: "INFO"
 	});
 
-	dutil.set_log_level(options.logging);
+	logger.log_to_file(options);
+	logger.set_log_level(options.logging);
 
 	// Instantiate a bosh server with the connector as a parameter.
 	var bosh_server = bosh.createServer(options);
