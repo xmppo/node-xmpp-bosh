@@ -57,7 +57,6 @@ const STREAM_OPENED   = 2;
 // https://github.com/superfeedr/strophejs/tree/protocol-ed
 //
 
-
 exports.createServer = function(bosh_server) {
 
 	// State information for XMPP streams
@@ -124,12 +123,24 @@ exports.createServer = function(bosh_server) {
 
 	websocket_server.on('connect', function(conn) {
 		var stream_name = uuid();
+
+		// Note: xmpp-proxy.js relies on the session object
+		// to have a sid attribute and the stream object to
+		// contain a name attribute. This is done to improve
+		// readability of the logs, even though it introduces
+		// coupling. We may choose to get rid of it later.
+		// Deviation from this behaviour for now might lead to
+		// a crash or unreadable logs.
+
 		var sstate = {
 			name: stream_name, 
 			stream_state: STREAM_UNOPENED, 
 			conn: conn, 
 			// Compatibility with xmpp-proxy-connector
 			state: {
+				sid: "WEBSOCKET"
+			},
+			session: {
 				sid: "WEBSOCKET"
 			}
 		};

@@ -45,6 +45,15 @@ var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind'; //TODO: might not be req
 
 // This encapsulates the state for the BOSH session
 //
+
+// Note: xmpp-proxy.js relies on the session object
+// to have a sid attribute and the stream object to
+// contain a name attribute. This is done to improve
+// readability of the logs, even though it introduces
+// coupling. We may choose to get rid of it later.
+// Deviation from this behaviour for now might lead to
+// a crash or unreadable logs.
+
 // Format: {
 //   sid: {
 //     sid:

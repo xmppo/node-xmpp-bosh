@@ -111,6 +111,12 @@ function StreamStore(bosh_options, bep) {
     this._bosh_options = bosh_options;
     this._bep = bep;
 
+	// This stream object is passed to xmpp-proxy.js to connect
+	// to the remote xmpp server. We assume in xmpp-proxy.js that
+	// the stream object will contain an attribute name, which is
+	// an identifier for the object, and an attribute session which
+	// is the session object.
+
     // This encapsulates the state for the client (xmpp) stream
     //
     // The same but by stream name.

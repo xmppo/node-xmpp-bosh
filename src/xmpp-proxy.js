@@ -43,6 +43,13 @@ var NS_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams';
 
 function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_star) {
 	this._xmpp_host      = xmpp_host;
+
+	// This code assumes that void_star will have a
+	// name attribute and a session object that has
+	// a sid attribute. These are used as identifiers
+	// to improve logging. We may choose to get rid of
+	// them later. Don't rely on this behaviour.
+
 	this._void_star      = void_star;
 	this._lookup_service = lookup_service;
 	this._default_stream_attrs = {
