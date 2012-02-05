@@ -204,11 +204,11 @@ dutil.copy(XMPPProxy.prototype, {
 		if (this._is_connected) {
 			try {
 				this._sock.write(data);
-				log.info("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data.toString());
+				log.info("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data);
 			}
 			catch (ex) {
 				this._is_connected = false;
-				log.error("%s %s Couldnot send: %s", this._void_star.session.sid, this._void_star.name, data.toString());
+				log.error("%s %s Couldnot send: %s", this._void_star.session.sid, this._void_star.name, data);
 				// this.on_close(true, ex);
 			}
 		}
@@ -323,11 +323,11 @@ dutil.copy(XMPPProxy.prototype, {
 
 					// console.log("self._stream_attrs:", self._stream_attrs);
 
-					log.info("%s %s _on_data emitting stanza: %s", self._void_star.session.sid, self._void_star.name, stanza.toString());
+					log.info("%s %s _on_data emitting stanza: %s", self._void_star.session.sid, self._void_star.name, stanza);
 					self._on_stanza(stanza);
 				}
 				catch (ex) {
-					log.error("%s %s _on_data Exception handling stanza: %s %s", this._void_star.session.name, this._void_star.name, stanza.toString(), ex.stack);
+					log.error("%s %s _on_data Exception handling stanza: %s %s", this._void_star.session.name, this._void_star.name, stanza, ex.stack);
 				}
 			});
 		}
