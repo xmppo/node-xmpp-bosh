@@ -31,6 +31,7 @@ var events = require("events");
 var util   = require('util');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
+var XmppParser = require('./stream-parser.js').XmppStreamParser;
 
 var path        = require('path');
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
@@ -70,8 +71,8 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
 	}.bind(this));
 
 	this._buff         = '';
-	this._first        = true;
 	this._is_connected = false;
+	this._parser       = new XmppParser();
 	this._terminate_on_connect = false;
 
 	return this;
@@ -102,6 +103,22 @@ dutil.copy(XMPPProxy.prototype, {
 		this._sock.on  ('error',   dutil.NULL_FUNC);
 	}, 
 
+	_attach_handlers_to_parser: function() {
+		this._parser.on("stanza", this._on_stanza.bind(this));
+		this._parser.on("error", this._on_stream_error.bind(this));
+		this._parser.on("stream-start", this._on_stream_start.bind(this));
+		this._parser.on("stream-restart", this._on_stream_restart.bind(this));
+		this._parser.on("stream-end", this._on_stream_end.bind(this));
+	},
+
+	_detach_handlers_from_parser: function() {
+		this._parser.removeAllListeners("stanza");
+		this._parser.removeAllListeners("error");
+		this._parser.removeAllListeners("stream-start");
+		this._parser.removeAllListeners("stream-restart");
+		this._parser.removeAllListeners("stream-end");
+	},
+
 	_starttls: function() {
 		log.debug("%s %s _starttls", this._void_star.session.sid, this._void_star.name);
 		// Vishnu hates 'self'
@@ -129,10 +146,15 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_stanza: function(stanza) {
+		log.info("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
+
+		dutil.extend(stanza.attrs, this._stream_attrs);
+
 		// TODO: Check for valid Namespaces too.
 
 		// dutil.log_it("DEBUG", "XMPP PROXY::Is stream:features?", stanza.is('features'));
 		// dutil.log_it("DEBUG", "XMPP PROXY::logging starttls:", stanza.getChild('starttls'));
+
 		if (stanza.is('features') &&
 			stanza.getChild('starttls')) {
 
@@ -173,14 +195,13 @@ dutil.copy(XMPPProxy.prototype, {
 		// console.log(this);
 		this._sock = new net.Stream();
 		this._attach_handlers();
+		this._attach_handlers_to_parser();
 		this._lookup_service.connect(this._sock);
 	},
 
 	restart: function(stream_attrs) {
 		this._buff = '';
-		this._first = true;
 		var _ss_open = this._get_stream_xml_open(stream_attrs);
-
 		this.send(_ss_open);
 	},
 
@@ -189,6 +210,8 @@ dutil.copy(XMPPProxy.prototype, {
 			log.debug("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
 			// Detach the 'data' handler so that we don't get any more events.
 			this._sock.removeAllListeners('data');
+			this._parser.end();
+			this._detach_handlers_from_parser();
 
 			// Write the stream termination tag
 			this.send("</stream:stream>");
@@ -203,6 +226,7 @@ dutil.copy(XMPPProxy.prototype, {
 			this._sock.end();
 		}
 		else {
+			log.debug("%s %s terminate - will terminate on connect", this._void_star.session.sid, this._void_star.name);
 			this._terminate_on_connect = true;
 		}
 	},
@@ -241,116 +265,33 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_data: function(d) {
-		//
-		// TODO: All this will become *much* cleaner (and faster) if we move 
-		// to a SAX based XML parser instead of using ltx to parse() buffers. 
-		// The current implementation will fail if we get a <stream:stream/> 
-		// packet. The SAX based parser will handle that very well.
-		//
+		var d = d.toString();
+
 		log.info("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
 
-		this._buff += d.toString();
+		this._parser.parse(d);
+	},
 
-		if (this._first) {
-			// Parse and save attribites from the first response
-			// so that we may replay them in all subsequent responses.
-			var ss_pos = this._buff.search("<stream:stream");
-			if (ss_pos !== -1) {
-				this._buff = this._buff.substring(ss_pos);
-				var gt_pos = this._buff.search(">");
-				if (gt_pos !== -1) {
-					log.trace("Got stream packet");
-					var _ss_stanza = this._buff.substring(0, gt_pos + 1) + "</stream:stream>";
+	_on_stream_start: function(attrs) {
+		log.debug("%s %s _on_stream_start: stream started", this._void_star.session.sid, this._void_star.name);
 
-					// Parse _ss_stanza and extract the attributes.
-					var _ss_node = dutil.xml_parse(_ss_stanza);
-					if (_ss_node) {
-						this._stream_attrs = { };
-						dutil.copy(this._stream_attrs, _ss_node.attrs, [
-							"xmlns:stream", "xmlns", "version"
-						]);
+		this._stream_attrs = { };
+		dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
+	},
 
-						// console.log("_ss_node:", _ss_node);
-						// console.log("stream:stream attrs:", this._stream_attrs);
-					}
+	_on_stream_restart: function(attrs) {
+		dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
+	},
 
-					this._buff = this._buff.substring(gt_pos+1);
+	_on_stream_end: function(attr) {
+		log.debug("%s %s _on_stream_end: stream terminated", this._void_star.session.sid, this._void_star.name);
+		this.terminate();
+	},
 
-					// Now that we have the complete <stream:stream> stanza, we can set
-					// this._first to false
-					this._first = false;
-				}
-			}
-		}
-
-		// console.log("buff is:", this._buff);
-		if (!this._buff) {
-			return;
-		}
-
-		var stream_terminated = false;
-		var st_pos = this._buff.indexOf("</stream:stream>");
-		// Check for the </stream:stream> packet
-		if (st_pos !== -1) {
-			stream_terminated = true;
-			this._buff = this._buff.substring(0, st_pos);
-		}
-
-		// Terminate if the buffer becomes too big
-		if (this._buff.length > this._max_xmpp_buffer_size) {
-			log.warn("%s %s _on_data Terminating due to buffer size violation", this._void_star.session.sid, this._void_star.name);
-			stream_terminated = true;
-		}
-
-		try {
-			var tmp = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' version='1.0'>" + 
-				this._buff + 
-				"</stream:stream>";
-			// console.log("TMP:", tmp);
-
-			var node = ltx.parse(tmp);
-
-			// If tmp is not WF-XML, then the following lines will NOT be executed.
-			this._buff = '';
-			// console.log('node:', node);
-
-			var self = this;
-
-			node.children
-			.filter(us.not(us.isString))
-			.forEach(function(stanza) {
-				try {
-					// NULL out the parent otherwise ltx will go crazy when we
-					// assign 'stanza' as the child node of some other parent.
-					stanza.parent = null;
-
-					// Populate the attributes of this packet from those of the 
-					// stream:stream stanza.
-					dutil.extend(stanza.attrs, self._stream_attrs);
-
-					// console.log("self._stream_attrs:", self._stream_attrs);
-
-					log.info("%s %s _on_data emitting stanza: %s", self._void_star.session.sid, self._void_star.name, stanza);
-					self._on_stanza(stanza);
-				}
-				catch (ex) {
-					log.error("%s %s _on_data Exception handling stanza: %s %s", this._void_star.session.name, this._void_star.name, stanza, ex.stack);
-				}
-			});
-		}
-		catch (ex) {
-			// Eat the exception.
-			log.trace("%s %s _on_data: Incomplete packet: %s", this._void_star.session.sid, this._void_star.name, ex);
-		}
-
-		if (stream_terminated) {
-			log.debug("%s %s _on_data: stream terminated", this._void_star.session.sid, this._void_star.name);
-			this.terminate();
-		}
-
-		// For debugging
-		// this._sock.destroy();
-	}, 
+	_on_stream_error: function(error) {
+		log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name);
+		this.terminate();
+	},
 
 	_close_connection: function(error) {
 		log.debug("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
