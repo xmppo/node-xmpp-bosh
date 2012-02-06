@@ -482,7 +482,7 @@ Session.prototype = {
 
         var self = this;
         this.timeout = setTimeout(function () {
-            log.debug("%s - terminating Session due to inactivity", this.sid);
+            log.debug("%s - terminating Session due to inactivity", self.sid);
             // Raise a no-client event on pending, unstitched as well as unacked 
             // responses.
             var _p = us.pluck(self.pending_stitched_responses, 'response');
@@ -726,7 +726,7 @@ Session.prototype = {
     _pop_and_send: function () {
         if (this.res.length === 0) {
             // dont stitch responses as well.
-            log.debug("%s pop_and_send - Holding 0 ro - return");
+            log.debug("%s pop_and_send - Holding 0 ro - return", this.sid);
             return;
         }
         

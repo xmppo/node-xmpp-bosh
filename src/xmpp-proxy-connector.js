@@ -79,7 +79,7 @@ function XMPPProxyConnector(bosh_server, options) {
 
 	// Fired every time the XMPP proxy fires the 'connect' event.
 	this._on_xmpp_proxy_connected = function(sstate) {
-		log.debug("% %s _on_xmpp_proxy_connected - connected", sstate.session.sid, sstate.name);
+		log.debug("%s %s _on_xmpp_proxy_connected - connected", sstate.session.sid, sstate.name);
 		this.bosh_server.emit('stream-added', sstate);
 
 		// Flush out any pending packets.
