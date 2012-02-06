@@ -55,18 +55,17 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         if (req.method !== 'POST' || ppos === -1) {
             return;
         }
-        var data = [];
-        var data_len = 0;
 
+        var data = "";
         var end_timeout;
+
         var _on_end_callback = us.once(function (timed_out) {
             if (timed_out) {
                 log.warn("Timed out - destroying connection from '%s'", req.socket.remoteAddress);
                 req.destroy();
             } else {
-                var _d = data.join('');
-                log.info("RECD: %s", _d);
-                bosh_request_handler(res, _d);
+                log.info("RECD: %s", data);
+                bosh_request_handler(res, data);
                 clearTimeout(end_timeout);
             }
         });
@@ -77,19 +76,16 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             _on_end_callback(true);
         }, 20 * 1000);
 
-
         req.on('data', function (d) {
-            var _d = d.toString();
-            data_len += _d.length;
+            data += d.toString();
             // Prevent attacks. If data (in its entirety) gets too big,
             // terminate the connection.
-            if (data_len > bosh_options.MAX_DATA_HELD) {
+            if (data.length > bosh_options.MAX_DATA_HELD) {
                 // Terminate the connection. We null out 'data' to aid GC
                 data = null;
                 _on_end_callback(true);
                 return;
             }
-            data.push(_d);
         })
             .on('end', function () {
                 _on_end_callback(false);
