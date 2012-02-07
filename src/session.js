@@ -175,7 +175,7 @@ function Session(node, options, bep, call_on_terminate) {
     this.has_next_tick = false;
 
     // Is this the first response? Helpful only if
-    // options.FAT_SESSION_CREATION_RESPONSE is true.
+    // options.pidgin_compatible is true.
     this.first_response = true;
 
     this.__defineGetter__("no_of_streams", function () {
