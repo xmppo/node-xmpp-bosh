@@ -196,20 +196,26 @@ However, instead of passing in the data in the request body, it is
 passed in via the *data=* GET query parameter. JSONP is also supported
 if the *callback=* GET query parameter is supplied.
 
-1. Example with the request passed in as a GET parameter
+* Example with the request passed in as a GET parameter
+
 ```
 http://localhost:5280/http-bind/?data=<body/>
 ```
+
 Response:
+
 ```
 <body condition="item-not-found" message="Invalid session ID" type="terminate"/>
 ```
 
-2. Example with the request and callback passed in as a GET parameter
+* Example with the request and callback passed in as a GET parameter
+
 ```
 http://localhost:5280/http-bind/?data=<body/>&callback=res341
 ```
+
 Response:
+
 ```
 res341({"reply":"<body xmlns="http://jabber.org/protocol/httpbind" 
   condition="item-not-found" message="Invalid session ID" 
