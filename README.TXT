@@ -2,7 +2,21 @@
 | An XMPP BOSH server (connection manager) written using Node.js in Javascript |
 +------------------------------------------------------------------------------+
 
-Project Home Page: http://code.google.com/p/node-xmpp-bosh/
+Project Home Page: https://github.com/dhruvbird/node-xmpp-bosh
+
+Notes:
+------
+
+[1] If you are using node-xmpp-bosh v0.2.2 or earlier, please
+immediately update to v0.2.3 since it fixes the Billion Laughs (XML
+Entity Expansion) vulnerability.
+
+[2] Some of the configuration variable names will change in
+v0.3.0. Please update your configuration files to reflect these
+changes. See issue #15 for more details.
+
+[4] The public-API has changed since the 0.4.x series. Please update
+your code if you are embedding node-xmpp-bosh.
 
 
 [A] Quick Start:
