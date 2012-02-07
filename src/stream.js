@@ -23,13 +23,13 @@
  *
  */
 
-var dutil	= require('./dutil.js');
-var uuid	= require('node-uuid');
-var helper	= require('./helper.js');
-var us		= require('underscore');
+var dutil	    = require('./dutil.js');
+var uuid	    = require('node-uuid');
+var helper	    = require('./helper.js');
+var us		    = require('underscore');
 var responsejs	= require('./response.js');
 var $terminate	= helper.$terminate;
-var $body	= helper.$body;
+var $body	    = helper.$body;
 
 function Stream(session, node, options, bep, call_on_terminate) {
     this._on_terminate	= call_on_terminate;
