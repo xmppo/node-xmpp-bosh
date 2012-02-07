@@ -198,15 +198,15 @@ if the *callback=* GET query parameter is supplied.
 
 * Example with the request passed in as a GET parameter
 
-   ```
-   http://localhost:5280/http-bind/?data=<body/>
-   ```
+    ```
+    http://localhost:5280/http-bind/?data=<body/>
+    ```
 
-   Response:
+    Response:
 
-   ```
-   <body condition="item-not-found" message="Invalid session ID" type="terminate"/>
-   ```
+    ```
+    <body condition="item-not-found" message="Invalid session ID" type="terminate"/>
+    ```
 
 * Example with the request and callback passed in as a GET parameter
 
