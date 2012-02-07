@@ -34,13 +34,13 @@ $ bosh-server --help
 
 3. For running from within a node application, type:
 ```
-    $ node
-    \> var nxb    = require("node-xmpp-bosh");
-    \> var server = nxb.start_bosh();
-    \> 
-    \> // To stop, type:
-    \> // server.stop();
-    \>
+$ node
+> var nxb    = require("node-xmpp-bosh");
+> var server = nxb.start_bosh();
+> 
+> // To stop, type:
+> // server.stop();
+>
 ```
 
 4. For a more complex setup, see the file main.js
