@@ -455,6 +455,9 @@ Session.prototype = {
             log.debug("%s - terminate - Terminating potentially non-empty BOSH session", this.sid);
         }
 
+        // Clear out this.streams to aid GC
+        this.streams = [ ]
+
         // We use get_response_object() since it also calls clearTimeout, etc...
         // for us for free.
         var ro = this.get_response_object();

@@ -34,11 +34,11 @@ var $body	    = helper.$body;
 function Stream(session, node, options, bep, call_on_terminate) {
     this._on_terminate	= call_on_terminate;
     this._options	    = options;
-    this._bep	    = bep;
-    this.name	   = uuid();
-    this.terminated    = false;
-    this.to		   = node.attrs.to;
-    this.session	   = session;
+    this._bep	        = bep;
+    this.name	        = uuid();
+    this.terminated     = false;
+    this.to		        = node.attrs.to;
+    this.session	    = session;
     // Routes are specific to a stream, and not a session
     if (node.attrs.route) {
         this.route = helper.route_parse(node.attrs.route);
@@ -176,12 +176,16 @@ StreamStore.prototype = {
     add_stream: function (session, node) {
         var self = this;
         var stream = new Stream(session, node, this._bosh_options, this._bep,
-            function (stream, condition) {
-                helper.save_terminate_condition_for_wait_time(self._terminated_streams,
-                    stream.name, condition, stream.session.wait);
-                delete self._sn_state[stream.name];
-        self.stat_stream_terminate();
-            });
+                                function (stream, condition) {
+                                    helper.save_terminate_condition_for_wait_time(self._terminated_streams,
+                                                                                  stream.name, condition, 
+                                                                                  stream.session.wait);
+                                    delete self._sn_state[stream.name];
+
+                                    // Try to aid GC by nulling out stream.session.
+                                    stream.session = null;
+                                    self.stat_stream_terminate();
+                                });
         session.add_stream(stream);
         this._sn_state[stream.name] = stream;
         this.stat_stream_add();
