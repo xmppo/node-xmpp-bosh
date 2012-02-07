@@ -108,7 +108,8 @@ function Session(node, options, bep, call_on_terminate) {
         this.route = node.attrs.route;
     }
 
-    // The 'ua' (user-agent) attribute is an extension.
+    // The 'ua' (user-agent) attribute is an extension. This may
+    // (optionally) be set by the client.
     if (node.attrs.ua) {
         this.ua = node.attrs.ua;
     }
@@ -131,17 +132,23 @@ function Session(node, options, bep, call_on_terminate) {
     // index of the next stream to responsd to
     this.next_stream = 0;
 
-    // This is just an array of strings holding the stream names
+    // This is an array of Stream() objects. It holds all the streams
+    // that belong to this session.
     this.streams = [ ];
 
     // A set of responses that have been sent by the BOSH server, but
     // not yet ACKed by the client.
-    // Format: { rid: { response: [Response Object with <body> wrapper],
-    // ts: new Date() } }
+    // Format: { rid: 
+    //   {  response: [Response Object with <body> wrapper],
+    //      ts: new Date()
+    //   } 
+    // }
+    //
     this.unacked_responses = { };
 
-    // A set of queued requests that will become complete when "holes" in the
-    // request queue are filled in by packets with the right 'rids'
+    // A set of queued requests that will become complete when "holes"
+    // in the request queue are filled in by packets with the right
+    // 'rids'
     this.queued_requests = { };
 
     // The Max value of the 'rid' (request ID) that has been sent by BOSH to the
