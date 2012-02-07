@@ -34,15 +34,15 @@ $ bosh-server --help
 
 3. For running from within a node application, type:
 
-```
-$ node
-> var nxb    = require("node-xmpp-bosh");
-> var server = nxb.start_bosh();
-> 
-> // To stop, type:
-> // server.stop();
->
-```
+    ```
+    $ node
+    > var nxb    = require("node-xmpp-bosh");
+    > var server = nxb.start_bosh();
+    > 
+    > // To stop, type:
+    > // server.stop();
+    >
+    ```
 
 4. For a more complex setup, see the file main.js
 
@@ -210,17 +210,17 @@ if the *callback=* GET query parameter is supplied.
 
 * Example with the request and callback passed in as a GET parameter
 
-```
-http://localhost:5280/http-bind/?data=<body/>&callback=res341
-```
+    ```
+    http://localhost:5280/http-bind/?data=<body/>&callback=res341
+    ```
 
-Response:
+    Response:
 
-```
-res341({"reply":"<body xmlns="http://jabber.org/protocol/httpbind" 
-  condition="item-not-found" message="Invalid session ID" 
-  type="terminate"/>"});
-```
+    ```
+    res341({"reply":"<body xmlns="http://jabber.org/protocol/httpbind" 
+      condition="item-not-found" message="Invalid session ID" 
+      type="terminate"/>"});
+    ```
 
 
 ### References
