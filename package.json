@@ -18,17 +18,21 @@
 		 }
 ,"devDependencies": {"jsdom": ">= 0.2.0"
 }
-,"repositories": [{"type": "svn"
-		  ,"path": "http://node-xmpp-bosh.googlecode.com/svn/trunk/"
+,"repositories": [{"type": "git"
+		  ,"path": "git://github.com/dhruvbird/node-xmpp-bosh.git"
 		  }]
-,"homepage": "http://code.google.com/p/node-xmpp-bosh/"
-,"bugs": "http://code.google.com/p/node-xmpp-bosh/issues/list"
+,"homepage": "https://github.com/dhruvbird/node-xmpp-bosh"
+,"bugs": "https://github.com/dhruvbird/node-xmpp-bosh/issues"
 ,"maintainers": [{"name": "Dhruv Matani"
 		 ,"email": "dhruvbird@gmail.com"
 		 ,"web": "http://dhruvbird.com/"
 		 }
 		 ,{"name": "Anup Kalbalia"
 		 ,"email": "anup.kalbalia@gmail.com"
+		 }
+                 ,{"name":"Satyam Shekhar"
+		 ,"email":"satyamshekhar@gmail.com"
+		 ,"url":"http://satyamshekhar.com/"
 		 }
 ]
 ,"contributors": [{"name":"Vanaryon"
@@ -38,10 +42,6 @@
 		  ,{"name":"Emmanuel Gil Peyrot"
 		  ,"email":"linkmauve@linkmauve.fr"
 		  ,"url":"http://linkmauve.fr/"
-		  }
-		  ,{"name":"Satyam Shekhar"
-		  ,"email":"satyamshekhar@gmail.com"
-		  ,"url":"http://satyamshekhar.com/"
 		  }
 		  ,{"name":"Julien Genestoux"
 		  ,"email":"julien.genestoux@gmail.com"
