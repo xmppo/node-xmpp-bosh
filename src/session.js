@@ -330,7 +330,7 @@ Session.prototype = {
                 delete this.queued_requests[rid];
                 // Increment the 'rid'
                 this.rid += 1;
-                log.debug("%s - updated session.rid to %s", this.sid, this.rid);
+                log.debug("%s updated session.rid to %s", this.sid, this.rid);
                 this._process_one_request(node, stream, stream_store);
             }
         }
@@ -351,7 +351,7 @@ Session.prototype = {
     // processing.
     //
     add_request_for_processing: function (node, res, stream_store) {
-        log.debug("%s - add_request_for_processing - session.rid: %s", this.sid, this.rid);
+        log.debug("%s add_request_for_processing - session.rid: %s", this.sid, this.rid);
         this.queued_requests[node.attrs.rid] = {node: node, stream: null};
 
         var stream;
@@ -443,13 +443,13 @@ Session.prototype = {
             self._send_no_requeue(ro, $body());
         }, this.wait * 1000);
 
-        log.debug("%s add_held_http_connection - holding %s res obj", this.sid, this.res.length);
-
         // Insert into its correct position (in RID order)
         var pos;
         for (pos = 0; pos < this.res.length && this.res[pos].rid < ro.rid; ++pos) {
         }
         this.res.splice(pos, 0, ro);
+
+        log.debug("%s add_held_http_connection - now holding %s res obj", this.sid, this.res.length);
     },
 
     // Note: Even if we terminate a non-empty BOSH session, it is
@@ -457,7 +457,7 @@ Session.prototype = {
     // all open streams (on the XMPP server side)
     terminate: function (condition) {
         if (this.streams.length !== 0) {
-            log.debug("%s - terminate - Terminating potentially non-empty BOSH session", this.sid);
+            log.debug("%s terminate - Terminating potentially non-empty BOSH session", this.sid);
         }
 
         // Clear out this.streams to aid GC
@@ -497,7 +497,7 @@ Session.prototype = {
 
         var self = this;
         this.timeout = setTimeout(function () {
-            log.debug("%s - terminating Session due to inactivity", self.sid);
+            log.debug("%s terminating Session due to inactivity", self.sid);
             // Raise a no-client event on pending, unstitched as well as unacked 
             // responses.
             var _p = us.pluck(self.pending_stitched_responses, 'response');
@@ -529,7 +529,7 @@ Session.prototype = {
     // These functions actually send responses to the client
 
     send_invalid_packet_terminate_response: function (res, node) {
-        log.debug("%s - send_invalid_packet_terminate_response", this.sid);
+        log.debug("%s send_invalid_packet_terminate_response", this.sid);
         var attrs = {
             condition   : 'item-not-found',
             message     : 'Invalid packet'
@@ -561,7 +561,7 @@ Session.prototype = {
         // We _must_ get a response object. If we don't, there is something
         // seriously messed up. Log this.
         if (this.res.length === 0) {
-            log.warn("%s - send_creation_response - No response object to send creation response for stream: %s", this.sid, stream.name);
+            log.warn("%s send_creation_response - No response object to send creation response for stream: %s", this.sid, stream.name);
             return false;
         }
 
@@ -613,7 +613,7 @@ Session.prototype = {
         // From streams, remove all entries that are
         // null or undefined, and log this condition.
         if (sie.length > 0) {
-            log.warn("%s - get_streams_to_terminate - %s streams in error", this.sid, sie.length);
+            log.warn("%s get_streams_to_terminate - %s streams in error", this.sid, sie.length);
         }
         return stt;
     },
@@ -663,10 +663,10 @@ Session.prototype = {
         var ro = res.length > 0 ? res.shift() : null;
         if (ro) {
             ro.clear_timeout();
-            log.debug("%s - get_response_object - return ro with rid: %s", this.sid, ro.rid);
+            log.debug("%s get_response_object - return ro with rid: %s", this.sid, ro.rid);
         }
 
-        log.debug("%s - get_response_object - holding %s ro", this.sid, (res ? res.length : 0));
+        log.debug("%s get_response_object - holding %s ro", this.sid, (res ? res.length : 0));
         return ro;
     },
 
@@ -696,7 +696,7 @@ Session.prototype = {
     _stitch_new_response: function () {
         var len = this.streams.length;
         this.next_stream = this.next_stream % len;
-        log.debug("%s - _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
+        log.debug("%s _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
         
         if(!len) {
             return;
@@ -765,7 +765,7 @@ Session.prototype = {
             // We try sending more queued responses
             this.send_pending_responses();
         } else {
-            log.debug("%s - pop_and_send - nothing to send, 0 pending - return");
+            log.debug("%s pop_and_send - nothing to send, 0 pending - return");
         }
     },
 
@@ -878,7 +878,7 @@ Session.prototype = {
         if (!stream) {
             // No stream name specified. This packet needs to be
             // broadcast to all open streams on this BOSH session.
-            log.debug("%s - emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
+            log.debug("%s emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
             var self = this;
             this.streams.forEach(function (stream) {
                 if (stream) {
@@ -895,7 +895,7 @@ Session.prototype = {
     // to us, then we relinquish the rest of the connections
     respond_to_extra_held_response_objects: function () {
         while (this.res.length > this.hold) {
-            log.debug("%s - respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
+            log.debug("%s respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
             var ro = this.get_response_object();
             this._send_no_requeue(ro, $body());
         }
@@ -992,10 +992,10 @@ Session.prototype = {
 	},
 
     // handle_broken_connections uses the response object "res"
-	// to send response to the client in case of abnormal conditions
-	// (redundant requests)in which case it returns true or else it
-	// returns false -- redundant requests need not be processed
-	// again.
+    // to send response to the client in case of abnormal conditions
+    // (redundant requests)in which case it returns true or else it
+    // returns false -- redundant requests need not be processed
+    // again.
     handle_broken_connections: function (node, res) {
         // Handle the condition of broken connections
         // http://xmpp.org/extensions/xep-0124.html#rids-broken
