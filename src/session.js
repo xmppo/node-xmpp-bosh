@@ -330,7 +330,7 @@ Session.prototype = {
                 delete this.queued_requests[rid];
                 // Increment the 'rid'
                 this.rid += 1;
-                log.debug("%s - updated session.rid to %s", this.sid, this.rid);
+                log.debug("%s updated session.rid to %s", this.sid, this.rid);
                 this._process_one_request(node, stream, stream_store);
             }
         }
@@ -351,7 +351,7 @@ Session.prototype = {
     // processing.
     //
     add_request_for_processing: function (node, res, stream_store) {
-        log.debug("%s - add_request_for_processing - session.rid: %s", this.sid, this.rid);
+        log.debug("%s add_request_for_processing - session.rid: %s", this.sid, this.rid);
         this.queued_requests[node.attrs.rid] = {node: node, stream: null};
 
         var stream;
@@ -360,7 +360,12 @@ Session.prototype = {
         // can be processed correctly. If only the stream name is invalid,
         // we treat this packet as a valid packet (only as far as updates
         // to 'rid' are concerned)
-        if (!this.cannot_handle_ack(node, res)) {
+
+        this.handle_acks(node);
+        this.enqueue_report_if_reqd(node);
+        var is_broken = this.handle_broken_connections(node, res);
+
+        if (!is_broken) {
             var stream_name = helper.get_stream_name(node);
             if (stream_name) {
                 // The stream name is included in the BOSH request.
@@ -386,7 +391,7 @@ Session.prototype = {
             // Process pending (queued) responses (if any)
             // this.send_pending_responses();
         } else {
-            log.debug("%s cannot_handle_ack - no-need-to-process - session.rid: %s", this.sid, this.rid);
+            log.debug("%s broken-request - no-need-to-process - session.rid: %s", this.sid, this.rid);
             should_process = false;
         }
         if (this.queued_requests.hasOwnProperty(node.attrs.rid)) {
@@ -438,13 +443,13 @@ Session.prototype = {
             self._send_no_requeue(ro, $body());
         }, this.wait * 1000);
 
-        log.debug("%s add_held_http_connection - holding %s res obj", this.sid, this.res.length);
-
         // Insert into its correct position (in RID order)
         var pos;
         for (pos = 0; pos < this.res.length && this.res[pos].rid < ro.rid; ++pos) {
         }
         this.res.splice(pos, 0, ro);
+
+        log.debug("%s add_held_http_connection - now holding %s res obj", this.sid, this.res.length);
     },
 
     // Note: Even if we terminate a non-empty BOSH session, it is
@@ -452,7 +457,7 @@ Session.prototype = {
     // all open streams (on the XMPP server side)
     terminate: function (condition) {
         if (this.streams.length !== 0) {
-            log.debug("%s - terminate - Terminating potentially non-empty BOSH session", this.sid);
+            log.debug("%s terminate - Terminating potentially non-empty BOSH session", this.sid);
         }
 
         // Clear out this.streams to aid GC
@@ -492,7 +497,7 @@ Session.prototype = {
 
         var self = this;
         this.timeout = setTimeout(function () {
-            log.debug("%s - terminating Session due to inactivity", self.sid);
+            log.debug("%s terminating Session due to inactivity", self.sid);
             // Raise a no-client event on pending, unstitched as well as unacked 
             // responses.
             var _p = us.pluck(self.pending_stitched_responses, 'response');
@@ -524,7 +529,7 @@ Session.prototype = {
     // These functions actually send responses to the client
 
     send_invalid_packet_terminate_response: function (res, node) {
-        log.debug("%s - send_invalid_packet_terminate_response", this.sid);
+        log.debug("%s send_invalid_packet_terminate_response", this.sid);
         var attrs = {
             condition   : 'item-not-found',
             message     : 'Invalid packet'
@@ -556,7 +561,7 @@ Session.prototype = {
         // We _must_ get a response object. If we don't, there is something
         // seriously messed up. Log this.
         if (this.res.length === 0) {
-            log.warn("%s - send_creation_response - No response object to send creation response for stream: %s", this.sid, stream.name);
+            log.warn("%s send_creation_response - No response object to send creation response for stream: %s", this.sid, stream.name);
             return false;
         }
 
@@ -608,7 +613,7 @@ Session.prototype = {
         // From streams, remove all entries that are
         // null or undefined, and log this condition.
         if (sie.length > 0) {
-            log.warn("%s - get_streams_to_terminate - %s streams in error", this.sid, sie.length);
+            log.warn("%s get_streams_to_terminate - %s streams in error", this.sid, sie.length);
         }
         return stt;
     },
@@ -658,10 +663,10 @@ Session.prototype = {
         var ro = res.length > 0 ? res.shift() : null;
         if (ro) {
             ro.clear_timeout();
-            log.debug("%s - get_response_object - return ro with rid: %s", this.sid, ro.rid);
+            log.debug("%s get_response_object - return ro with rid: %s", this.sid, ro.rid);
         }
 
-        log.debug("%s - get_response_object - holding %s ro", this.sid, (res ? res.length : 0));
+        log.debug("%s get_response_object - holding %s ro", this.sid, (res ? res.length : 0));
         return ro;
     },
 
@@ -691,7 +696,7 @@ Session.prototype = {
     _stitch_new_response: function () {
         var len = this.streams.length;
         this.next_stream = this.next_stream % len;
-        log.debug("%s - _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
+        log.debug("%s _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
         
         if(!len) {
             return;
@@ -760,7 +765,7 @@ Session.prototype = {
             // We try sending more queued responses
             this.send_pending_responses();
         } else {
-            log.debug("%s - pop_and_send - nothing to send, 0 pending - return");
+            log.debug("%s pop_and_send - nothing to send, 0 pending - return");
         }
     },
 
@@ -873,7 +878,7 @@ Session.prototype = {
         if (!stream) {
             // No stream name specified. This packet needs to be
             // broadcast to all open streams on this BOSH session.
-            log.debug("%s - emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
+            log.debug("%s emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
             var self = this;
             this.streams.forEach(function (stream) {
                 if (stream) {
@@ -890,7 +895,7 @@ Session.prototype = {
     // to us, then we relinquish the rest of the connections
     respond_to_extra_held_response_objects: function () {
         while (this.res.length > this.hold) {
-            log.debug("%s - respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
+            log.debug("%s respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
             var ro = this.get_response_object();
             this._send_no_requeue(ro, $body());
         }
@@ -920,14 +925,7 @@ Session.prototype = {
         ro.send_response(response_obj.toString());
     },
 
-    //
-    // cannot_handle_ack accepts a request, "node", and a response object, "res" and handles acknowledgement for that
-    // node. It uses the response object "res" to send response to the client in case of abnormal conditions in which
-    // case it returns true or else it returns false.
-    //
-    cannot_handle_ack: function (node, res) {
-        var self = this;
-        
+    handle_acks: function (node) {
         if (!this.ack) {
             node.attrs.ack = node.attrs.rid - this.window;
         }
@@ -941,7 +939,7 @@ Session.prototype = {
             // The client seems to be buggy. It has not ACKed the
             // last WINDOW_SIZE * 4 requests. We turn off ACKs.
             delete this.ack;
-            log.info("%s cannot_handle_ack - disabling ACKs", this.sid);
+            log.info("%s handle_acks - disabling ACKs", this.sid);
             // will not emit response-acknowledged for these
             // responses. consider them to be lost.
             while (_uar_keys.length > this.window) {
@@ -956,42 +954,49 @@ Session.prototype = {
             node.attrs.ack = node.attrs.rid - 1;
         }
 
+        var self = this;
+
         // If the request from the client includes an ACK, we delete all
         // packets with an 'rid' less than or equal to this value since
         // the client has seen all those packets.
         _uar_keys.forEach(function (rid) {
             if (rid <= node.attrs.ack) {
                 // Raise the 'response-acknowledged' event.
-                log.debug("%s - cannot_handle_ack - received ack: %s", self.sid, rid);
+                log.info("%s handle_acks - received ack: %s", self.sid, rid);
                 self._bep.emit('response-acknowledged',
                                self.unacked_responses[rid], self);
                 delete self.unacked_responses[rid];
             }
         });
+	},
 
+    enqueue_report_if_reqd: function (node) {
         // Client has not acknowledged the receipt of the last message we sent it.
-        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack]) {
-            var _ts = this.unacked_responses[node.attrs.ack].ts;
-            var ss = this._get_random_stream();
-            if (!ss) {
-                log.error("%s - cannot_handle_ack - couldnt get random stream", this.sid);
+        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack + 1]) {
+            var _ts = this.unacked_responses[node.attrs.ack + 1].ts;
+            var stream = this._get_random_stream();
+            if (!stream) {
+                log.error("%s enqueue_report_if_reqd - couldnt get random stream", this.sid);
             } else {
                 // We inject a response packet into the pending queue to
                 // notify the client that it _may_ have missed something.
                 // TODO: we should also have a check which ensures that 
                 // time > RTT has passed. 
-                log.debug("%s - cannot_handle_ack - sending report", this.sid);
-                this.pending_stitched_responses.push({
-                    response: $body({
-                        report: node.attrs.ack + 1,
-                        time: new Date() - _ts
-                    }),
-                    stream: ss
-                });
+                log.debug("%s enqueue_report_if_reqd - sending report - max_rid_sent: %s, node.attrs.ack: %s", this.sid, this.max_rid_sent, node.attrs.ack);
+                this.enqueue_bosh_response({
+                    report: node.attrs.ack + 1,
+                    time: new Date() - _ts,
+                }, stream);
             }
         }
+	},
 
-        //
+    // handle_broken_connections uses the response object "res"
+    // to send response to the client in case of abnormal conditions
+    // (redundant requests)in which case it returns true or else it
+    // returns false -- redundant requests need not be processed
+    // again.
+    handle_broken_connections: function (node, res) {
         // Handle the condition of broken connections
         // http://xmpp.org/extensions/xep-0124.html#rids-broken
         //
@@ -1001,23 +1006,28 @@ Session.prototype = {
         //
         var _queued_request_keys = Object.keys(this.queued_requests).map(toNumber);
         _queued_request_keys.sort(dutil.num_cmp);
-        var quit_me = false;
-        _queued_request_keys.forEach(function (rid) {
-            //
-            // There should be exactly 1 'rid' in state.queued_requests that is
-            // less than state.rid+1
-            //
-            if (rid < self.rid + 1) {
-                log.debug("%s - cannot_handle_ack - queued_req.rid: %s, state.rid: %s", self.sid, rid, self.rid);
-                delete self.queued_requests[rid];
+        var is_broken = false;
 
+        var self = this;
+
+        // can we get rid of this forEach and check
+        // only for the node.attrs.rid value??
+        _queued_request_keys.forEach(function (rid) {
+            // There should be exactly 1 'rid' in state.queued_requests
+            // that is less than state.rid + 1. -- such requests are
+            // immediately returned (processed and deleted by this 
+            // function).
+
+            if (rid < self.rid + 1) {
+                log.debug("%s handle_broken_connections - queued_req.rid: %s, state.rid: %s", self.sid, rid, self.rid);
+                delete self.queued_requests[rid];
+                is_broken = true;
                 if (self.unacked_responses.hasOwnProperty(rid)) {
                     //
                     // Send back the original response on this conection itself
                     //
-                    log.debug("%s - resending unacked response: %s", self.sid, rid);
+                    log.debug("%s handle_broken_connections - resending unacked response: %s", self.sid, rid);
                     self._send_immediate(res, self.unacked_responses[rid].response);
-                    quit_me = true;
                 } else if (rid >= self.rid - self.window - 2) {
                     //
                     // Send back an empty body since it is within the range. We assume
@@ -1028,10 +1038,9 @@ Session.prototype = {
                     // body the second time around. The client is to be blamed for its
                     // stupidity and not us.
                     //
-                    log.debug("%s sending empty body for rid: %s", self.sid, rid);
+                    log.debug("%s handle_broken_connections sending empty body for rid(out of range): %s", self.sid, rid);
                     self._send_immediate(res, $body());
 
-                    quit_me = true;
                 } else {
                     //
                     // Terminate this session. We make the rest of the code believe
@@ -1043,16 +1052,18 @@ Session.prototype = {
                     //
                     // Note: Control DOES reach here. We need to figure out WHY.
                     //
+                    log.error("%s handle_broken_connections - terminating due to out of bound rid: %s, session.rid: %s", self.sid, rid, self.rid);
                     dutil.copy(node.attrs, { //TODO: Might be moved to helper.
                         type: 'terminate',
                         condition: 'item-not-found',
                         xmlns: BOSH_XMLNS
                     });
+                    is_broken = false;
                 }
             }
         });
 
-        return quit_me;
+        return is_broken;
     },
 
     is_max_streams_violation: function () {
