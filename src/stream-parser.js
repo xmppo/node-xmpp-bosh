@@ -74,12 +74,15 @@ dutil.copy(XmppStreamParser.prototype, {
             return;
         }
 
-        if (this.stanza.parent) {
+        if (this.stanza && this.stanza.parent) {
             this.stanza = this.stanza.parent;
-        } else {
-			// none of the emitted stanzas have a parent.
+        } else if (this.stanza) {
             this.emit("stanza", this.stanza);
             delete this.stanza;
+        } else {
+            // this happens some-times.
+            this.emit("error", "end-element w/o start");
+            this.end();
         }
     },
 
@@ -98,7 +101,11 @@ dutil.copy(XmppStreamParser.prototype, {
 
     parse: function(data) {
         if (this._parser && !this._parser.parse(data)) {
-            this.emit("error", this._parser.getError());
+            // in case the parser is deleted on end-stream
+            // and there is garbage after that.
+            if (this._parser) {
+                this.emit("error", this._parser.getError());
+            }
         }
     },
 
