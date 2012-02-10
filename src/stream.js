@@ -182,8 +182,6 @@ StreamStore.prototype = {
                                                                                   stream.session.wait);
                                     delete self._sn_state[stream.name];
 
-                                    // Try to aid GC by nulling out stream.session.
-                                    stream.session = null;
                                     self.stat_stream_terminate();
                                 });
         session.add_stream(stream);
