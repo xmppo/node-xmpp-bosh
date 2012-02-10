@@ -395,8 +395,8 @@ Session.prototype = {
             should_process = false;
         }
         if (this.queued_requests.hasOwnProperty(node.attrs.rid)) {
-            // This check is required because the cannot_handle_ack
-            // deletes the requests for broken connections.
+            // This check is required because handle_acks()
+            // deletes request for broken connections.
             this.queued_requests[node.attrs.rid].stream = stream;
         }
         return should_process;
@@ -970,10 +970,15 @@ Session.prototype = {
         });
 	},
 
+    // Precondition:
+    //
+    //
+    // Postcondition: 
+    // 
     enqueue_report_if_reqd: function (node) {
         // Client has not acknowledged the receipt of the last message we sent it.
-        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack + 1]) {
-            var _ts = this.unacked_responses[node.attrs.ack + 1].ts;
+        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack + 1]) { // FIXME
+            var _ts = this.unacked_responses[node.attrs.ack + 1].ts; // FIXME
             var stream = this._get_random_stream();
             if (!stream) {
                 log.error("%s enqueue_report_if_reqd - couldnt get random stream", this.sid);
@@ -991,11 +996,17 @@ Session.prototype = {
         }
 	},
 
-    // handle_broken_connections uses the response object "res"
-    // to send response to the client in case of abnormal conditions
-    // (redundant requests)in which case it returns true or else it
-    // returns false -- redundant requests need not be processed
-    // again.
+    // handle_broken_connections uses the response object "res" to
+    // send response to the client in case of abnormal conditions
+    // (redundant requests) in which case it returns true or else it
+    // returns false -- redundant requests need not be processed again.
+    //
+    // Preconditoin: We should call this function BEFORE we update the
+    // current session's 'rid'.
+    //
+    // Postcondition: If we return 'true', then the caller should NOT
+    // process this request.
+    //
     handle_broken_connections: function (node, res) {
         // Handle the condition of broken connections
         // http://xmpp.org/extensions/xep-0124.html#rids-broken
