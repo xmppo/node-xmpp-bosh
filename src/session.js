@@ -987,7 +987,8 @@ Session.prototype = {
                 // notify the client that it _may_ have missed something.
                 // TODO: we should also have a check which ensures that 
                 // time > RTT has passed. 
-                log.debug("%s enqueue_report_if_reqd - sending report - max_rid_sent: %s, node.attrs.ack: %s", this.sid, this.max_rid_sent, node.attrs.ack);
+                log.debug("%s enqueue_report_if_reqd - sending report - max_rid_sent: %s, node.attrs.ack: %s", 
+                          this.sid, this.max_rid_sent, node.attrs.ack);
                 this.enqueue_bosh_response({
                     report: node.attrs.ack + 1,
                     time: new Date() - _ts,
