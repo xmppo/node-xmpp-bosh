@@ -6,19 +6,6 @@ exports.config = {
 	path: /^\/http-bind(\/+)?$/, 
 	logging: 'INFO', 
 	
-	// uncomment the following line to log to a file.
-	// otherwise all the logs will go to stdout.
-	// log_file_name: 'nxb.log',
-
-	// if loggin to a file, the maximum size (in bytes) 
-	// for a log file, if not provided then logs won't 
-	// be rotated.
-	// max_log_file_size: 50000000,
-
-	// if logging to a file, the number of log files to 
-	// keep after logSize has been reached
-	// number_of_log_files: 10,
-
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client
 	max_data_held: 100000, 

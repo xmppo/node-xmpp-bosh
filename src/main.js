@@ -52,7 +52,6 @@ exports.start_bosh = function(options) {
 		logging: "INFO"
 	});
 
-	logger.log_to_file(options);
 	logger.set_log_level(options.logging);
 
 	// Instantiate a bosh server with the connector as a parameter.
