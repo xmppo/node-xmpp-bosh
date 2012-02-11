@@ -370,8 +370,9 @@ Session.prototype = {
         // we treat this packet as a valid packet (only as far as updates
         // to 'rid' are concerned)
 
-        this.handle_acks(node);
         this.enqueue_report_if_reqd(node);
+        this.handle_acks(node);
+
         var is_broken = this.handle_broken_connections(node, res);
 
         if (!is_broken) {
@@ -987,15 +988,17 @@ Session.prototype = {
         });
 	},
 
-    // Precondition:
-    //
-    //
-    // Postcondition: 
-    // 
+    // Precondition: This function should be called before handle_acks
+    // since handle_acks deletes all unacked_reponses upto node.attrs.ack
     enqueue_report_if_reqd: function (node) {
+        // No reports for clients that dont have acks.
+        if (!this.ack) {
+            return;
+        }
+
         // Client has not acknowledged the receipt of the last message we sent it.
-        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack + 1]) { // FIXME
-            var _ts = this.unacked_responses[node.attrs.ack + 1].ts; // FIXME
+        if (node.attrs.ack < this.max_rid_sent && this.unacked_responses[node.attrs.ack]) {
+            var _ts = this.unacked_responses[node.attrs.ack].ts;
             var stream = this._get_random_stream();
             if (!stream) {
                 log.error("%s enqueue_report_if_reqd - couldnt get random stream", this.sid);
