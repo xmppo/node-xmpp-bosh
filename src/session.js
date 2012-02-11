@@ -416,6 +416,14 @@ Session.prototype = {
     // the response object 'res' to 'rid'
     add_held_http_connection: function (rid, res) {
         var ro = new responsejs.Response(res, rid, this._options);
+
+        // Return an empty body if something has already
+        // been sent on a request with greater rid.
+        if (rid < this.max_rid_sent) {
+            ro.send_empty_body();
+            return;
+        }
+
         // If a client makes more connections than allowed, trim them.
         // http://xmpp.org/extensions/xep-0124.html#overactive
         //
