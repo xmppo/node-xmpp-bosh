@@ -212,6 +212,15 @@ Session.prototype = {
             }
             this.streams.splice(pos, 1);
         }
+
+        // Null out all the requests for the deleted stream.
+        us(this.queued_requests).each(function (queued_request, rid) {
+            if (queued_request.stream === stream) {
+                log.debug("%s %s delete_stream - will not process request rid: %s", this.sid, stream.name, rid);
+                this.queued_requests[rid].node = $body();
+                this.queued_requests[rid].stream = null;
+            }
+        }, this);
     },
 
     get_only_stream: function () {
