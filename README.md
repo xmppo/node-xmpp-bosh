@@ -173,10 +173,10 @@ stream for the client.
 
 ### Custom attributes on BOSH streams
 
-1. If a stream creation request has the 'ua' attribute, it shall be
+1. If a session creation request has the 'ua' attribute, it shall be
 included in all events that involve that session. This is useful when
-embedding this library
-      
+embedding this library.
+
 2. If a stream restart request has the 'stream_attrs' attribute set,
 then the value of that attribute is assumed to be a stringified JSON
 object which is subsequently parsed and every key/value pair is added
@@ -242,7 +242,9 @@ if the *callback=* GET query parameter is supplied.
 * [dns-srv] (https://github.com/dhruvbird/dns-srv)
 * [semver] (https://github.com/isaacs/node-semver)
 * [websocket-server] (https://github.com/miksago/node-websocket-server)
+* [log4js] (http://log4js.berlios.de/)
 * [jsdom] (https://github.com/tmpvar/jsdom) for tests
+* [jslint] (https://github.com/reid/node-jslint) for running lintit.sh
 
 
 ### Tested with
