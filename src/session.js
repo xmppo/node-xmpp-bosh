@@ -961,7 +961,7 @@ Session.prototype = {
             // will not emit response-acknowledged for these
             // responses. consider them to be lost.
             while (_uar_keys.length > this.window) {
-                var key = _uar_keys.unshift();
+                var key = _uar_keys.shift();
                 delete this.unacked_responses[key];
             }
         }
