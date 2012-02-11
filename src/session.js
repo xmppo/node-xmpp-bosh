@@ -1051,6 +1051,8 @@ Session.prototype = {
             // function).
 
             if (rid < self.rid + 1) {
+                assert(rid === node.attrs.rid);
+
                 log.debug("%s handle_broken_connections - queued_req.rid: %s, state.rid: %s", self.sid, rid, self.rid);
                 delete self.queued_requests[rid];
                 is_broken = true;
