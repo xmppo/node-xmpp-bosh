@@ -84,7 +84,7 @@ Stream.prototype = {
 
     handle_restart: function (node) {
         if (node.attrs.stream_attrs) {
-            this._attrs = dutil.json_parse(node.attrs.stream_attrs, { });
+            this.attrs = dutil.json_parse(node.attrs.stream_attrs, { });
         }
         this._bep.emit('stream-restart', this);
     },
@@ -166,7 +166,7 @@ StreamStore.prototype = {
         return stream;
     },
 
-        get_streams_obj: function () {
+    get_streams_obj: function () {
         return this._sn_state;
     },
 
