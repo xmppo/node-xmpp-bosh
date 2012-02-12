@@ -146,6 +146,18 @@ function get_stream_name(node) {
     return node.attrs.stream;
 }
 
+// Sanitize all attributes in node.attr that the BOSH server cares
+// about.
+function sanitize_request_node(node) {
+    // TODO: Implement
+
+    // In case node doesn't have attrs.rid it will be set to 0, which
+    // is alright.
+    node.attrs.rid = toNumber(node.attrs.rid);
+
+    return node;
+}
+
 // Coded according to the rules mentioned here:
 // http://xmpp.org/extensions/xep-0206.html#create and
 // http://xmpp.org/extensions/xep-0206.html#preconditions-sasl

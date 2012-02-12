@@ -128,7 +128,7 @@ function Session(node, options, bep, call_on_terminate) {
 
     // Once the response is stitched 
     this.pending_stitched_responses = [ ];
-    
+
     // index of the next stream to responsd to
     this.next_stream = 0;
 
@@ -144,6 +144,10 @@ function Session(node, options, bep, call_on_terminate) {
     //   } 
     // }
     //
+    // Invariant: if unacked_responses[k] is truthy, then 
+    // unacked_responses[k], unacked_responses[k+1], ..., 
+    // unacked_responses[max_rid_sent] MUST also be truthy.
+    // 
     this.unacked_responses = { };
 
     // A set of queued requests that will become complete when "holes"
@@ -151,15 +155,17 @@ function Session(node, options, bep, call_on_terminate) {
     // 'rids'
     this.queued_requests = { };
 
-    // The Max value of the 'rid' (request ID) that has been sent by BOSH to the
-    // client. i.e. The highest request ID responded to by us.
+    // The maxiimum value of the 'rid' (request ID) that has been sent
+    // by the BOSH server to the client. i.e. The highest request ID
+    // responded to by us. We initialize it to a previous "ghost"
+    // request that we supposedly responded to.
     this.max_rid_sent = this.rid - 1;
 
     if (this.inactivity) {
         // We squeeze options.inactivity between the min and max allowable values
         this.inactivity = [ Math.floor(toNumber(this.inactivity)),
-            options.MAX_INACTIVITY,
-            options.DEFAULT_INACTIVITY].sort(dutil.num_cmp)[1];
+                            options.MAX_INACTIVITY,
+                            options.DEFAULT_INACTIVITY].sort(dutil.num_cmp)[1];
     } else {
         this.inactivity = options.DEFAULT_INACTIVITY;
     }
@@ -479,7 +485,7 @@ Session.prototype = {
         }
 
         // Clear out this.streams to aid GC
-        this.streams = [ ]
+        this.streams = [ ];
 
         // We use get_response_object() since it also calls clearTimeout, etc...
         // for us for free.

@@ -128,15 +128,13 @@ exports.createServer = function (options) {
         var session = null;
         var stream = null;
 
-        // In case node doesn't have attrs.rid
-        // it will be set to 0, which is alright.
-        node.attrs.rid = toNumber(node.attrs.rid);
+        node = helper.sanitize_request_node(node);
 
         // Check if this is a session start packet.
         if (helper.is_session_creation_packet(node)) {
             log.debug("Session Creation");
             session = session_store.add_session(node, res);
-            stream = stream_store.add_stream(session, node);
+            stream  = stream_store.add_stream(session, node);
 
             // Respond to the client.
             session.send_creation_response(stream);
