@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var url   = require('url');
 var ltx   = require('ltx');
 var dutil = require('./dutil.js');
@@ -187,10 +189,10 @@ function is_stream_terminate_request(node) {
 // Even though it says SHOULD for everything we expect, we violate the XEP.
 function is_session_creation_packet(node) {
     var ia = dutil.inflated_attrs(node);
-    return node.attrs.rid && 
-        node.attrs.to && node.attrs.wait &&
-        node.attrs.hold && !node.attrs.sid &&
-        ia.hasOwnProperty('urn:xmpp:xbosh:version');
+    return (node.attrs.rid &&
+            node.attrs.to && node.attrs.wait &&
+            node.attrs.hold && !node.attrs.sid &&
+            ia.hasOwnProperty('urn:xmpp:xbosh:version'));
 }
 
 // End misc. helpers
