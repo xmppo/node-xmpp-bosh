@@ -59,7 +59,7 @@ files.forEach(function(fp) {
 		}
 		mtimes[fp] = cmtime;
 
-		var jslint = cp.spawn('jslint', [ '--forin=false', '--node=false', fp ]);
+		var jslint = cp.spawn('jslint', [ '--forin=false', '--node=false', '--nomen=true', '--vars=true', fp ]);
 		var title = "Linting file: " + fp;
 		var underline = dutil.repeat('-', title.length).join('');
 

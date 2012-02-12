@@ -9,6 +9,6 @@ do
   D=$(printf $FS ' ')
   D=${D//?/-}
   echo -e "$S\n$D"
-  jslint --forin=false --node=false $fn
+  jslint --forin=false --node=false --nomen=true --vars=true $fn
   echo ""
 done
