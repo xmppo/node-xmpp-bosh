@@ -121,7 +121,7 @@ function Session(node, options, bep, call_on_terminate) {
     // Contains objects of the form:
     // { "stream-name": [ stanzas ] }
     this.pending_stanzas = { };
-    
+
     // Contains objects of the form:
     // { "stream-name": [ body element attrs obj] }
     this.pending_bosh_responses = { };
@@ -261,7 +261,7 @@ Session.prototype = {
     // It processes the request node. uses the stream_store for adding stream to it in case of stream add.
     //
     _process_one_request: function (node, stream, stream_store) {
-        var stream_log_name = (stream && stream.name) || "No/All Stream"
+        var stream_log_name = (stream && stream.name) || "No/All Stream";
         log.debug("%s %s _process_one_request - session.rid: %s, valid_stream: %s", this.sid, stream_log_name, this.rid, !!stream);
         var nodes = node.children;
         // Check if this is a stream restart packet.
@@ -722,7 +722,7 @@ Session.prototype = {
         this.next_stream = this.next_stream % len;
         log.debug("%s _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
         
-        if(!len) {
+        if (!len) {
             return;
         }
 
@@ -834,8 +834,7 @@ Session.prototype = {
 
         if (this._options.PIDGIN_COMPATIBLE && this.first_response) {
             this.first_response = false;
-        }
-        else {
+        } else {
             this.try_sending();
         }
     },
@@ -846,19 +845,18 @@ Session.prototype = {
         this.try_sending();
     },
 
+    // 
     // If the client has enabled ACKs, then acknowledge the highest request
     // that we have received till now -- if it is not the current request.
-    _get_highest_rid_to_ack: function (rid, msg) {
-        this.unacked_responses[rid] = {
-            response: msg,
-            ts: new Date(),
-            rid: rid
-        };
-        this.max_rid_sent = Math.max(this.max_rid_sent, rid);
-
+    // 
+    // Returns: The RID that we should ACK or "null", in which case,
+    // we implicitly ACK the RID on which we are sending the response.
+    // 
+    _get_highest_rid_to_ack: function (rid) {
         if (rid !== this.rid) {
             return this.rid;
         }
+        return null;
     },
 
     // Send a response, but do NOT requeue if it fails
@@ -870,10 +868,23 @@ Session.prototype = {
 
         log.debug("%s _send_pending_responses - ro.rid: %s, this.rid: %s", this.sid, ro.rid, this.rid);
 
-        var ack = this._get_highest_rid_to_ack(ro.rid, msg);
+        var ack = this._get_highest_rid_to_ack(ro.rid);
+
         if (this.ack && ack) {
             msg.attrs.ack = ack;
         }
+
+        // Add this sent message to unacked_responses so that
+        // unacked_responses is a serial list of unacknowledged
+        // responses.
+        this.unacked_responses[ro.rid] = {
+            response: msg,
+            ts: new Date(),
+            rid: ro.rid
+        };
+
+        this.max_rid_sent = Math.max(this.max_rid_sent, ro.rid);
+
         var res_str = msg.toString();
 
         ro.send_response(res_str);
@@ -885,7 +896,7 @@ Session.prototype = {
         if (this.res.length === 0) {
             return;
         }
-        
+
         if (!this.pending_stitched_responses.length) {
             this._stitch_new_response();
         }
