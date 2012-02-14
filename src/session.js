@@ -861,7 +861,6 @@ Session.prototype = {
     // we implicitly ACK the RID on which we are sending the response.
     // 
     _get_highest_rid_to_ack: function (rid) {
-        assert(rid <= this.rid);
         if (rid !== this.rid) {
             return this.rid;
         }
