@@ -424,10 +424,12 @@ Session.prototype = {
     add_held_http_connection: function (rid, res) {
         var ro = new responsejs.Response(res, rid, this._options);
 
-        // Return an empty body if something has already
-        // been sent on a request with greater rid.
+        // Return an empty body if something has already been sent on
+        // a request with greater rid.
         if (rid < this.max_rid_sent) {
-            ro.send_empty_body();
+            // Always use _send_no_requeue() since it correctly
+            // manipulates internal state.
+            this._send_no_requeue(helper.$body());
             return;
         }
 
@@ -491,7 +493,7 @@ Session.prototype = {
         // for us for free.
         var ro = this.get_response_object();
         while (ro) {
-            ro.send_empty_body();
+            this._send_no_requeue(helper.$body());
             ro = this.get_response_object();
         }
 
@@ -568,9 +570,15 @@ Session.prototype = {
         ro.send_termination_stanza(attrs);
     },
 
+    // 
+    // This function immediately sends the message to the client (does
+    // not queue them up).
+    // 
     // ro: The response object to use
+    // 
     // condition: (optional) A string which specifies the condition to
-    //     send to the client as to why the session was closed.
+    // send to the client as to why the session was closed.
+    // 
     send_terminate_response: function (ro, condition) {
         log.debug("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
         var attrs = { };
@@ -853,6 +861,7 @@ Session.prototype = {
     // we implicitly ACK the RID on which we are sending the response.
     // 
     _get_highest_rid_to_ack: function (rid) {
+        assert(rid <= this.rid);
         if (rid !== this.rid) {
             return this.rid;
         }

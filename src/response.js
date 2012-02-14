@@ -52,10 +52,6 @@ Response.prototype = {
 		this._res.on('error', error_func);
 	},
 
-    send_empty_body: function () {
-		this.send_response(helper.$body().toString());
-	},
-
 	// Sends a stream termination response on an HTTP response (res) object.
 	// This method is generally used to terminate rogue connections.
 	send_termination_stanza: function (attrs) {
