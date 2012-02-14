@@ -7,9 +7,9 @@ var log4js = require("log4js");
 // crashes in their current release. We will
 // turn it off as soon as they release.
 
-// log4js.configure({
-//     doNotReplaceConsole: true
-// });
+log4js.configure({
+    doNotReplaceConsole: true
+});
 
 var appender = log4js.consoleAppender(log4js.basicLayout);
 log4js.clearAppenders();
