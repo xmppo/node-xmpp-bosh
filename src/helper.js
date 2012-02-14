@@ -152,11 +152,13 @@ function get_stream_name(node) {
 // about.
 function sanitize_request_node(node) {
     // TODO: Implement
+    if (node.attrs.rid) {
+        node.attrs.rid = toNumber(node.attrs.rid);
+    }
 
-    // In case node doesn't have attrs.rid it will be set to 0, which
-    // is alright.
-    node.attrs.rid = toNumber(node.attrs.rid);
-
+    if (node.attrs.ack) {
+        node.attrs.ack = toNumber(node.attrs.ack);
+    }
     return node;
 }
 
@@ -208,3 +210,4 @@ exports.is_stream_restart_packet    = is_stream_restart_packet;
 exports.is_stream_add_request       = is_stream_add_request;
 exports.is_stream_terminate_request = is_stream_terminate_request;
 exports.is_session_creation_packet  = is_session_creation_packet;
+exports.sanitize_request_node       = sanitize_request_node;
