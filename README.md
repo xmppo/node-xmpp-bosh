@@ -341,7 +341,7 @@ instance and so on.
 * v0.3.0 == SVN Commit #345
 * v0.3.1 == SVN Commit #364
 * v0.3.2 == SVN Commit #368
-* v0.3.3 == SVN Commit #393¡
+* v0.3.3 == SVN Commit #393
 * v0.4.0 == SVN Commit #397
 * v0.4.1 == SVN Commit #402
 * v0.4.2 == SVN Commit #420
