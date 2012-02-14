@@ -429,7 +429,7 @@ Session.prototype = {
         if (rid < this.max_rid_sent) {
             // Always use _send_no_requeue() since it correctly
             // manipulates internal state.
-            this._send_no_requeue(helper.$body());
+            this._send_no_requeue(ro, helper.$body());
             return;
         }
 
@@ -493,7 +493,7 @@ Session.prototype = {
         // for us for free.
         var ro = this.get_response_object();
         while (ro) {
-            this._send_no_requeue(helper.$body());
+            this._send_no_requeue(ro, helper.$body());
             ro = this.get_response_object();
         }
 
