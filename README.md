@@ -1,6 +1,6 @@
 # node-xmpp-bosh
 
-An XMPP BOSH server (connection manager) written using Node.js in Javascript
+An XMPP BOSH & WebSocket server (connection manager) written using node.js in Javascript
 
 Project Home Page:
 [https://github.com/dhruvbird/node-xmpp-bosh](https://github.com/dhruvbird/node-xmpp-bosh)
