@@ -1,5 +1,5 @@
 { "name": "node-xmpp-bosh"
-,"version": "0.5.6"
+,"version": "0.6.0"
 ,"main": "./src/main"
 ,"bin": { "bosh-server": "./run-server.js" }
 ,"description": "An XMPP BOSH server written for node.js in javascript"
@@ -14,7 +14,7 @@
 		 ,"semver": ">= 1.0.8"
 		 ,"websocket-server": ">= 1.4.04"
 		 ,"websocket": ">= 0.0.16"
-		 ,"log4js": ">= 0.4.1"
+		 ,"log4js": "git://github.com/nomiddlename/log4js-node.git#2ab6f5fa2416790dd8a708abe11231564bddae41"
 		 }
 ,"devDependencies": {"jsdom": ">= 0.2.0"
                     ,"jslint": ">= 0.1.2"

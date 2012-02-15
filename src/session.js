@@ -376,7 +376,7 @@ Session.prototype = {
         // we treat this packet as a valid packet (only as far as updates
         // to 'rid' are concerned)
 
-        this.enqueue_report_if_reqd(node);
+        // this.enqueue_report_if_reqd(node);
         this.handle_acks(node);
 
         var is_broken = this.handle_broken_connections(node, res);
