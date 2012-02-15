@@ -41,7 +41,7 @@ $ node node_modules/node-xmpp-bosh/run-server.js
 $ npm install node-xmpp-bosh -g
 $ bosh-server
 
-9. Report any bugs to dhruvbird@gmail.com
+9. Report any bugs at https://github.com/dhruvbird/node-xmpp-bosh/issues
 
 
 * If you are a developer and want a bleeding edge version of the server, 
@@ -49,9 +49,9 @@ pull it from SVN and link it to your node module using npm.
 
 10. $ cd <your project directory>
 
-11. $ svn checkout http://node-xmpp-bosh.googlecode.com/svn/trunk/ node-xmpp-bosh-read-only
+11. $ git clone https://github.com/dhruvbird/node-xmpp-bosh
 
-12. $ cd node-xmpp-bosh-read-only
+12. $ cd node-xmpp-bosh
 
 13. Link the SVN version of the proxy to the main one (so that you can 
 pull and needn't wait for a release)

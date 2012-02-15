@@ -104,7 +104,7 @@ exports.createServer = function (options) {
             .up()
             .c('body')
             .c('h1')
-            .c('a', {'href': 'http://code.google.com/p/node-xmpp-bosh/'})
+            .c('a', {'href': 'https://github.com/dhruvbird/node-xmpp-bosh'})
             .t('node-xmpp-bosh')
             .up()
             .up()
