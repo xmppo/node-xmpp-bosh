@@ -17,6 +17,7 @@
 		 ,"log4js": ">= 0.4.1"
 		 }
 ,"devDependencies": {"jsdom": ">= 0.2.0"
+                    ,"jslint": ">= 0.1.2"
 }
 ,"repositories": [{"type": "git"
 		  ,"path": "git://github.com/dhruvbird/node-xmpp-bosh.git"
