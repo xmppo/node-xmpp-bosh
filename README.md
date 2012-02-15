@@ -306,6 +306,9 @@ instance and so on.
 * [rhb - Ruby](http://rubyforge.org/projects/rhb/)
 * [Ejabberd websocket module](https://github.com/superfeedr/ejabberd-websockets)
 
+### Identi.ca groups:
+* [node-xmpp-bosh](http://identi.ca/group/nodexmppbosh)
+
 
 ### Commit IDs for older releases
 
