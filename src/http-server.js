@@ -87,14 +87,13 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 return;
             }
         })
-            .on('end', function () {
-                _on_end_callback(false);
-            })
-
-            .on('error', function (ex) {
-                log.error("Exception '" + ex.toString() + "' while processing request");
-                log.error("Stack Trace: %s\n", ex.stack);
-            });
+        .on('end', function () {
+            _on_end_callback(false);
+        })
+        .on('error', function (ex) {
+            log.error("Exception '" + ex.toString() + "' while processing request");
+            log.error("Stack Trace: %s\n", ex.stack);
+        });
         return false;
     }
 
