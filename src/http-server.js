@@ -56,7 +56,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             return;
         }
 
-        var data = "";
+        var data = '';
         var end_timeout;
 
         var _on_end_callback = us.once(function (timed_out) {
@@ -89,6 +89,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         })
         .on('end', function () {
             _on_end_callback(false);
+            data = null; // No point keeping this reference around any more.
         })
         .on('error', function (ex) {
             log.error("Exception '" + ex.toString() + "' while processing request");
