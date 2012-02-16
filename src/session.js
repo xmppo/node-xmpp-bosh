@@ -1184,6 +1184,7 @@ SessionStore.prototype = {
 
     add_session: function (node, res) {
         var self = this;
+        // TODO: Log the number of entries in this._terminated_sessions
         var session = new Session(node, this._bosh_options, this._bep,
             function (session, condition) {
                 helper.save_terminate_condition_for_wait_time(self._terminated_sessions,
