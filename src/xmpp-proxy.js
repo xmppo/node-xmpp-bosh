@@ -289,7 +289,7 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	_on_stream_error: function(error) {
-		log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name);
+		log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name, error);
 		this.terminate();
 	},
 
