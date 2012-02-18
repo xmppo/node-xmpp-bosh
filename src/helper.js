@@ -125,7 +125,7 @@ function route_parse(route) {
      * TODO: Move this out of bosh.js and into lookup_service.js
      */
     var m = route.match(/^(\S+):(\S+):([0-9]+)$/) || [ ];
-    log.debug("route_parse: %s", m);
+    log.trace("route_parse: %s", m);
     if (m && m.length === 4) {
         return {protocol: m[1], host: m[2], port: toNumber(m[3])};
     } else {

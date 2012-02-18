@@ -80,7 +80,7 @@ exports.start_bosh = function(options) {
 	// Example:
 	bosh_server.on("response-acknowledged", function(wrapped_response, session) {
 		// What to do with this response??
-        log.debug("%s Response Acknowledged: %s", session.sid, wrapped_response.rid);
+        log.trace("%s Response Acknowledged: %s", session.sid, wrapped_response.rid);
 	});
 
 	return bosh_server;

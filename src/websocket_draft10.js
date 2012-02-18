@@ -204,7 +204,7 @@ exports.createServer = function(bosh_server) {
 		});
 
 		conn.on('close', function() {
-			log.debug("%s Stream close requested", stream_name);
+			log.trace("%s Stream close requested", stream_name);
 
 			if (!sn_state.hasOwnProperty(stream_name)) {
 				// Already terminated

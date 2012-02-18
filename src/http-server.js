@@ -64,6 +64,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 log.warn("Timed out - destroying connection from '%s'", req.socket.remoteAddress);
                 req.destroy();
             } else {
+                log.debug("RECD: %s", data);
                 bosh_request_handler(res, data);
                 clearTimeout(end_timeout);
             }
@@ -146,7 +147,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     }
 
     function handle_unhandled_request(req, res, u) {
-        log.debug("Invalid request, method: %s path: %s", req.method, u.pathname);
+        log.trace("Invalid request, method: %s path: %s", req.method, u.pathname);
         var _headers = { };
         dutil.copy(_headers, bosh_options.HTTP_POST_RESPONSE_HEADERS);
         _headers['Content-Type'] = 'text/plain; charset=utf-8';
