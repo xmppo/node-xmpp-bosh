@@ -203,6 +203,7 @@ dutil.copy(XMPPProxy.prototype, {
 		this._buff = '';
 		var _ss_open = this._get_stream_xml_open(stream_attrs);
 		this.send(_ss_open);
+		this._parser.restart();
 	},
 
 	terminate: function() {
