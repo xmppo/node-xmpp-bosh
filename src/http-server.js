@@ -64,7 +64,6 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 log.warn("Timed out - destroying connection from '%s'", req.socket.remoteAddress);
                 req.destroy();
             } else {
-                log.info("RECD: %s", data);
                 bosh_request_handler(res, data);
                 clearTimeout(end_timeout);
             }

@@ -979,10 +979,11 @@ Session.prototype = {
 
         //We are fairly generous
         if (_uar_keys.length > this._options.WINDOW_SIZE * 4) {
-            // The client seems to be buggy. It has not ACKed the
-            // last WINDOW_SIZE * 4 requests. We turn off ACKs.
+            // The client seems to be buggy. It has not ACKed the last
+            // WINDOW_SIZE * 4 requests. We turn off ACKs.
             delete this.ack;
-            log.info("%s handle_acks - disabling ACKs", this.sid);
+            log.debug("%s handle_acks - disabling ACKs", this.sid);
+
             // will not emit response-acknowledged for these
             // responses. consider them to be lost.
             while (_uar_keys.length > this.window) {
@@ -1005,7 +1006,7 @@ Session.prototype = {
         _uar_keys.forEach(function (rid) {
             if (rid <= node.attrs.ack) {
                 // Raise the 'response-acknowledged' event.
-                log.info("%s handle_acks - received ack: %s", self.sid, rid);
+                log.debug("%s handle_acks - received ack: %s", self.sid, rid);
                 self._bep.emit('response-acknowledged',
                                self.unacked_responses[rid], self);
                 delete self.unacked_responses[rid];

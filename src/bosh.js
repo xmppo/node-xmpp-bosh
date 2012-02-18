@@ -153,19 +153,21 @@ exports.createServer = function (options) {
         } else {
             session = session_store.get_session(node);
             if (!session) { //No (valid) session ID in BOSH request. Not phare enuph.
-                log.info("Invalid Session: %s", node.attrs.sid || "No Session Id");
+                log.debug("%s Invalid Session", node.attrs.sid || "No_Session_ID");
                 session_store.send_invalid_session_terminate_response(res, node);
                 return;
             }
             try {
                 // This is enclosed in a try/catch block since invalid requests
                 // at this point MAY not have these attributes
-                log.debug("%s %s req.rid: %s,  session.rid: %s", session.sid, node.attrs.stream || "NO Stream", node.attrs.rid, session.rid);
+                log.debug("%s %s req.rid: %s, session.rid: %s", session.sid, 
+                          node.attrs.stream || "NO_Stream", node.attrs.rid, 
+                          session.rid);
             } catch (ex) { }
 
             // Check the validity of the packet and the BOSH session
             if (!session.is_valid_packet(node)) {
-                log.info("%s Invalid Packet", session.sid);
+                log.debug("%s Invalid Packet", session.sid);
                 session.send_invalid_packet_terminate_response(res, node);
                 return;
             }
