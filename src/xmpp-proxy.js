@@ -146,7 +146,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_stanza: function(stanza) {
-		log.info("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
+		log.debug("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
 
 		dutil.extend(stanza.attrs, this._stream_attrs);
 
@@ -236,7 +236,7 @@ dutil.copy(XMPPProxy.prototype, {
 		if (this._is_connected) {
 			try {
 				this._sock.write(data);
-				log.info("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data);
+				log.debug("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data);
 			}
 			catch (ex) {
 				this._is_connected = false;
@@ -268,7 +268,7 @@ dutil.copy(XMPPProxy.prototype, {
 	_on_data: function(d) {
 		var d = d.toString();
 
-		log.info("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
+		log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
 
 		this._parser.parse(d);
 	},
@@ -290,7 +290,7 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	_on_stream_error: function(error) {
-		log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name);
+		log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name, error);
 		this.terminate();
 	},
 
