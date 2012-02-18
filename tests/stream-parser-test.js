@@ -70,7 +70,7 @@ var test_3 = (function () {
 
 var test_4 = (function () {
     var stanzas = [];
-    
+
     for (var i = 0; i < 4; i++) {
         var message = new ltx.Element("message", {
             xmlns: "namespace",
@@ -84,7 +84,7 @@ var test_4 = (function () {
         message.cnode(body);
         stanzas.push(message);
     }
-    
+
     console.log("stanzas: %s", util.inspect(stanzas));
 
     var parser = new XmppParser.XmppStreamParser();
@@ -104,7 +104,7 @@ var test_4 = (function () {
     });
 
     parser.parse(stream_start);
-    
+
     stanzas_copy.forEach(function (stanza) {
         console.log ("will parse: %s", stanza);
         parser.parse(stanza.toString());
@@ -122,6 +122,29 @@ var test_5 = (function () {
     });
 
     parser.parse("<ddb></ddb><r/></stream:stream><r>");
+})();
+
+var test_6 = (function () {
+    var parser = new XmppParser.XmppStreamParser();
+
+    parser.on("stanza", function (stanza) {
+        // console.log("revd: %s", stanza);
+    });
+
+    parser.on("error", function (err){
+        console.log("Test case 6 failed: %s", err);
+    });
+
+    var stream_start = "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='3344545251' from='abc.com' version='1.0' xml:lang='en'><stream:features><starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>SCRAM-SHA-1</mechanism><mechanism>DIGEST-MD5</mechanism><mechanism>PLAIN</mechanism></mechanisms></stream:features>";
+    parser.parse(stream_start);
+
+    var next = "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>";
+    parser.parse(next);
+    parser.restart();
+
+    var restart = "<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='2692183849' from='abc.com' version='1.0' xml:lang='en'><stream:features><mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>SCRAM-SHA-1</mechanism><mechanism>DIGEST-MD5</mechanism><mechanism>PLAIN</mechanism></mechanisms></stream:features>";
+    parser.parse(restart);
+
 })();
 
 // test_5();
