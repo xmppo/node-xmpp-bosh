@@ -14,8 +14,7 @@ Expansion) vulnerability.
 
 2. Some of the configuration variable names will change in
 v0.3.0. Please update your configuration files to reflect these
-changes. See [issue
-#15](http://code.google.com/p/node-xmpp-bosh/issues/detail?id=15) for
+changes. See [issue \#15](http://code.google.com/p/node-xmpp-bosh/issues/detail?id=15) for
 more details.
 
 3. The public-API has changed since the 0.4.x series. Please update
