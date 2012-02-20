@@ -306,7 +306,7 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	_on_lookup_error: function(error) {
-		log.warn("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name);
+		log.warn("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name, error);
 		this._close_connection(error);
 	}
 });
