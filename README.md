@@ -253,7 +253,7 @@ if the *callback=* GET query parameter is supplied.
 ### Tested with
 
 * Servers:
-    1. [ejabberd](http://ejabberd.im/) hosted at [jappix.com](https://www.jappix.com/)
+    1. [ejabberd](http://ejabberd.im/) hosted at [jappix.com](https://jappix.com/)
     2. [M-Link](http://www.isode.com/products/m-link.html) hosted at [jabber.org](http://www.jabber.org/)
     3. [Google Talk](http://www.google.com/talk/) hosted at [gmail.com](http://gmail.com/)
     4. [Facebook](http://www.facebook.com/sitetour/chat.php) hosted at [chat.facebook.com](http://facebook.com/)
@@ -263,7 +263,7 @@ if the *callback=* GET query parameter is supplied.
 
 * Clients:
     1. [strophe.js] (http://github.com/metajack/strophejs)
-    2. [JSJaC] (https://github.com/sstrigler/JSJaC)
+    2. [JSJaC] (https://github.com/sstrigler/JSJaC) used at [jappix.org](http://jappix.org/)
     3. [dojox.xmpp] (http://dojoapi-mirror.devs.nu/jsdoc/dojox/1.2/dojox.xmpp) (modified since node-xmpp-bosh doesn't support the authid attribute)
     4. libpurple (pidgin as a client)
     5. [strophe.js websocket client] (https://github.com/superfeedr/strophejs/)
