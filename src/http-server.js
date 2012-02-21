@@ -34,6 +34,8 @@ var EventPipe   = require('eventpipe').EventPipe;
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
 var log         = require('./log.js').getLogger(filename);
 
+var BoshRequestParser = require('./bosh-request-parser').BoshRequestParser;
+
 function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_handler,
                     bosh_options) {
 
@@ -56,40 +58,41 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             return;
         }
 
-        var data = '';
         var end_timeout;
+        var bosh_request_parser = new BoshRequestParser();
 
-        var _on_end_callback = us.once(function (timed_out) {
-            if (timed_out) {
-                log.warn("Timed out - destroying connection from '%s'", req.socket.remoteAddress);
-                req.destroy();
-            } else {
-                log.debug("RECD: %s", data);
-                bosh_request_handler(res, data);
+        var _on_end_callback = us.once(function (err) {
+            if (end_timeout) {
                 clearTimeout(end_timeout);
             }
+
+            if (err) {
+                log.warn("%s - destroying connection from '%s'", err, req.socket.remoteAddress);
+                req.destroy();
+            } else {
+                var body = bosh_request_parser.parsedBody;
+                log.debug("RECD: %s", body);
+                bosh_request_handler(res, body);
+                bosh_request_parser.end();
+            }
+
+            bosh_request_parser = null;
         });
 
         // Timeout the request of we don't get an 'end' event within
         // 20 sec of the request being made.
         end_timeout = setTimeout(function () {
-            _on_end_callback(true);
+            _on_end_callback(new Error("Timed Out"));
         }, 20 * 1000);
-
+        
+        // Add abuse prevention.
         req.on('data', function (d) {
-            data += d.toString();
-            // Prevent attacks. If data (in its entirety) gets too big,
-            // terminate the connection.
-            if (data.length > bosh_options.MAX_DATA_HELD) {
-                // Terminate the connection. We null out 'data' to aid GC
-                data = null;
-                _on_end_callback(true);
-                return;
+            if (!bosh_request_parser.parse(d)) {
+                _on_end_callback(new Error("Parse Error"));
             }
         })
         .on('end', function () {
-            _on_end_callback(false);
-            data = null; // No point keeping this reference around any more.
+            _on_end_callback();
         })
         .on('error', function (ex) {
             log.error("Exception '" + ex.toString() + "' while processing request");
