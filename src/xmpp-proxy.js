@@ -264,8 +264,6 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_data: function(d) {
-		var d = d.toString();
-
 		log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
 
 		this._parser.parse(d);
