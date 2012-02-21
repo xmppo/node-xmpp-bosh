@@ -70,7 +70,6 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
 		this._no_tls_domains[domain] = 1;
 	}.bind(this));
 
-	this._buff         = '';
 	this._is_connected = false;
 	this._parser       = new XmppParser();
 	this._terminate_on_connect = false;
@@ -200,7 +199,6 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	restart: function(stream_attrs) {
-		this._buff = '';
 		var _ss_open = this._get_stream_xml_open(stream_attrs);
 		this.send(_ss_open);
 		this._parser.restart();
