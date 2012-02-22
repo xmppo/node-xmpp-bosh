@@ -1,0 +1,22 @@
+* TODO CPU
+  When users connect simultaneously
+  ** 0 user
+  ** 1 user
+  ** 5 user
+  ** 10 user
+  ** 50 user
+  ** 100 user
+  ** 500 user
+  ** 1000 user
+
+* TODO Memory
+  Every user send msg to everyone every 5 secs
+  ** 0 user - 3.22mb 
+    code: 1.2mb
+    string: 0.9kb
+  ** 1 user - 
+  ** 10 user
+  ** 50 user
+  ** 100 user
+  ** 500 user
+  ** 1000 user
