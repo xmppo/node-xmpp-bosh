@@ -31,10 +31,7 @@ var responsejs	= require('./response.js');
 var $terminate	= helper.$terminate;
 var $body	    = helper.$body;
 
-function Stream(session, node, options, bep, call_on_terminate) {
-    this._on_terminate	= call_on_terminate;
-    this._options	    = options;
-    this._bep	        = bep;
+function Stream(session, node, option) {
     this.name	        = uuid();
     this.terminated     = false;
     this.to		        = node.attrs.to;
@@ -48,16 +45,14 @@ function Stream(session, node, options, bep, call_on_terminate) {
     }
 
     this.__defineGetter__("state", function () { //For backward API compatibility.
-    return this.session;
+        return this.session;
     });
-
 }
 
 Stream.prototype = {
-
     terminate: function (condition) {
         this.session.delete_stream(this);
-        this._on_terminate(this, condition);
+        delete this.session;
     },
 
     // Terminates an open stream.

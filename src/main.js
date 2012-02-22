@@ -27,11 +27,13 @@
 var bosh      = require('./bosh.js');
 var websocket = require('./websocket.js');
 var websocket_draft10 = require('./websocket_draft10.js');
+var config    = require('./configuration.js');
 var dutil     = require('./dutil.js');
 var xpc       = require('./xmpp-proxy-connector.js');
 var xp        = require('./xmpp-proxy.js');
 var ls        = require('./lookup-service.js');
 var us        = require('underscore');
+
 var path   = require('path');
 
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
@@ -43,21 +45,38 @@ exports.connector  = xpc;
 exports.proxy      = xp;
 exports.lookup     = ls;
 exports.dutil      = dutil;
+
+// Important links:
+//
+// List of BOSH errors for the terminate packet
+// http://xmpp.org/extensions/xep-0124.html#errorstatus-terminal
+//
+// XEP-206
+// http://xmpp.org/extensions/xep-0206.html
+//
+// CORS headers
+// https://developer.mozilla.org/En/HTTP_access_control
+
+// options:
+//
+// * path
+// * port
+// * host
+// * window_size
+// * http_headers
+// * max_data_held
+// * max_inactivity 
+// * default_inactivity
+// * max_bosh_connections
+// * http_socket_keepalive
+
 exports.start_bosh = function(options) {
-
-	options = options || { };
-	options = dutil.extend(options, {
-		path: /^\/http-bind(\/+)?$/, 
-		port: 5280, 
-		logging: "INFO"
-	});
-
+    options = config.get_config(options);
 	logger.set_log_level(options.logging);
 
+    log.trace("Starting the BOSH server");
 	// Instantiate a bosh server with the connector as a parameter.
 	var bosh_server = bosh.createServer(options);
-
-	log.trace("Starting the BOSH server");
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.

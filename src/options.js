@@ -23,67 +23,75 @@
  *
  */
 
-var helper = require('./helper.js');
+var _ = require('underscore');
 
-function BOSH_Options(opts) {
-
-    var _opts = opts;
-
-    this.HTTP_GET_RESPONSE_HEADERS = {
+var config = {
+    HTTP_GET_RESPONSE_HEADERS: {
         'Content-Type': 'application/xhtml+xml; charset=UTF-8',
         'Cache-Control': 'no-cache, no-store',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
         'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
         'Access-Control-Max-Age': '14400'
-    };
+    }
 
-    this.HTTP_POST_RESPONSE_HEADERS = {
+    , HTTP_POST_RESPONSE_HEADERS: {
         'Content-Type': 'text/xml; charset=UTF-8',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
         'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
         'Access-Control-Max-Age': '14400'
-    };
+    }
 
-    this.HTTP_OPTIONS_RESPONSE_HEADERS = {
+    , HTTP_OPTIONS_RESPONSE_HEADERS: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
         'Access-Control-Max-Age': '14400'
-    };
-
-    if (_opts.http_headers) {
-        helper.add_to_headers(this.HTTP_GET_RESPONSE_HEADERS, _opts.http_headers);
-        helper.add_to_headers(this.HTTP_POST_RESPONSE_HEADERS, _opts.http_headers);
-        helper.add_to_headers(this.HTTP_OPTIONS_RESPONSE_HEADERS, _opts.http_headers);
     }
 
-    this.path = _opts.path;
+    , path: /^\/http-bind(\/+)?$/
+    , port: 5280
+	, logging: "INFO"
 
     // The maximum number of bytes that the BOSH server will
     // "hold" from the client.
-    this.MAX_DATA_HELD = _opts.max_data_held || 100000;
+    , MAX_DATA_HELD: 100000
 
     // Don't entertain more than 2 (default) simultaneous connections
     // on any BOSH session.
-    this.MAX_BOSH_CONNECTIONS = _opts.max_bosh_connections || 2;
+    , MAX_BOSH_CONNECTIONS: 2
 
     // The maximum number of packets on either side of the current 'rid'
     // that we are willing to accept.
-    this.WINDOW_SIZE = _opts.window_size || 2;
+    , WINDOW_SIZE: 2
 
     // How much time (in second) should we hold a response object
     // before sending and empty response on it?
-    this.DEFAULT_INACTIVITY = _opts.default_inactivity || 70;
+    , DEFAULT_INACTIVITY: 70
 
-    this.MAX_INACTIVITY = _opts.max_inactivity || 160;
+    , MAX_INACTIVITY: 160
 
-    this.HTTP_SOCKET_KEEPALIVE = _opts.http_socket_keepalive || 60;
+	// The value (in second) of keepalive to set on the HTTP response 
+	// socket
+    , HTTP_SOCKET_KEEPALIVE: 60
 
-    this.MAX_STREAMS_PER_SESSION = _opts.max_streams_per_session || 8;
+	// The maximum number of active streams allowed per BOSH session
+    , MAX_STREAMS_PER_SESSION: 8
 
-    this.PIDGIN_COMPATIBLE = _opts.pidgin_compatible || false;
-}
+    // Set to 'true' if you want:
+    // 
+    // 1. The session creation response to contain the <stream:features/> tag.
+    // 2. NO multiple streams support (only supports a single stream
+    // per session in this mode).
+    // 
+    // Useful to work around a pidgin (libpurple) bug.
+    // 
+    , PIDGIN_COMPATIBLE: false
+};
 
-exports.BOSH_Options = BOSH_Options;
+exports.get_config = function (user_config) {
+    // TODO: Handle HTTP headers.
+    config = _.defaults(user_config, config);
+    return config;
+};

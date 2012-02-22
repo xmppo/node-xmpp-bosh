@@ -43,8 +43,13 @@ var $body = helper.$body;
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind'; //TODO: might not be required
 
 
-// This encapsulates the state for the BOSH session
-//
+// Ideally, the session_* functions shouldn't worry about anything except for 
+// session state maintenance. They should specifically NOT know about streams.
+// There may be some exceptions where the abstractions leak into one another, 
+// but they should be the exceptions (and there should be a good reason for 
+// such an occurence) and not the rule.
+// 
+
 
 // Note: xmpp-proxy.js relies on the session object
 // to have a sid attribute and the stream object to
@@ -53,30 +58,6 @@ var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind'; //TODO: might not be req
 // coupling. We may choose to get rid of it later.
 // Deviation from this behaviour for now might lead to
 // a crash or unreadable logs.
-
-// Format: {
-//   sid: {
-//     sid:
-//     rid:
-//     wait:
-//     hold:
-//     res: [ An array of response objects (format is show below) ]
-//     pending: [ An array of pending responses to send to the client ]
-//     has_next_tick: true if a nextTick handler for this session has
-//       been registered, false otherwise
-//     ... and other jazz ...
-//   }
-// }
-//
-// Format of a single response object:
-//
-// {
-//   res: HTTP response object (obtained from node.js)
-//   timeout: A timeout, after which an empty <body> packet will be
-//            sent on this response object
-//   rid: The 'rid' of the request to which this response object is
-//        associated
-// }
 
 function Session(node, options, bep, call_on_terminate) {
     this._on_terminate = call_on_terminate;
@@ -94,7 +75,7 @@ function Session(node, options, bep, call_on_terminate) {
 
     if (this.hold <= 0) {
         this.hold = 1;
-    } // Sanitize hold
+    } 
 
     if (node.attrs.content) { // If the client included a content attribute, we mimic it.
         this.content = node.attrs.content;
@@ -129,7 +110,7 @@ function Session(node, options, bep, call_on_terminate) {
     // Once the response is stitched 
     this.pending_stitched_responses = [ ];
 
-    // index of the next stream to responsd to
+    // index of the next stream to respond to
     this.next_stream = 0;
 
     // This is an array of Stream() objects. It holds all the streams
@@ -197,37 +178,35 @@ function Session(node, options, bep, call_on_terminate) {
 
 }
 
-Session.prototype = {
+Session.prototype.add_stream = function (stream) {
+    this.streams.push(stream);
+    this.pending_bosh_responses[stream.name] = [ ];
+    this.pending_stanzas[stream.name] = [ ];
+};
 
-    add_stream: function (stream) {
-        this.streams.push(stream);
-        this.pending_bosh_responses[stream.name] = [ ];
-        this.pending_stanzas[stream.name] = [ ];
-    },
+Session.prototype.delete_stream = function (stream) {
+    if (this.pending_stanzas[stream.name]) {
+        delete this.pending_stanzas[stream.name];
+        delete this.pending_bosh_responses[stream.name];
+    }
 
-    delete_stream: function (stream) {
-        if (this.pending_stanzas[stream.name]) {
-            delete this.pending_stanzas[stream.name];
-            delete this.pending_bosh_responses[stream.name];
+    var pos = this.streams.indexOf(stream);
+    if (pos !== -1) {
+        if (pos < this.next_stream) {
+            --this.next_stream;
         }
+        this.streams.splice(pos, 1);
+    }
 
-        var pos = this.streams.indexOf(stream);
-        if (pos !== -1) {
-            if (pos < this.next_stream) {
-                --this.next_stream;
-            }
-            this.streams.splice(pos, 1);
+    // Null out all the requests for the deleted stream.
+    us(this.queued_requests).each(function (queued_request, rid) {
+        if (queued_request.stream === stream) {
+            log.trace("%s %s delete_stream - will not process request rid: %s", this.sid, stream.name, rid);
+            this.queued_requests[rid].node = $body();
+            this.queued_requests[rid].stream = null;
         }
-
-        // Null out all the requests for the deleted stream.
-        us(this.queued_requests).each(function (queued_request, rid) {
-            if (queued_request.stream === stream) {
-                log.trace("%s %s delete_stream - will not process request rid: %s", this.sid, stream.name, rid);
-                this.queued_requests[rid].node = $body();
-                this.queued_requests[rid].stream = null;
-            }
-        }, this);
-    },
+    }, this);
+};
 
     get_only_stream: function () {
         if (this.streams.length === 1) {
@@ -1132,97 +1111,3 @@ Session.prototype = {
 };
 
 
-function SessionStore(bosh_options, bep) {
-
-    this._bosh_options = bosh_options;
-
-    this._bep = bep;
-
-    this._sid_state = {
-    };
-
-    this._sid_info = {
-        length  : 0,     // Stores the number of active sessions
-        total   : 0     // Stores the total number of sessions
-    };
-
-    // This holds the terminate condition for terminated
-    // sessions. Both this, and terminated_streams are used when the
-    // connection between nxb and xmpp server breaks and all the
-    // session related info is wiped out. We preserve the condition in
-    // this case to let the client know why its connection broke.
-    this._terminated_sessions = {
-    };
-
-}
-
-// Ideally, the session_* functions shouldn't worry about anything except for 
-// session state maintenance. They should specifically NOT know about streams.
-// There may be some exceptions where the abstractions leak into one another, 
-// but they should be the exceptions (and there should be a good reason for 
-// such an occurence) and not the rule.
-// 
-SessionStore.prototype = {
-
-    get_active_no: function () {
-        return this._sid_info.length;
-    },
-
-    get_total_no: function () {
-        return this._sid_info.total;
-    },
-
-    //Fetches a BOSH session object given a BOSH stanza (<body> tag)
-    get_session: function (node) {
-        var sid = node.attrs.sid;
-        var session = sid ? this._sid_state[sid] : null;
-        return session;
-    },
-
-    get_sessions_obj: function () {
-        return this._sid_state;
-    },
-
-    add_session: function (node, res) {
-        var self = this;
-        // TODO: Log the number of entries in this._terminated_sessions
-        var session = new Session(node, this._bosh_options, this._bep,
-            function (session, condition) {
-                helper.save_terminate_condition_for_wait_time(self._terminated_sessions,
-                    session.sid, condition, session.wait);
-                delete self._sid_state[session.sid];
-                self.stat_session_terminate();
-            });
-        session.reset_inactivity_timeout();
-        session.add_held_http_connection(node.attrs.rid, res);
-        this._sid_state[session.sid] = session;
-        this.stat_session_add();
-        return session;
-    },
-
-    send_invalid_session_terminate_response: function (res, node) {
-        log.trace("Sending invalid sid");
-        var terminate_condition;
-        if (this._terminated_sessions[node.attrs.sid]) {
-            terminate_condition = this._terminated_sessions[node.attrs.sid].condition;
-        }
-        var attrs = {
-            condition   : terminate_condition || 'item-not-found',
-            message     : terminate_condition ? '' : 'Invalid session ID'
-        };
-        var ro = new responsejs.Response(res, null, this._bosh_options);
-        ro.send_termination_stanza(attrs);
-    },
-
-    stat_session_add: function () {
-        ++this._sid_info.length;
-        ++this._sid_info.total;
-    },
-
-    stat_session_terminate: function () {
-        --this._sid_info.length;
-    }
-
-};
-
-exports.SessionStore = SessionStore;
