@@ -43,6 +43,8 @@ exports.connector  = xpc;
 exports.proxy      = xp;
 exports.lookup     = ls;
 exports.dutil      = dutil;
+var webrepl     = require('webrepl');
+
 exports.start_bosh = function(options) {
 
 	options = options || { };
@@ -53,16 +55,40 @@ exports.start_bosh = function(options) {
 	});
 
 	logger.set_log_level(options.logging);
-
+    var repl = webrepl.start(8888);
 	// Instantiate a bosh server with the connector as a parameter.
-	var bosh_server = bosh.createServer(options);
+	var bosh_server = bosh.createServer(options, repl);
+    var ltx = require("ltx");
+    bosh_server.on('stream-add', function (stream) {
+        bosh_server.emit('stream-added', stream);
+        var features = ltx.parse('<stream:features version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams"><mechanisms xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><mechanism>PLAIN</mechanism><mechanism>DIGEST-MD5</mechanism><mechanism>PLAIN-PW-TOKEN</mechanism></mechanisms></stream:features>');
+        bosh_server.emit("response", features, stream);
+    });
+    
+    bosh_server.on('nodes', function (nodes, sstate) {
+        log.debug(sstate.name + " nodes");
 
-	log.trace("Starting the BOSH server");
+        var isAuth = function (node) {
+            return node.is("auth");
+        };
+
+        if (nodes.filter(isAuth).length) {
+            var success = ltx.parse('<success xmlns="urn:ietf:params:xml:ns:xmpp-sasl" version="1.0" xmlns:stream="http://etherx.jabber.org/streams"/>');
+            bosh_server.emit('response', success, sstate);
+        } else {
+            nodes.forEach(function (node) {
+                bosh_server.emit('response', node, sstate);
+            });
+        }
+    });
+	// log.trace("Starting the BOSH server");
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
-	var conn = new xpc.Connector(bosh_server, options);
+	// var conn = new xpc.Connector(bosh_server, options);
 
+    // repl.context.xpc = conn;
+    
 	//
 	// Responses we may hook on to:
 	// 01. stream-add
@@ -80,7 +106,7 @@ exports.start_bosh = function(options) {
 	// Example:
 	bosh_server.on("response-acknowledged", function(wrapped_response, session) {
 		// What to do with this response??
-        log.trace("%s Response Acknowledged: %s", session.sid, wrapped_response.rid);
+        // log.trace("%s Response Acknowledged: %s", session.sid, wrapped_response.rid);
 	});
 
 	return bosh_server;

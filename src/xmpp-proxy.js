@@ -119,13 +119,13 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	_starttls: function() {
-		log.trace("%s %s _starttls", this._void_star.session.sid, this._void_star.name);
+		// log.trace("%s %s _starttls", this._void_star.session.sid, this._void_star.name);
 		// Vishnu hates 'self'
 		var self = this;
 		this._detach_handlers();
 
 		var ct = require('./starttls.js')(this._sock, { }, function() {
-			log.trace("%s %s _starttls - restart the stream", self._void_star.session.sid, self._void_star.name);
+			// log.trace("%s %s _starttls - restart the stream", self._void_star.session.sid, self._void_star.name);
 			// Restart the stream.
 			self.restart();
 	    });
@@ -145,7 +145,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_stanza: function(stanza) {
-		log.trace("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
+		// log.trace("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
 
 		dutil.extend(stanza.attrs, this._stream_attrs);
 
@@ -167,12 +167,12 @@ dutil.copy(XMPPProxy.prototype, {
 
 			if (starttls_stanza.getChild('required') || !this._no_tls_domains[this._xmpp_host]) {
 				/* Signal willingness to perform TLS handshake */
-				log.trace("%s %s _on_stanza starttls requested", this._void_star.session.sid, this._void_star.name);
+				// log.trace("%s %s _on_stanza starttls requested", this._void_star.session.sid, this._void_star.name);
 				var _starttls_request = 
 					new ltx.Element('starttls', {
 						xmlns: NS_XMPP_TLS
 					}).toString();
-				log.trace("%s %s Writing out starttls", this._void_star.session.sid, this._void_star.name);
+				// log.trace("%s %s Writing out starttls", this._void_star.session.sid, this._void_star.name);
 				this.send(_starttls_request);
 			}
 			else {
@@ -206,7 +206,7 @@ dutil.copy(XMPPProxy.prototype, {
 
 	terminate: function() {
 		if (this._is_connected) {
-			log.trace("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
+			// log.trace("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
 			// Detach the 'data' handler so that we don't get any more events.
 			this._sock.removeAllListeners('data');
 			this._parser.end();
@@ -225,7 +225,7 @@ dutil.copy(XMPPProxy.prototype, {
 			this._sock.end();
 		}
 		else {
-			log.trace("%s %s terminate - will terminate on connect", this._void_star.session.sid, this._void_star.name);
+			// log.trace("%s %s terminate - will terminate on connect", this._void_star.session.sid, this._void_star.name);
 			this._terminate_on_connect = true;
 		}
 	},
@@ -234,11 +234,11 @@ dutil.copy(XMPPProxy.prototype, {
 		if (this._is_connected) {
 			try {
 				this._sock.write(data);
-				log.trace("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data);
+				// log.trace("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data);
 			}
 			catch (ex) {
 				this._is_connected = false;
-				log.error("%s %s Couldnot send: %s", this._void_star.session.sid, this._void_star.name, data);
+				// log.error("%s %s Couldnot send: %s", this._void_star.session.sid, this._void_star.name, data);
 				// this.on_close(true, ex);
 			}
 		}
@@ -246,7 +246,7 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_connect: function() {
-		log.trace("%s %s connected", this._void_star.session.sid, this._void_star.name);
+		// log.trace("%s %s connected", this._void_star.session.sid, this._void_star.name);
 
 		this._is_connected = true;
 
@@ -264,13 +264,13 @@ dutil.copy(XMPPProxy.prototype, {
 	}, 
 
 	_on_data: function(d) {
-		log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
+		// log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
 
 		this._parser.parse(d);
 	},
 
 	_on_stream_start: function(attrs) {
-		log.trace("%s %s _on_stream_start: stream started", this._void_star.session.sid, this._void_star.name);
+		// log.trace("%s %s _on_stream_start: stream started", this._void_star.session.sid, this._void_star.name);
 
 		this._stream_attrs = { };
 		dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
@@ -281,28 +281,28 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
 	_on_stream_end: function(attr) {
-		log.trace("%s %s _on_stream_end: stream terminated", this._void_star.session.sid, this._void_star.name);
+		// log.trace("%s %s _on_stream_end: stream terminated", this._void_star.session.sid, this._void_star.name);
 		this.terminate();
 	},
 
 	_on_stream_error: function(error) {
-		log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name, error);
+		// log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name, error);
 		this.terminate();
 	},
 
 	_close_connection: function(error) {
-		log.trace("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
+		// log.trace("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
 		this.emit('close', error, this._void_star);
 	},
 	
 	_on_close: function(had_error) {
 		had_error = had_error || false;
-		log.trace("%s %s _on_close error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
+		// log.trace("%s %s _on_close error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
 		this._close_connection(had_error ? 'remote-connection-failed' : null);
 	},
 
 	_on_lookup_error: function(error) {
-		log.warn("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name, error);
+		// log.warn("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name, error);
 		this._close_connection(error);
 	}
 });

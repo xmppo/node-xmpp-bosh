@@ -71,7 +71,7 @@ Response.prototype = {
         this._res.setHeader("Content-Length", Buffer.byteLength(msg, 'utf8'));
 		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
 		this._res.end(msg);
-		log.debug("SENT: %s", msg);
+		// log.debug("SENT: %s", msg);
 	},
 
 	// If a client closes a connection and a response to that HTTP request

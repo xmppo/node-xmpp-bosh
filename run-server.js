@@ -27,7 +27,7 @@
 var fs   = require('fs');
 var path = require('path');
 var nxb  = require("./src/main.js");
-
+var profiler = require('v8-profiler');
 
 var BOSH_DEFAULT_CONFIG_PATH = '/etc/bosh.js.conf';
 
@@ -175,7 +175,7 @@ function main() {
 										  new Date())
 					   );
 
-	var ws10_server   = nxb.start_websocket_draft10(bosh_server);
+	// var ws10_server   = nxb.start_websocket_draft10(bosh_server);
 
 
 }

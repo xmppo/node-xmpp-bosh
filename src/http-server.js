@@ -67,11 +67,11 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             }
 
             if (err) {
-                log.warn("%s - destroying connection from '%s'", err, req.socket.remoteAddress);
+                // log.warn("%s - destroying connection from '%s'", err, req.socket.remoteAddress);
                 req.destroy();
             } else {
                 var body = bosh_request_parser.parsedBody;
-                log.debug("RECD: %s", body);
+                // log.debug("RECD: %s", body);
                 bosh_request_handler(res, body);
                 bosh_request_parser.end();
             }
@@ -95,8 +95,8 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             _on_end_callback();
         })
         .on('error', function (ex) {
-            log.error("Exception '" + ex.toString() + "' while processing request");
-            log.error("Stack Trace: %s\n", ex.stack);
+            // log.error("Exception '" + ex.toString() + "' while processing request");
+            // log.error("Stack Trace: %s\n", ex.stack);
         });
         return false;
     }
@@ -150,7 +150,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     }
 
     function handle_unhandled_request(req, res, u) {
-        log.trace("Invalid request, method: %s path: %s", req.method, u.pathname);
+        // log.trace("Invalid request, method: %s path: %s", req.method, u.pathname);
         var _headers = { };
         dutil.copy(_headers, bosh_options.HTTP_POST_RESPONSE_HEADERS);
         _headers['Content-Type'] = 'text/plain; charset=utf-8';
@@ -173,7 +173,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
     function http_request_handler(req, res) {
         var u = url.parse(req.url, true);
-        log.trace("Processing %s request at location: %s", req.method, u.pathname);
+        // log.trace("Processing %s request at location: %s", req.method, u.pathname);
         router.emit('request', req, res, u);
     }
 

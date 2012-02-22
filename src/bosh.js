@@ -70,7 +70,7 @@ var log         = require('./log.js').getLogger(filename);
 //
 
 
-exports.createServer = function (options) {
+exports.createServer = function (options, repl) {
     //
     // +-------+
     // | NOTE: |
@@ -132,7 +132,7 @@ exports.createServer = function (options) {
 
         // Check if this is a session start packet.
         if (helper.is_session_creation_packet(node)) {
-            log.trace("Session Creation");
+            //log.trace("Session Creation");
             session = session_store.add_session(node, res);
             stream  = stream_store.add_stream(session, node);
 
@@ -153,21 +153,21 @@ exports.createServer = function (options) {
         } else {
             session = session_store.get_session(node);
             if (!session) { //No (valid) session ID in BOSH request. Not phare enuph.
-                log.trace("%s Invalid Session", node.attrs.sid || "No_Session_ID");
+                //log.trace("%s Invalid Session", node.attrs.sid || "No_Session_ID");
                 session_store.send_invalid_session_terminate_response(res, node);
                 return;
             }
             try {
                 // This is enclosed in a try/catch block since invalid requests
                 // at this point MAY not have these attributes
-                log.trace("%s %s req.rid: %s, session.rid: %s", session.sid, 
-                          node.attrs.stream || "NO_Stream", node.attrs.rid, 
-                          session.rid);
+                //log.trace("%s %s req.rid: %s, session.rid: %s", session.sid, 
+                // node.attrs.stream || "NO_Stream", node.attrs.rid, 
+                // session.rid);
             } catch (ex) { }
 
             // Check the validity of the packet and the BOSH session
             if (!session.is_valid_packet(node)) {
-                log.trace("%s Invalid Packet", session.sid);
+                //log.trace("%s Invalid Packet", session.sid);
                 session.send_invalid_packet_terminate_response(res, node);
                 return;
             }
@@ -217,14 +217,14 @@ exports.createServer = function (options) {
             res.end(helper.$terminate({ condition: 'bad-request' }).toString());
             return;
         }
-        log.trace("Processing Request");
+        //log.trace("Processing Request");
         process_bosh_request(res, node);
     }
 
     // When the Connector is able to add the stream, we too do the same and
     // respond to the client accordingly.
     function _on_stream_added(stream) {
-        log.trace("%s %s stream-added", stream.state.sid, stream.name);
+        //log.trace("%s %s stream-added", stream.state.sid, stream.name);
         // Send only if this is the 2nd (or more) stream on this BOSH session.
         // This should work all the time. If anyone finds a case where it will
         // NOT work, please do let me know.
@@ -237,7 +237,7 @@ exports.createServer = function (options) {
     // When a response is received from the connector, try to send it out to the
     // real client if possible.
     function _on_repsponse(connector_response, stream) {
-        log.trace("%s %s response: %s", stream.state.sid, stream.name, connector_response);
+        //log.trace("%s %s response: %s", stream.state.sid, stream.name, connector_response);
         var session = stream.session;
         session.enqueue_stanza(connector_response, stream);
     }
@@ -272,6 +272,9 @@ exports.createServer = function (options) {
     bep.on('terminate', _on_terminate);
     session_store = new sess.SessionStore(bosh_options, bep);
     stream_store = new strm.StreamStore(bosh_options, bep);
+
+    repl.context.session_store = session_store;
+    repl.context.stream_store = stream_store;
     bep.set_session_data(session_store);
     bep.set_stream_data(stream_store);
     return bep;
