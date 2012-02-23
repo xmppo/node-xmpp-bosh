@@ -869,12 +869,12 @@ Session.prototype = {
 
     // Send a response, but do NOT requeue if it fails
     _send_no_requeue: function (ro, msg) {
-        log.trace("%s _send_pending_responses - ro: %s", this.sid, !!ro);
+        log.trace("%s _send_no_requeue::ro: %s", this.sid, !!ro);
         if (us.isFalsy(ro)) {
             return;
         }
 
-        log.trace("%s _send_pending_responses - ro.rid: %s, this.rid: %s", this.sid, ro.rid, this.rid);
+        log.trace("%s _send_no_requeue::ro.rid: %s, this.rid: %s", this.sid, ro.rid, this.rid);
 
         var ack = this._get_highest_rid_to_ack(ro.rid);
 
