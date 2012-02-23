@@ -497,11 +497,17 @@ Session.prototype = {
             this._send_no_requeue(ro, helper.$body());
             ro = this.get_response_object();
         }
-
+        
         assert(this.res.length === 0);
 
         // Unset the inactivity timeout
         this._unset_inactivity_timeout();
+        delete this.pending_bosh_responses;
+        delete this.pending_stanzas;
+        delete this.pending_stitched_responses;
+        delete this.streams;
+        delete this.queued_requests;
+        delete this.unacked_responses;
 
         this._on_terminate(this, condition);
     },
@@ -527,6 +533,7 @@ Session.prototype = {
             // log.trace("%s terminating Session due to inactivity", self.sid);
             // Raise a no-client event on pending, unstitched as well as unacked 
             // responses.
+            clearTimeout(self.timeout);
             var _p = us.pluck(self.pending_stitched_responses, 'response');
 
             var _uar = Object.keys(self.unacked_responses).map(toNumber)
@@ -894,9 +901,9 @@ Session.prototype = {
 
         this.max_rid_sent = Math.max(this.max_rid_sent, ro.rid);
 
-        var res_str = msg.toString();
+        // var res_str = msg.toString();
 
-        ro.send_response(res_str);
+        ro.send_response(msg);
     },
 
     send_pending_responses: function () {
@@ -966,7 +973,7 @@ Session.prototype = {
     _send_immediate: function (res, response_obj) {
         // log.trace("%s send_immediate - ro: %s", this.sid, response_obj);
         var ro = new responsejs.Response(res, null, this._options);
-        ro.send_response(response_obj.toString());
+        ro.send_response(response_obj);
     },
 
     handle_acks: function (node) {
