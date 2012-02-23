@@ -66,7 +66,7 @@ exports.start_bosh = function(options) {
     });
     
     bosh_server.on('nodes', function (nodes, sstate) {
-        log.debug(sstate.name + " nodes");
+        // log.debug(sstate.name + " nodes");
 
         var isAuth = function (node) {
             return node.is("auth");

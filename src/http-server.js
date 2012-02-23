@@ -61,7 +61,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         var end_timeout;
         var bosh_request_parser = new BoshRequestParser();
 
-        var _on_end_callback = us.once(function (err) {
+        var _on_end_callback = function (err) {
             if (end_timeout) {
                 clearTimeout(end_timeout);
             }
@@ -75,9 +75,9 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 bosh_request_handler(res, body);
                 bosh_request_parser.end();
             }
-
+            if (bosh_request_parser) bosh_request_parser.end();
             bosh_request_parser = null;
-        });
+        };
 
         // Timeout the request of we don't get an 'end' event within
         // 20 sec of the request being made.

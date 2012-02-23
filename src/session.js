@@ -455,7 +455,7 @@ Session.prototype = {
         }
 
         ro.set_socket_options(this.wait);
-        /*
+
         var self = this;
         ro.set_timeout(function () {
             var pos = self.res.indexOf(ro);
@@ -469,7 +469,7 @@ Session.prototype = {
             // WE ACTUALLY DO add it to unacked_responses
             self._send_no_requeue(ro, $body());
         }, this.wait * 1000);
-         */
+
         // Insert into its correct position (in RID order)
         var pos;
         for (pos = 0; pos < this.res.length && this.res[pos].rid < ro.rid; ++pos) {
@@ -779,6 +779,8 @@ Session.prototype = {
     // the current implementation.
     //
     _pop_and_send: function () {
+        log.info("pop_and_send");
+        assert(this.inactivity && this.sid && this.rid);
         if (this.res.length === 0) {
             // dont stitch responses as well.
             // log.trace("%s pop_and_send - Holding 0 ro - return", this.sid);
@@ -801,9 +803,10 @@ Session.prototype = {
             // that the client will request the missing
             // RID. 
             this._send_no_requeue(ro, response);
-
             // We try sending more queued responses
-            this.send_pending_responses();
+            this._pop_and_send();
+            // this.send_pending_responses();
+
         } else {
             // log.trace("%s pop_and_send - nothing to send, 0 pending - return");
         }
@@ -822,6 +825,11 @@ Session.prototype = {
     },
 
     try_sending: function () {
+        /*
+        if (!this.first_response) {
+            this._pop_and_send();
+        }*/
+
         if (!this.has_next_tick) {
             var self = this;
             process.nextTick(function () {
@@ -830,6 +838,7 @@ Session.prototype = {
             });
             this.has_next_tick = true;
         }
+
     },
 
 
@@ -847,7 +856,7 @@ Session.prototype = {
     enqueue_bosh_response: function (attrs, stream) {
         // log.trace("%s %s enqueue_bosh_response", this.sid, stream.name);
         this.pending_bosh_responses[stream.name].push(attrs);
-
+        this.first_response = false;
         if (this._options.PIDGIN_COMPATIBLE && this.first_response) {
             this.first_response = false;
         } else {
@@ -893,6 +902,7 @@ Session.prototype = {
         // Add this sent message to unacked_responses so that
         // unacked_responses is a serial list of unacknowledged
         // responses.
+
         this.unacked_responses[ro.rid] = {
             response: msg,
             ts: new Date(),

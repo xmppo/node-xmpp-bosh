@@ -75,9 +75,9 @@ function BOSH_Options(opts) {
 
     // How much time (in second) should we hold a response object
     // before sending and empty response on it?
-    this.DEFAULT_INACTIVITY = _opts.default_inactivity || 70;
+    this.DEFAULT_INACTIVITY = _opts.default_inactivity || 30;
 
-    this.MAX_INACTIVITY = _opts.max_inactivity || 160;
+    this.MAX_INACTIVITY = _opts.max_inactivity || 16000;
 
     this.HTTP_SOCKET_KEEPALIVE = _opts.http_socket_keepalive || 60;
 

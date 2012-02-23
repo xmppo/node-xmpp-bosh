@@ -266,7 +266,7 @@ exports.createServer = function (options, repl) {
     // The BOSH event emitter. People outside will subscribe to
     // events from this guy. We return an instance of BoshEventPipe
     // to the outside world when anyone calls createServer()
-    bep = new bee.BoshEventPipe(server.http_server);
+    bep = new bee.BoshEventPipe();
     bep.on('stream-added', _on_stream_added);
     bep.on('response', _on_repsponse);
     bep.on('terminate', _on_terminate);
@@ -275,7 +275,7 @@ exports.createServer = function (options, repl) {
 
     repl.context.session_store = session_store;
     repl.context.stream_store = stream_store;
-    bep.set_session_data(session_store);
-    bep.set_stream_data(stream_store);
+    // bep.set_session_data(session_store);
+    // bep.set_stream_data(stream_store);
     return bep;
 };
