@@ -815,11 +815,10 @@ Session.prototype = {
 
     try_sending: function () {
         if (!this.has_next_tick) {
-            var self = this;
             process.nextTick(function () {
-                self.has_next_tick = false;
-                self._pop_and_send();
-            });
+                this.has_next_tick = false;
+                this._pop_and_send();
+            }.bind(this));
             this.has_next_tick = true;
         }
     },
