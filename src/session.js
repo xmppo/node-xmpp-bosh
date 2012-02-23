@@ -781,7 +781,7 @@ Session.prototype = {
             this._stitch_new_response();
         }
 
-        if (this.pending_stitched_responses.length) {
+        if (this.pending_stitched_responses.length > 0) {
             var ro = this.get_response_object();
             log.trace("%s pop_and_send - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
             
