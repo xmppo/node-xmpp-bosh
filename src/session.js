@@ -778,37 +778,37 @@ Session.prototype = {
     // degrade the experience for the client. Hence, we stick with
     // the current implementation.
     //
-    _pop_and_send: function () {
-        log.info("pop_and_send");
+    send_pending_responses: function () {
         assert(this.inactivity && this.sid && this.rid);
-        if (this.res.length === 0) {
-            // dont stitch responses as well.
-            // log.trace("%s pop_and_send - Holding 0 ro - return", this.sid);
-            return;
-        }
-        
-        if (!this.pending_stitched_responses.length) {
-            this._stitch_new_response();
-        }
-
-        if (this.pending_stitched_responses.length) {
-            var ro = this.get_response_object();
-            // log.trace("%s pop_and_send - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
+        while (true) {
+            if (this.res.length === 0) {
+                // dont stitch responses as well.
+                // log.trace("%s pop_and_send - Holding 0 ro - return", this.sid);
+                break;
+            }
             
-            var _p = this.pending_stitched_responses.shift();
-            var response = _p.response;
-            var stream = _p.stream;
+            if (!this.pending_stitched_responses.length) {
+                this._stitch_new_response();
+            }
 
-            // We dont do anything on error, we assume
-            // that the client will request the missing
-            // RID. 
-            this._send_no_requeue(ro, response);
-            // We try sending more queued responses
-            this._pop_and_send();
-            // this.send_pending_responses();
+            if (this.pending_stitched_responses.length) {
+                var ro = this.get_response_object();
+                // log.trace("%s pop_and_send - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
+                
+                var _p = this.pending_stitched_responses.shift();
+                var response = _p.response;
+                var stream = _p.stream;
 
-        } else {
-            // log.trace("%s pop_and_send - nothing to send, 0 pending - return");
+                // We dont do anything on error, we assume
+                // that the client will request the missing
+                // RID. 
+                this._send_no_requeue(ro, response);
+                // We try sending more queued responses
+
+            } else {
+                break;
+                // log.trace("%s pop_and_send - nothing to send, 0 pending - return");
+            }
         }
     },
 
@@ -825,16 +825,11 @@ Session.prototype = {
     },
 
     try_sending: function () {
-        /*
-        if (!this.first_response) {
-            this._pop_and_send();
-        }*/
-
         if (!this.has_next_tick) {
             var self = this;
             process.nextTick(function () {
                 self.has_next_tick = false;
-                self._pop_and_send();
+                self.send_pending_responses();
             });
             this.has_next_tick = true;
         }
@@ -916,22 +911,6 @@ Session.prototype = {
         ro.send_response(msg);
     },
 
-    send_pending_responses: function () {
-        // log.trace("%s send_pending_responses - pending.length: %s", this.sid, this.pending_stitched_responses.length);
-
-        if (this.res.length === 0) {
-            return;
-        }
-
-        if (!this.pending_stitched_responses.length) {
-            this._stitch_new_response();
-        }
-
-        if (this.pending_stitched_responses.length > 0) {
-            this._pop_and_send();
-        }
-    },
-
     // Raise the 'nodes' event on 'bep' for every node in 'nodes'.
     // If 'sstate' is falsy, then the 'nodes' event is raised on
     // every open stream in the BOSH session represented by 'state'.
@@ -948,7 +927,19 @@ Session.prototype = {
             });
         } else {
             // log.trace("%s %s emit_nodes_event - emitting: %s", this.sid, stream.name, nodes);
-            this._bep.emit('nodes', nodes, stream);
+            //this._bep.emit('nodes', nodes, stream);
+            var isAuth = function (node) {
+                return node.is("auth");
+            };
+            var ltx = require("ltx");
+            if (nodes.filter(isAuth).length) {
+                var success = ltx.parse('<success xmlns="urn:ietf:params:xml:ns:xmpp-sasl" version="1.0" xmlns:stream="http://etherx.jabber.org/stream"/>');
+                this.enqueue_stanza(success, stream);
+            } else {
+                for (var node in nodes) {
+                    this.enqueue_stanza(nodes[node], stream);
+                }
+            }
         }
     },
 
