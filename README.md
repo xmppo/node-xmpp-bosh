@@ -82,6 +82,8 @@ as:
 $ bosh-server --config=PATH_TO_CONFIG
 ```
 
+Note: The **=** sign is important here. Replacing the equal sign with a space will NOT work.
+
 * **path**: The path to listen on **(default: /http-bind/)**
 
 * **port**: The port to listen on **(default: 5280)**
