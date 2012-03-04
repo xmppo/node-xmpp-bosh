@@ -29,9 +29,8 @@ curl http://npmjs.org/install.sh | sh
 
 7. Get the proxy (this should get all deps.) and run it.
 
-Go to the directory where you want to install 
-node-xmpp-bosh (for a local install and move to 
-setp-9) or follow step-8
+Go to the directory where you want to install node-xmpp-bosh (for 
+a local install and move to step-9) or follow step-8
 
 $ cd ~/
 $ npm install node-xmpp-bosh
