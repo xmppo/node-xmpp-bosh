@@ -45,7 +45,7 @@ $ bosh-server
 
 
 * If you are a developer and want a bleeding edge version of the server, 
-pull it from SVN and link it to your node module using npm.
+pull it from GIT and link it to your node module using npm.
 
 10. $ cd <your project directory>
 
@@ -53,8 +53,8 @@ pull it from SVN and link it to your node module using npm.
 
 12. $ cd node-xmpp-bosh
 
-13. Link the SVN version of the proxy to the main one (so that you can 
-pull and needn't wait for a release)
+13. Link the GIT checked-out directory of the proxy to the main one (so 
+that you can pull and needn't wait for a release)
 $ npm link
 
 14. Set the executable flag on run-server.js:
