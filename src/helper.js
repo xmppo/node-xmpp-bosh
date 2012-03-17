@@ -110,6 +110,9 @@ JSONPResponseProxy.prototype = {
             this.res_.write('"});');
         }
         return this.res_.end();
+    }, 
+    setHeader: function(name, value) {
+        return this.res_.setHeader(name, value);
     }
 };
 // End HTTP header helpers
