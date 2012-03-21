@@ -72,6 +72,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             } else {
                 var body = bosh_request_parser.parsedBody;
                 log.debug("RECD(%s): %s", req.socket.remoteAddress, body);
+                res.remoteAddress = req.socket.remoteAddress;
                 bosh_request_handler(res, body);
                 bosh_request_parser.end();
             }
