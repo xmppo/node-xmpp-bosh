@@ -14,7 +14,7 @@
 		 ,"semver": ">= 1.0.8"
 		 ,"websocket-server": ">= 1.4.04"
 		 ,"websocket": ">= 0.0.16"
-		 ,"log4js": ">= 0.4.3"
+		 ,"log4js": ">= 0.4.2"
 		 }
 ,"devDependencies": {"jsdom": ">= 0.2.0"
                     ,"jslint": ">= 0.1.2"
