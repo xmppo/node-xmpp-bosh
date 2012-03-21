@@ -45,21 +45,21 @@ var log         = require('./log.js').getLogger(filename);
  * If all attempts fail, an 'error' event is raised on the 'socket'.
  *
  */
-function XMPPLookupService(domain_name, port, route) {
-    this._domain_name = domain_name;
+function XMPPLookupService(stream, port) {
+    this._domain_name = stream.to;
     this._port = port;
-    this._route = route;
+    this._route = stream.route;
 
     var _special = {
         "gmail.com": "talk.google.com",
         "chat.facebook.com": "chat.facebook.com"
     };
 
-    if (_special.hasOwnProperty(domain_name)) {
+    if (_special.hasOwnProperty(this._domain_name)) {
         if (!this._route) {
             this._route = {
                 protocol: "xmpp",
-                host: _special[domain_name],
+                host: _special[this._domain_name],
                 port: this._port
             };
         }
