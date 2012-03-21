@@ -144,7 +144,7 @@ XMPPProxyConnector.prototype = {
 
 		log.trace("%s %s stream_add", sstate.session.sid, sstate.name);
 		var _ls_ctor = this.options.lookup_service || lookup.LookupService;
-		var _ls      = new _ls_ctor(sstate.to, DEFAULT_XMPP_PORT, sstate.route);
+		var _ls      = new _ls_ctor(sstate, DEFAULT_XMPP_PORT);
 
 		// Create a new stream.
 		var proxy = new this.Proxy(sstate.to, _ls, stream_start_attrs, 
