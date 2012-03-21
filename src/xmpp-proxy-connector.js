@@ -142,7 +142,6 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
-		log.trace("%s %s stream_add", sstate.session.sid, sstate.name);
 		var _ls_ctor = this.options.lookup_service || lookup.LookupService;
 		var _ls      = new _ls_ctor(sstate, DEFAULT_XMPP_PORT);
 
