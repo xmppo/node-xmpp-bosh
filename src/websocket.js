@@ -145,19 +145,30 @@ exports.createServer = function(bosh_server, webSocket) {
 		sn_state[stream_name] = sstate;
 
 		conn.on('message', function(message) {
-            console.log("message:", message);
+            // console.log("message:", message);
             if (message.type !== 'utf8') {
                 log.warn("Only utf-8 supported...");
                 return;
             }
 
-            // TODO: Use a SAX based parser instead
-			message = '<dummy>' + message.utf8Data + '</dummy>';
+            var message_data = message.utf8Data;
 
-			log.debug("%s - Processing: %s", stream_name, message);
+            // Check if this is a stream open message
+            if (message_data.search('<stream:stream') != -1) {
+                // Yes, it is. Now, check if it is closed or unclosed
+                if (message_data.search('/>') === -1) {
+                    // Unclosed - Close it to continue parsing
+                    message_data += '</stream:stream>';
+                }
+            }
+
+            // TODO: maybe use a SAX based parser instead
+			message_data = '<dummy>' + message_data + '</dummy>';
+
+			log.debug("%s - Processing: %s", stream_name, message_data);
 
 			// XML parse the message
-			var nodes = dutil.xml_parse(message);
+			var nodes = dutil.xml_parse(message_data);
 			if (!nodes) {
 				log.warn("%s Closing connection due to invalid packet", stream_name);
 				sstate.conn.close();
