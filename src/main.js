@@ -26,7 +26,6 @@
 
 var bosh      = require('./bosh.js');
 var websocket = require('./websocket.js');
-var websocket_draft10 = require('./websocket_draft10.js');
 var dutil     = require('./dutil.js');
 var xpc       = require('./xmpp-proxy-connector.js');
 var xp        = require('./xmpp-proxy.js');
@@ -86,20 +85,11 @@ exports.start_bosh = function(options) {
 	return bosh_server;
 };
 
-exports.start_websocket = function(bosh_server) {
-	var ws_server = websocket.createServer(bosh_server);
+exports.start_websocket = function(bosh_server, webSocket) {
+	var ws_server = websocket.createServer(bosh_server, webSocket);
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
 	var conn = new xpc.Connector(ws_server, { });
-
-};
-
-exports.start_websocket_draft10 = function(bosh_server) {
-	var ws_server_draft10 = websocket_draft10.createServer(bosh_server);
-
-	// The connector is responsible for communicating with the real XMPP server.
-	// We allow different types of connectors to exist.
-	var conn = new xpc.Connector(ws_server_draft10, { });
-
+    return ws_server;
 };
