@@ -143,7 +143,7 @@ XMPPProxyConnector.prototype = {
 		}
 
 		var _ls_ctor = this.options.lookup_service || lookup.LookupService;
-		var _ls      = new _ls_ctor(stream, DEFAULT_XMPP_PORT);
+		var _ls      = new _ls_ctor(DEFAULT_XMPP_PORT, stream);
 
 		// Create a new stream.
 		var proxy = new this.Proxy(stream.to, _ls, stream.attrs, 

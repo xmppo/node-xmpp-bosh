@@ -206,7 +206,7 @@ StreamStore.prototype = {
             message: terminate_condition ? '' : 'Invalid stream name',
             stream: sname
         };
-        var ro = new responsejs.Response(res, null, this._bosh_options);
+        var ro = new responsejs.Response(res, null, "invalid-stream", this._bosh_options);
         ro.send_termination_stanza(attrs);
     },
 

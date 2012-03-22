@@ -245,7 +245,7 @@ Session.prototype = {
     // the 'sid' and 'rid' attributes.
     // Also limit the number of attributes in the <body> tag to 20
     is_valid_packet: function (node) {
-        log.trace("%s is_valid_packet - node.attrs.rid: %s, state.rid: %s", this.sid, node.attrs.sid, this.rid);
+        log.trace("%s is_valid_packet - node.attrs.rid: %s, state.rid: %s", this.sid, node.attrs.rid, this.rid);
 
         // Allow variance of "window" rids on either side. This is in violation
         // of the XEP though.
@@ -422,7 +422,7 @@ Session.prototype = {
     // objects for this BOSH session. Also sets the associated 'rid' of
     // the response object 'res' to 'rid'
     add_held_http_connection: function (rid, res) {
-        var ro = new responsejs.Response(res, rid, this._options);
+        var ro = new responsejs.Response(res, rid, this.sid, this._options);
 
         // Return an empty body if something has already been sent on
         // a request with greater rid.
@@ -566,7 +566,7 @@ Session.prototype = {
         // Terminate the session (thanks @satyam.s). The XEP mentions this as
         // a MUST, so we humbly comply
         this.handle_client_stream_terminate_request(null, [ ], 'item-not-found');
-        var ro = new responsejs.Response(res, null, this._options);
+        var ro = new responsejs.Response(res, null, this.sid, this._options);
         ro.send_termination_stanza(attrs);
     },
 
@@ -960,7 +960,7 @@ Session.prototype = {
      */
     _send_immediate: function (res, response_obj) {
         log.trace("%s send_immediate - ro: %s", this.sid, response_obj);
-        var ro = new responsejs.Response(res, null, this._options);
+        var ro = new responsejs.Response(res, null, this.sid, this._options);
         ro.send_response(response_obj.toString());
     },
 
@@ -1204,7 +1204,7 @@ SessionStore.prototype = {
             condition   : terminate_condition || 'item-not-found',
             message     : terminate_condition ? '' : 'Invalid session ID'
         };
-        var ro = new responsejs.Response(res, null, this._bosh_options);
+        var ro = new responsejs.Response(res, null, "invalid-sid", this._bosh_options);
         ro.send_termination_stanza(attrs);
     },
 

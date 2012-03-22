@@ -51,7 +51,7 @@ var log         = require('./log.js').getLogger(filename);
  *         the following fields: 'route'
  * 
  */
-function XMPPLookupService(stream, port) {
+function XMPPLookupService(port, stream) {
     this._domain_name = stream.to;
     this._port = port;
     this._route = stream.route;

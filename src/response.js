@@ -32,8 +32,9 @@ var path        = require('path');
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
 var log         = require('./log.js').getLogger(filename);
 
-function Response(res, request_id, options) {
+function Response(res, request_id, sid, options) {
     this.rid        = request_id;
+    this._sid       = sid;
 	this._res		= res;
 	this._options   = options;
 }
@@ -71,7 +72,7 @@ Response.prototype = {
         this._res.setHeader("Content-Length", Buffer.byteLength(msg, 'utf8'));
 		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
 		this._res.end(msg);
-		log.debug("SENT: %s", msg);
+		log.debug("%s SENT(%s): %s", this._sid, this.rid, msg);
 	},
 
 	// If a client closes a connection and a response to that HTTP request
