@@ -914,19 +914,18 @@ Session.prototype = {
     },
 
     // Raise the 'nodes' event on 'bep' for every node in 'nodes'.
-    // If 'sstate' is falsy, then the 'nodes' event is raised on
-    // every open stream in the BOSH session represented by 'state'.
+    // If 'stream' is falsy, then the 'nodes' event is raised on
+    // every open stream in the BOSH session (the 'this' object).
     emit_nodes_event: function (nodes, stream) {
         if (!stream) {
             // No stream name specified. This packet needs to be
             // broadcast to all open streams on this BOSH session.
             log.trace("%s emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
-            var self = this;
             this.streams.forEach(function (stream) {
                 if (stream) {
-                    self._bep.emit('nodes', nodes, stream);
+                    this._bep.emit('nodes', nodes, stream);
                 }
-            });
+            }.bind(this));
         } else {
             log.trace("%s %s emit_nodes_event - emitting: %s", this.sid, stream.name, nodes);
             this._bep.emit('nodes', nodes, stream);
@@ -944,7 +943,7 @@ Session.prototype = {
     },
 
     /* Fetches a random stream from the BOSH session. This is used to
-     * send a sstate object to function that require one even though
+     * send a 'stream' object to function that require one even though
      * the particular response may have nothing to do with a stream
      * as such.
      */
@@ -997,20 +996,18 @@ Session.prototype = {
             node.attrs.ack = node.attrs.rid - 1;
         }
 
-        var self = this;
-
         // If the request from the client includes an ACK, we delete all
         // packets with an 'rid' less than or equal to this value since
         // the client has seen all those packets.
         _uar_keys.forEach(function (rid) {
             if (rid <= node.attrs.ack) {
                 // Raise the 'response-acknowledged' event.
-                log.trace("%s handle_acks - received ack: %s", self.sid, rid);
-                self._bep.emit('response-acknowledged',
-                               self.unacked_responses[rid], self);
-                delete self.unacked_responses[rid];
+                log.trace("%s handle_acks - received ack: %s", this.sid, rid);
+                this._bep.emit('response-acknowledged',
+                               this.unacked_responses[rid], this);
+                delete this.unacked_responses[rid];
             }
-        });
+        }.bind(this));
 	},
 
     // Precondition: This function should be called before handle_acks

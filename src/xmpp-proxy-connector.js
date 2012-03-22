@@ -88,8 +88,8 @@ function XMPPProxyConnector(bosh_server, options) {
 			return;
 		}
 
-		ss.pending.forEach(function(ps /* Pending Stanza */) {
-			ss.proxy.send(ps.toString());
+		ss.pending.forEach(function(pending_stanza) {
+			ss.proxy.send(pending_stanza.toString());
 		});
 
 		ss.pending = [ ];
