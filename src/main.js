@@ -42,8 +42,8 @@ exports.connector  = xpc;
 exports.proxy      = xp;
 exports.lookup     = ls;
 exports.dutil      = dutil;
-exports.start_bosh = function(options) {
 
+exports.start_bosh = function(options) {
 	options = options || { };
 	options = dutil.extend(options, {
 		path: /^\/http-bind(\/+)?$/, 
@@ -85,6 +85,12 @@ exports.start_bosh = function(options) {
 	return bosh_server;
 };
 
+//
+// bosh_server: The bosh server instance returned by start_bosh
+//
+// webSocket: An optional reference to the 'websocket' module - in
+// case you need to provide your own proxy object
+//
 exports.start_websocket = function(bosh_server, webSocket) {
 	var ws_server = websocket.createServer(bosh_server, webSocket);
 
