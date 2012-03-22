@@ -248,7 +248,7 @@ if the *callback=* GET query parameter is supplied.
 * [eventpipe] (https://github.com/dhruvbird/eventpipe)
 * [dns-srv] (https://github.com/dhruvbird/dns-srv)
 * [semver] (https://github.com/isaacs/node-semver)
-* [websocket-server] (https://github.com/miksago/node-websocket-server)
+* [websocket] (https://github.com/Worlize/WebSocket-Node)
 * [log4js] (http://log4js.berlios.de/)
 * [jsdom] (https://github.com/tmpvar/jsdom) for tests
 * [jslint] (https://github.com/reid/node-jslint) for running lintit.sh

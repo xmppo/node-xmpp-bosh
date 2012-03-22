@@ -170,8 +170,7 @@ function main() {
 										  new Date())
 					   );
 
-    var webSocket   = require('websocket');
-	var ws_server   = nxb.start_websocket(bosh_server, webSocket);
+	var ws_server   = nxb.start_websocket(bosh_server);
 }
 
 // Go!!

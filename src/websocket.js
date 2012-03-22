@@ -56,7 +56,7 @@ const STREAM_OPENED   = 2;
 //
 
 exports.createServer = function(bosh_server, webSocket) {
-    webSocket = webSocket || require('websocket-server');
+    webSocket = webSocket || require('websocket');
 
 	// State information for XMPP streams
 	var sn_state = { };
@@ -81,41 +81,9 @@ exports.createServer = function(bosh_server, webSocket) {
 
 	var wsep = new WebSocketEventPipe(bosh_server);
 
-    var connect_event = '';
-    var send_proc     = '';
-    var createWebSocketServer = '';
-
-    function setWSSpecificParameters(webSocket) {
-        if (webSocket.createServer) {
-            connect_event = 'connection';
-            send_proc     = function(conn, data) {
-                return conn.send(data);
-            };
-            createWebSocketServer = function(options) {
-                return webSocket.createServer(options);
-            };
-        } else {
-            connect_event = 'connect';
-            send_proc     = function(conn, data) {
-                return conn.sendUTF(data);
-            };
-            createWebSocketServer = function(options) {
-                return new webSocket.server(options);
-            };
-        }
-    }
-
-    setWSSpecificParameters(webSocket);
-
-	var websocket_server = createWebSocketServer({
-        // For draft-10
+	var websocket_server = new webSocket.server({
         httpServer:  bosh_server.server,
         autoAcceptConnections: true,
-
-        // For pre-draft-10
-        server: bosh_server.server, 
-
-        // Common to both
 		subprotocol: 'xmpp'
 	});
 
@@ -130,14 +98,14 @@ exports.createServer = function(bosh_server, webSocket) {
 			'xml:lang': 'en', 
 			'from': to
 		}).toString();
-		send_proc(sstate.conn, ss_xml);
+		sstate.conn.sendUTF(ss_xml);
 	});
 
 	wsep.on('response', function(response, sstate) {
 		// Send the data back to the client
 
 		// TODO: Handle send() failed
-		send_proc(sstate.conn, response.toString());
+		sstate.conn.sendUTF(response.toString());
 	});
 
 	wsep.on('terminate', function(sstate, had_error) {
@@ -151,7 +119,7 @@ exports.createServer = function(bosh_server, webSocket) {
 		sstate.conn.close();
 	});
 
-	websocket_server.on(connect_event, function(conn) {
+	websocket_server.on('connect', function(conn) {
 		var stream_name = uuid();
 
 		// Note: xmpp-proxy.js relies on the session object
@@ -179,10 +147,11 @@ exports.createServer = function(bosh_server, webSocket) {
 		conn.on('message', function(message) {
             console.log("message:", message);
             if (message.type !== 'utf8') {
-                console.log("Only utf-8 supported..."); // TODO use log4js
+                log.warn("Only utf-8 supported...");
                 return;
             }
 
+            // TODO: Use a SAX based parser instead
 			message = '<dummy>' + message.utf8Data + '</dummy>';
 
 			log.debug("%s - Processing: %s", stream_name, message);
