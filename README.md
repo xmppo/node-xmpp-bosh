@@ -281,9 +281,9 @@ if the *callback=* GET query parameter is supplied.
 ### Running tests
 ```
 $ cd tests
-$ node basic.js [params] # To check basic working
+$ node basic.js [params]     # To check basic working
 $ node send_recv.js [params] # To check message sending/stress testing
-$ node stress.js [params] # To stress test node-xmpp-bosh
+$ node stress.js [params]    # To stress test node-xmpp-bosh
 ```
 
 
