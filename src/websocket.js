@@ -177,14 +177,13 @@ exports.createServer = function(bosh_server, webSocket) {
 		sn_state[stream_name] = sstate;
 
 		conn.on('message', function(message) {
-            if (!message.type || (message.type && message.type === 'utf8')) {
-			    message = '<dummy>' + message + '</dummy>';
-            }
-
-            if (message.type && message.type === 'binary') {
-                console.log("Binary not supported..."); // TODO use log4js
+            console.log("message:", message);
+            if (message.type !== 'utf8') {
+                console.log("Only utf-8 supported..."); // TODO use log4js
                 return;
             }
+
+			message = '<dummy>' + message.utf8Data + '</dummy>';
 
 			log.debug("%s - Processing: %s", stream_name, message);
 
