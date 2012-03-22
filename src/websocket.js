@@ -168,7 +168,7 @@ exports.createServer = function(bosh_server, webSocket) {
                 }
             }
 
-            // TODO: maybe use a SAX based parser instead
+            // TODO: Maybe use a SAX based parser instead
 			message_data = '<dummy>' + message_data + '</dummy>';
 
 			log.debug("%s - Processing: %s", stream_name, message_data);
