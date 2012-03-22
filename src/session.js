@@ -245,7 +245,7 @@ Session.prototype = {
     // the 'sid' and 'rid' attributes.
     // Also limit the number of attributes in the <body> tag to 20
     is_valid_packet: function (node) {
-        log.trace("%s is_valid_packet - node.attrs.rid: %s, state.rid: %s", this.sid, node.attrs.sid, this.rid);
+        log.trace("%s is_valid_packet - node.attrs.rid: %s, state.rid: %s", this.sid, node.attrs.rid, this.rid);
 
         // Allow variance of "window" rids on either side. This is in violation
         // of the XEP though.
