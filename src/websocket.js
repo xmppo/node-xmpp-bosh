@@ -25,7 +25,6 @@
 
 
 var http   = require('http');
-var ws     = require('websocket-server');
 var ltx    = require('ltx');
 var util   = require('util');
 var uuid   = require('node-uuid');
@@ -56,7 +55,8 @@ const STREAM_OPENED   = 2;
 // https://github.com/superfeedr/strophejs/tree/protocol-ed
 //
 
-exports.createServer = function(bosh_server) {
+exports.createServer = function(bosh_server, webSocket) {
+    webSocket = webSocket || require('websocket-server');
 
 	// State information for XMPP streams
 	var sn_state = { };
@@ -81,8 +81,41 @@ exports.createServer = function(bosh_server) {
 
 	var wsep = new WebSocketEventPipe(bosh_server);
 
-	var websocket_server = ws.createServer({
-		server: bosh_server.server, 
+    var connect_event = '';
+    var send_proc     = '';
+    var createWebSocketServer = '';
+
+    function setWSSpecificParameters(webSocket) {
+        if (webSocket.createServer) {
+            connect_event = 'connection';
+            send_proc     = function(conn, data) {
+                return conn.send(data);
+            };
+            createWebSocketServer = function(options) {
+                return webSocket.createServer(options);
+            };
+        } else {
+            connect_event = 'connect';
+            send_proc     = function(conn, data) {
+                return conn.sendUTF(data);
+            };
+            createWebSocketServer = function(options) {
+                return new webSocket.server(options);
+            };
+        }
+    }
+
+    setWSSpecificParameters(webSocket);
+
+	var websocket_server = createWebSocketServer({
+        // For draft-10
+        httpServer:  bosh_server.server,
+        autoAcceptConnections: true,
+
+        // For pre-draft-10
+        server: bosh_server.server, 
+
+        // Common to both
 		subprotocol: 'xmpp'
 	});
 
@@ -97,14 +130,14 @@ exports.createServer = function(bosh_server) {
 			'xml:lang': 'en', 
 			'from': to
 		}).toString();
-		sstate.conn.send(ss_xml);
+		send_proc(sstate.conn, ss_xml);
 	});
 
 	wsep.on('response', function(response, sstate) {
 		// Send the data back to the client
 
 		// TODO: Handle send() failed
-		sstate.conn.send(response.toString());
+		send_proc(sstate.conn, response.toString());
 	});
 
 	wsep.on('terminate', function(sstate, had_error) {
@@ -118,7 +151,7 @@ exports.createServer = function(bosh_server) {
 		sstate.conn.close();
 	});
 
-	websocket_server.on('connection', function(conn) {
+	websocket_server.on(connect_event, function(conn) {
 		var stream_name = uuid();
 
 		// Note: xmpp-proxy.js relies on the session object
@@ -144,7 +177,15 @@ exports.createServer = function(bosh_server) {
 		sn_state[stream_name] = sstate;
 
 		conn.on('message', function(message) {
-			message = '<dummy>' + message + '</dummy>';
+            if (!message.type || (message.type && message.type === 'utf8')) {
+			    message = '<dummy>' + message + '</dummy>';
+            }
+
+            if (message.type && message.type === 'binary') {
+                console.log("Binary not supported..."); // TODO use log4js
+                return;
+            }
+
 			log.debug("%s - Processing: %s", stream_name, message);
 
 			// XML parse the message
@@ -179,8 +220,7 @@ exports.createServer = function(bosh_server) {
 
 					sstate.to = ss_node.attrs.to;
 					wsep.emit('stream-add', sstate, ss_node.attrs);
-				}
-				else if (sstate.stream_state === STREAM_OPENED) {
+				} else if (sstate.stream_state === STREAM_OPENED) {
 					// Restart the current stream
 					wsep.emit('stream-restart', sstate, ss_node.attrs);
 				}
