@@ -1,56 +1,75 @@
-{ "name": "node-xmpp-bosh"
-,"version": "0.6.0"
-,"main": "./src/main"
-,"bin": { "bosh-server": "./run-server.js" }
-,"description": "An XMPP BOSH server written for node.js in javascript"
-,"author": "Dhruv Matani"
-,"dependencies": {"node-expat": ">=1.2.0"
-		 ,"ltx": ">= 0.0.4"
-		 ,"node-uuid": ">= 0.0.0"
-		 ,"tav": ">= 0.1.0"
-		 ,"underscore": ">= 1.1.5"
-		 ,"eventpipe": "= 0.0.3"
-		 ,"dns-srv": ">= 0.0.6"
-		 ,"semver": ">= 1.0.8"
-		 ,"websocket-server": ">= 1.4.04"
-		 ,"websocket": ">= 0.0.16"
-		 ,"log4js": ">= 0.4.2"
-		 }
-,"devDependencies": {"jsdom": ">= 0.2.0"
-                    ,"jslint": ">= 0.1.2"
-}
-,"repositories": [{"type": "git"
-		  ,"path": "git://github.com/dhruvbird/node-xmpp-bosh.git"
-		  }]
-,"homepage": "https://github.com/dhruvbird/node-xmpp-bosh"
-,"bugs": "https://github.com/dhruvbird/node-xmpp-bosh/issues"
-,"maintainers": [{"name": "Dhruv Matani"
-		 ,"email": "dhruvbird@gmail.com"
-		 ,"web": "http://dhruvbird.com/"
-		 }
-		 ,{"name": "Anup Kalbalia"
-		 ,"email": "anup.kalbalia@gmail.com"
-		 }
-                 ,{"name":"Satyam Shekhar"
-		 ,"email":"satyamshekhar@gmail.com"
-		 ,"url":"http://satyamshekhar.com/"
-		 }
-]
-,"contributors": [{"name":"Vanaryon"
-		  ,"email":"val.saliou@gmail.com"
-		  ,"url":"http://jappix.com/"
-		  }
-		  ,{"name":"Emmanuel Gil Peyrot"
-		  ,"email":"linkmauve@linkmauve.fr"
-		  ,"url":"http://linkmauve.fr/"
-		  }
-		  ,{"name":"Julien Genestoux"
-		  ,"email":"julien.genestoux@gmail.com"
-		  ,"url":"http://ouvre-boite.com/"
-		  }
-]
-,"licenses": [{"type": "MIT"}]
-,"engines": {
-	    "node": ">=0.4.1"
-	    }
+{
+  "name": "node-xmpp-bosh",
+  "version": "0.6.0",
+  "main": "./src/main",
+  "bin": {
+    "bosh-server": "./run-server.js"
+  },
+  "description": "An XMPP BOSH server written for node.js in javascript",
+  "author": "Dhruv Matani",
+  "dependencies": {
+    "node-expat": ">=1.2.0",
+    "ltx": ">= 0.0.4",
+    "node-uuid": ">= 0.0.0",
+    "tav": ">= 0.1.0",
+    "underscore": ">= 1.1.5",
+    "eventpipe": "= 0.0.3",
+    "dns-srv": ">= 0.0.6",
+    "semver": ">= 1.0.8",
+    "websocket": "~1.0.4",
+    "log4js": ">= 0.4.2"
+  },
+  "devDependencies": {
+    "jsdom": ">= 0.2.0",
+    "jslint": ">= 0.1.2"
+  },
+  "repositories": [
+    {
+      "type": "git",
+      "path": "git://github.com/dhruvbird/node-xmpp-bosh.git"
+    }
+  ],
+  "homepage": "https://github.com/dhruvbird/node-xmpp-bosh",
+  "bugs": "https://github.com/dhruvbird/node-xmpp-bosh/issues",
+  "maintainers": [
+    {
+      "name": "Dhruv Matani",
+      "email": "dhruvbird@gmail.com",
+      "web": "http://dhruvbird.com/"
+    },
+    {
+      "name": "Anup Kalbalia",
+      "email": "anup.kalbalia@gmail.com"
+    },
+    {
+      "name": "Satyam Shekhar",
+      "email": "satyamshekhar@gmail.com",
+      "url": "http://satyamshekhar.com/"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Vanaryon",
+      "email": "val.saliou@gmail.com",
+      "url": "http://jappix.com/"
+    },
+    {
+      "name": "Emmanuel Gil Peyrot",
+      "email": "linkmauve@linkmauve.fr",
+      "url": "http://linkmauve.fr/"
+    },
+    {
+      "name": "Julien Genestoux",
+      "email": "julien.genestoux@gmail.com",
+      "url": "http://ouvre-boite.com/"
+    }
+  ],
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "engines": {
+    "node": ">=0.4.1"
+  }
 }

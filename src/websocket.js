@@ -25,7 +25,6 @@
 
 
 var http   = require('http');
-var ws     = require('websocket-server');
 var ltx    = require('ltx');
 var util   = require('util');
 var uuid   = require('node-uuid');
@@ -56,7 +55,8 @@ const STREAM_OPENED   = 2;
 // https://github.com/superfeedr/strophejs/tree/protocol-ed
 //
 
-exports.createServer = function(bosh_server) {
+exports.createServer = function(bosh_server, webSocket) {
+    webSocket = webSocket || require('websocket');
 
 	// State information for XMPP streams
 	var sn_state = { };
@@ -81,8 +81,9 @@ exports.createServer = function(bosh_server) {
 
 	var wsep = new WebSocketEventPipe(bosh_server);
 
-	var websocket_server = ws.createServer({
-		server: bosh_server.server, 
+	var websocket_server = new webSocket.server({
+        httpServer:  bosh_server.server,
+        autoAcceptConnections: true,
 		subprotocol: 'xmpp'
 	});
 
@@ -97,14 +98,18 @@ exports.createServer = function(bosh_server) {
 			'xml:lang': 'en', 
 			'from': to
 		}).toString();
-		sstate.conn.send(ss_xml);
+        if (sstate.has_open_stream_tag) {
+            ss_xml = ss_xml.replace('/>', '>');
+        }
+        log.trace("%s sending data: %s", sstate.name, ss_xml);
+		sstate.conn.sendUTF(ss_xml);
 	});
 
 	wsep.on('response', function(response, sstate) {
 		// Send the data back to the client
 
 		// TODO: Handle send() failed
-		sstate.conn.send(response.toString());
+		sstate.conn.sendUTF(response.toString());
 	});
 
 	wsep.on('terminate', function(sstate, had_error) {
@@ -118,7 +123,7 @@ exports.createServer = function(bosh_server) {
 		sstate.conn.close();
 	});
 
-	websocket_server.on('connection', function(conn) {
+	websocket_server.on('connect', function(conn) {
 		var stream_name = uuid();
 
 		// Note: xmpp-proxy.js relies on the session object
@@ -139,16 +144,37 @@ exports.createServer = function(bosh_server) {
 			},
 			session: {
 				sid: "WEBSOCKET"
-			}
+			}, 
+            has_open_stream_tag: false
 		};
 		sn_state[stream_name] = sstate;
 
 		conn.on('message', function(message) {
-			message = '<dummy>' + message + '</dummy>';
-			log.debug("%s - Processing: %s", stream_name, message);
+            // console.log("message:", message);
+            if (message.type !== 'utf8') {
+                log.warn("Only utf-8 supported...");
+                return;
+            }
+
+            var message_data = message.utf8Data;
+
+            // Check if this is a stream open message
+            if (message_data.search('<stream:stream') != -1) {
+                // Yes, it is. Now, check if it is closed or unclosed
+                if (message_data.search('/>') === -1) {
+                    // Unclosed - Close it to continue parsing
+                    message_data += '</stream:stream>';
+                    sstate.has_open_stream_tag = true;
+                }
+            }
+
+            // TODO: maybe use a SAX based parser instead
+			message_data = '<dummy>' + message_data + '</dummy>';
+
+			log.debug("%s - Processing: %s", stream_name, message_data);
 
 			// XML parse the message
-			var nodes = dutil.xml_parse(message);
+			var nodes = dutil.xml_parse(message_data);
 			if (!nodes) {
 				log.warn("%s Closing connection due to invalid packet", stream_name);
 				sstate.conn.close();
@@ -179,8 +205,7 @@ exports.createServer = function(bosh_server) {
 
 					sstate.to = ss_node.attrs.to;
 					wsep.emit('stream-add', sstate, ss_node.attrs);
-				}
-				else if (sstate.stream_state === STREAM_OPENED) {
+				} else if (sstate.stream_state === STREAM_OPENED) {
 					// Restart the current stream
 					wsep.emit('stream-restart', sstate, ss_node.attrs);
 				}

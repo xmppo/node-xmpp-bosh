@@ -44,6 +44,12 @@ var log         = require('./log.js').getLogger(filename);
  * A 'connect' event is raised on the passed 'socket' if connection succeeds.
  * If all attempts fail, an 'error' event is raised on the 'socket'.
  *
+ * Expects:
+ * --------
+ * 
+ * stream: An object that MUST have the following fields: 'to' and MAY have
+ *         the following fields: 'route'
+ * 
  */
 function XMPPLookupService(port, stream) {
     this._domain_name = stream.to;
