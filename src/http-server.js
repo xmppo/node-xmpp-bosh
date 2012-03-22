@@ -59,6 +59,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         }
 
         var end_timeout;
+        var req_body_length = 0;
         var bosh_request_parser = new BoshRequestParser();
 
         var _on_end_callback = us.once(function (err) {
@@ -71,7 +72,8 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 req.destroy();
             } else {
                 var body = bosh_request_parser.parsedBody;
-                log.debug("RECD: %s", body);
+                log.debug("RECD(%s): %s", req.socket.remoteAddress, body);
+                res.remoteAddress = req.socket.remoteAddress;
                 bosh_request_handler(res, body);
                 bosh_request_parser.end();
             }
@@ -87,7 +89,11 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         
         // Add abuse prevention.
         req.on('data', function (d) {
-            if (!bosh_request_parser.parse(d)) {
+            req_body_length += d.length;
+            if (req_body_length > bosh_options.MAX_DATA_HELD) {
+                _on_end_callback(new Error("max_data_held exceeded"));
+            }
+            else if (!bosh_request_parser.parse(d)) {
                 _on_end_callback(new Error("Parse Error"));
             }
         })

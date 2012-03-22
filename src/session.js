@@ -721,7 +721,7 @@ Session.prototype = {
         this.pending_stanzas[stream_name].forEach(function (stanza) {
             response = response.cnode(stanza).tree();
         });
-        
+        this.pending_stanzas[stream_name] = [ ];
         return response;
     },
     
@@ -746,8 +746,6 @@ Session.prototype = {
             
             if (response) {
                 log.trace("%s %s _stitch_response_for_stream - stitched", this.sid, stream.name);
-                // Q. Why does the caller clear the pending stazas?
-                this.pending_stanzas[stream.name] = [ ];
                 this.pending_stitched_responses.push({
                     response: response,
                     stream: stream

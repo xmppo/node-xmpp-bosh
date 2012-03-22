@@ -39,6 +39,9 @@ function Stream(session, node, options, bep, call_on_terminate) {
     this.terminated     = false;
     this.to		        = node.attrs.to;
     this.session	    = session;
+    // extra attrs sent to the xmpp server
+    // during stream opening stanza
+    this.attrs          = { };
     // Routes are specific to a stream, and not a session
     if (node.attrs.route) {
         this.route = helper.route_parse(node.attrs.route);

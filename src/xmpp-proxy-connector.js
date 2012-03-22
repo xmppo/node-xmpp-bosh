@@ -135,19 +135,18 @@ XMPPProxyConnector.prototype = {
 
 	}, 
 
-	stream_add: function(sstate, stream_start_attrs) {
+	stream_add: function(sstate) {
 		log.trace("%s %s stream_add", sstate.session.sid, sstate.name);
 		// Check if this stream name exists
 		if (this.streams[sstate.name]) {
 			return;
 		}
 
-		log.trace("%s %s stream_add", sstate.session.sid, sstate.name);
 		var _ls_ctor = this.options.lookup_service || lookup.LookupService;
-		var _ls      = new _ls_ctor(sstate.to, DEFAULT_XMPP_PORT, sstate.route);
+		var _ls      = new _ls_ctor(sstate, DEFAULT_XMPP_PORT);
 
 		// Create a new stream.
-		var proxy = new this.Proxy(sstate.to, _ls, stream_start_attrs, 
+		var proxy = new this.Proxy(sstate.to, _ls, sstate.attrs, 
 								   this.options, sstate);
 
 		var stream = {
