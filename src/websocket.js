@@ -101,6 +101,7 @@ exports.createServer = function(bosh_server, webSocket) {
         if (sstate.has_open_stream_tag) {
             ss_xml = ss_xml.replace('/>', '>');
         }
+        log.trace("%s sending data: %s", sstate.name, ss_xml);
 		sstate.conn.sendUTF(ss_xml);
 	});
 
