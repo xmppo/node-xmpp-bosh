@@ -45,7 +45,7 @@ var log         = require('./log.js').getLogger(filename);
  * If all attempts fail, an 'error' event is raised on the 'socket'.
  *
  */
-function XMPPLookupService(stream, port) {
+function XMPPLookupService(port, stream) {
     this._domain_name = stream.to;
     this._port = port;
     this._route = stream.route;
