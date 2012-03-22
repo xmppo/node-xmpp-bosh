@@ -98,6 +98,9 @@ exports.createServer = function(bosh_server, webSocket) {
 			'xml:lang': 'en', 
 			'from': to
 		}).toString();
+        if (sstate.has_open_stream_tag) {
+            ss_xml = ss_xml.replace('/>', '>');
+        }
 		sstate.conn.sendUTF(ss_xml);
 	});
 
@@ -140,7 +143,8 @@ exports.createServer = function(bosh_server, webSocket) {
 			},
 			session: {
 				sid: "WEBSOCKET"
-			}
+			}, 
+            has_open_stream_tag: false
 		};
 		sn_state[stream_name] = sstate;
 
@@ -159,6 +163,7 @@ exports.createServer = function(bosh_server, webSocket) {
                 if (message_data.search('/>') === -1) {
                     // Unclosed - Close it to continue parsing
                     message_data += '</stream:stream>';
+                    sstate.has_open_stream_tag = true;
                 }
             }
 
