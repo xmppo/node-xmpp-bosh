@@ -84,30 +84,34 @@ exports.Proxy = XMPPProxy;
 
 dutil.copy(XMPPProxy.prototype, {
 	_detach_handlers: function() {
-		this._lookup_service.removeAllListeners('connect');
-		this._lookup_service.removeAllListeners('error');
-		this._sock.removeAllListeners('data');
-		this._sock.removeAllListeners('error');
-		this._sock.removeAllListeners('close');
+        if (this._lookup_service) {
+		    this._lookup_service.removeAllListeners('connect');
+		    this._lookup_service.removeAllListeners('error');
+        }
+        this._sock.removeAllListeners('data');
+        this._sock.removeAllListeners('error');
+        this._sock.removeAllListeners('close');
 	}, 
 
 	_attach_handlers: function() {
-		// Ideally, 'connect' and 'close' should be once() listeners
-		// but having them as on() listeners has helped us catch some
-		// nasty bugs, so we let them be.
-		this._lookup_service.on('connect', us.bind(this._on_connect, this));
-		this._lookup_service.on('error', us.bind(this._on_lookup_error, this)); 
-		this._sock.on  ('data',    us.bind(this._on_data, this));
-		this._sock.once('close',   us.bind(this._on_close, this));
-		this._sock.on  ('error',   dutil.NULL_FUNC);
+        // Ideally, 'connect' and 'close' should be once() listeners
+        // but having them as on() listeners has helped us catch some
+        // nasty bugs, so we let them be.
+        if (this._lookup_service) {
+		    this._lookup_service.on('connect', us.bind(this._on_connect, this));
+		    this._lookup_service.on('error', us.bind(this._on_lookup_error, this));
+        }
+        this._sock.on  ('data',    us.bind(this._on_data, this));
+        this._sock.once('close',   us.bind(this._on_close, this));
+        this._sock.on  ('error',   dutil.NULL_FUNC);
 	}, 
 
 	_attach_handlers_to_parser: function() {
-		this._parser.on("stanza", this._on_stanza.bind(this));
-		this._parser.on("error", this._on_stream_error.bind(this));
-		this._parser.on("stream-start", this._on_stream_start.bind(this));
-		this._parser.on("stream-restart", this._on_stream_restart.bind(this));
-		this._parser.on("stream-end", this._on_stream_end.bind(this));
+        this._parser.on("stanza", this._on_stanza.bind(this));
+        this._parser.on("error", this._on_stream_error.bind(this));
+        this._parser.on("stream-start", this._on_stream_start.bind(this));
+        this._parser.on("stream-restart", this._on_stream_restart.bind(this));
+        this._parser.on("stream-end", this._on_stream_end.bind(this));
 	},
 
 	_detach_handlers_from_parser: function() {
@@ -120,20 +124,20 @@ dutil.copy(XMPPProxy.prototype, {
 
 	_starttls: function() {
 		log.trace("%s %s _starttls", this._void_star.session.sid, this._void_star.name);
-		// Vishnu hates 'self'
-		var self = this;
+		// Vishnu hates 'self' - binding to 'this' _is_ definitely cleaner
+		// var self = this;
 		this._detach_handlers();
 
 		var ct = require('./starttls.js')(this._sock, { }, function() {
-			log.trace("%s %s _starttls - restart the stream", self._void_star.session.sid, self._void_star.name);
-			// Restart the stream.
-			self.restart();
-	    });
+			log.trace("%s %s _starttls - restart the stream", this._void_star.session.sid, this._void_star.name);
+			// Restart the stream
+			this.restart();
+	    }.bind(this));
 
 	    // The socket is now the cleartext stream
 		this._sock = ct;
 
-		self._attach_handlers();
+		this._attach_handlers();
 	},
 
 	_get_stream_xml_open: function(stream_attrs) {
@@ -249,6 +253,7 @@ dutil.copy(XMPPProxy.prototype, {
 		log.trace("%s %s connected", this._void_star.session.sid, this._void_star.name);
 
 		this._is_connected = true;
+        delete this._lookup_service;
 
 		if (this._terminate_on_connect) {
 			this.terminate();
@@ -265,7 +270,6 @@ dutil.copy(XMPPProxy.prototype, {
 
 	_on_data: function(d) {
 		log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
-
 		this._parser.parse(d);
 	},
 
