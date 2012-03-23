@@ -1042,7 +1042,7 @@ Session.prototype = {
     // (redundant requests) in which case it returns true or else it
     // returns false -- redundant requests need not be processed again.
     //
-    // Preconditoin: We should call this function BEFORE we update the
+    // Precondition: We should call this function BEFORE we update the
     // current session's 'rid'.
     //
     // Postcondition: If we return 'true', then the caller should NOT
