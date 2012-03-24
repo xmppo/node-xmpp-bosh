@@ -177,6 +177,8 @@ the client's connection (stream).
 3. **stream-added**: Emitted when the backend server starts a new XMPP
 stream for the client.
 
+4. **stream-restarted**: Emitted when the backend server restarts an
+existing XMPP stream for the client.
 
 ### Custom attributes on BOSH streams
 
