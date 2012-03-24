@@ -180,15 +180,13 @@ exports.XMLHttpRequest = function() {
 		// Use the proper protocol
 		var doRequest = ssl ? https.request : http.request;
 
-		// Increase the number of simultaneous sockets to 512.
-		(ssl ? https : http).globalAgent.maxSockets = 512;
-
 		var options = {
-			host: host,
-			port: port,
-			path: uri,
-			method: settings.method,
-			headers: headers
+		    host: host,
+		    port: port,
+		    path: uri,
+		    method: settings.method,
+		    headers: headers, 
+                    agent: false
 		};
 		
 		var req = doRequest(options, function(res) {
