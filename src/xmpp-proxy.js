@@ -265,7 +265,6 @@ dutil.copy(XMPPProxy.prototype, {
 
 	_on_data: function(d) {
 		log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
-
 		this._parser.parse(d);
 	},
 
@@ -276,8 +275,10 @@ dutil.copy(XMPPProxy.prototype, {
 		dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
 	},
 
-	_on_stream_restart: function(attrs) {
-		dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
+	_on_stream_restart: function(attrs, stanza) {
+        log.trace("%s %s _on_stream_restart: stream restarted", this._void_star.session.sid, this._void_star.name);
+        dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
+        this.emit('restart', stanza, this._void_star);
 	},
 
 	_on_stream_end: function(attr) {

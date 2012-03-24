@@ -95,6 +95,15 @@ function XMPPProxyConnector(bosh_server, options) {
 		ss.pending = [ ];
 	}.bind(this);
 
+	this._on_xmpp_stream_restarted = function(stanza, stream) {
+		log.trace("%s %s _on_xmpp_stream_restarted", stream.session.sid, stream.name);
+		this.bosh_server.emit('stream-restarted', stream, stanza);
+
+		var ss = this.streams[stream.name];
+		if (!ss) {
+			return;
+		}
+	}.bind(this);
 
 	bosh_server.on('nodes', function(nodes, stream) {
 		nodes = nodes.filter(us.not(us.isString));
@@ -157,6 +166,7 @@ XMPPProxyConnector.prototype = {
 		this.streams[stream.name] = stream_object;
 
 		proxy.on('connect', this._on_xmpp_proxy_connected);
+		proxy.on('restart', this._on_xmpp_stream_restarted);
 		proxy.on('stanza',  this._on_stanza_received);
 		proxy.on('close',   this._on_xmpp_proxy_close);
 

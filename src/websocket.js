@@ -105,6 +105,16 @@ exports.createServer = function(bosh_server, webSocket) {
 		sstate.conn.sendUTF(ss_xml);
 	});
 
+    // Special case for WebSockets due to https://github.com/dhruvbird/node-xmpp-bosh/issues/16
+    wsep.on('stream-restarted', function(sstate, stanza) {
+        var ss_xml = stanza.toString();
+        if (sstate.has_open_stream_tag) {
+            ss_xml = ss_xml.replace('/>', '>');
+        }
+        log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
+        sstate.conn.sendUTF(ss_xml);
+    });
+
 	wsep.on('response', function(response, sstate) {
 		// Send the data back to the client
 

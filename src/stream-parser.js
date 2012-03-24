@@ -47,10 +47,10 @@ dutil.copy(XmppStreamParser.prototype, {
                 this.end();
             }
         } else {
+            var stanza = new ltx.Element(name, attrs);
             if (name === "stream:stream") {
-                this.emit("stream-restart", attrs);
+                this.emit("stream-restart", attrs, stanza);
             } else {
-                var stanza = new ltx.Element(name, attrs);
                 if (this.stanza) {
                     this.stanza = this.stanza.cnode(stanza);
                 } else {
