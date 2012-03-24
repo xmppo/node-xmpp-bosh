@@ -31,11 +31,11 @@ var xpc       = require('./xmpp-proxy-connector.js');
 var xp        = require('./xmpp-proxy.js');
 var ls        = require('./lookup-service.js');
 var us        = require('underscore');
-var path   = require('path');
+var path      = require('path');
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
-var logger      = require('./log.js');
-var log         = logger.getLogger(filename);
+var filename  = "[" + path.basename(path.normalize(__filename)) + "]";
+var logger    = require('./log.js');
+var log       = logger.getLogger(filename);
 
 exports.bosh       = bosh;
 exports.connector  = xpc;
