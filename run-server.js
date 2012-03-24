@@ -163,7 +163,7 @@ function main() {
 
 	var bosh_server = nxb.start_bosh(server_options);
 
-	print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET DRAFT 10 server 'v%s' on ws://%s:%s' at '%s'", 
+	print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET server 'v%s' on ws://%s:%s' at '%s'", 
 										  get_version(), 
                                           server_options.host, 
                                           server_options.port, 
