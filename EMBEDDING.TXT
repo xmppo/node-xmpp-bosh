@@ -51,6 +51,7 @@ Raised by the WEBSOCKET server
 Listened to by the WEBSOCKET server
 -----------------------------------
 
-06. stream-added
-07. response
-08. terminate
+06. stream-added            => function(stream_state)
+07. response                => function(response, stream_state)
+08. terminate               => function(stream_state, had_error)
+09. stream-restarted        => function(stream_state, stanza)
