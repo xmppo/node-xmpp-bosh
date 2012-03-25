@@ -38,9 +38,9 @@ util.inherits(XmppStreamParser, events.EventEmitter);
 
 dutil.copy(XmppStreamParser.prototype, {
     _handle_start_element: function(name, attrs) {
-        if (this._start_count == 0) {
+        if (!this._started) {
             if (name === "stream:stream") {
-                this._start_count += 1;
+                this._started = true;
                 this.emit("stream-start", attrs);
             } else {
                 this.emit("error", "stanza w/o stream-start");
@@ -104,7 +104,7 @@ dutil.copy(XmppStreamParser.prototype, {
 
     _start: function () {
         this._parser = new expat.Parser('UTF-8');
-        this._start_count = this._start_count || 0;
+        this._started = this._started || false;
 
         this._parser.on("text", this._handle_text.bind(this));
         this._parser.on("endElement", this._handle_end_element.bind(this));
