@@ -72,8 +72,8 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 req.destroy();
             } else {
                 var body = bosh_request_parser.parsedBody;
-                log.debug("RECD(%s): %s", req.socket.remoteAddress, body);
-                res.remoteAddress = req.socket.remoteAddress;
+                log.debug("RECD: %s", body);
+                res.request_headers = req.headers;
                 bosh_request_handler(res, body);
                 bosh_request_parser.end();
             }
@@ -87,7 +87,6 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             _on_end_callback(new Error("Timed Out"));
         }, 20 * 1000);
         
-        // Add abuse prevention.
         req.on('data', function (d) {
             req_body_length += d.length;
             if (req_body_length > bosh_options.MAX_DATA_HELD) {
