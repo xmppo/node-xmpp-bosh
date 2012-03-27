@@ -55,6 +55,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             if (err) {
                 req.destroy();
             } else {
+                res.request_headers = req.headers;
                 bosh_request_handler(res, bosh_request_parser.parsedBody);
             }
             return false;
