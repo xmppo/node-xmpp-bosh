@@ -247,7 +247,7 @@ exports.createServer = function (options) {
         // 
         // https://github.com/dhruvbird/node-xmpp-bosh/issues/21
         if (stanza.is('error')) {
-            _on_terminate(stream, 'remote-stream-error');
+            stream.send_stream_terminate_response('remote-stream-error');
         }
     }
 
@@ -264,7 +264,7 @@ exports.createServer = function (options) {
         // Should we terminate the BOSH session as well?
         if (session.no_of_streams === 0) {
             session.send_terminate_response(session.get_response_object(),
-                condition);
+                                            condition);
             session.terminate(condition);
         }
     }
