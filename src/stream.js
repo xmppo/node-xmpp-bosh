@@ -177,16 +177,18 @@ StreamStore.prototype = {
     // or the Connector. That is someone else's job. They just
     // update internal state for the operations being performed.
     add_stream: function (session, node) {
-        var self = this;
-        var stream = new Stream(session, node, this._bosh_options, this._bep,
-                                function (stream, condition) {
-                                    helper.save_terminate_condition_for_wait_time(self._terminated_streams,
-                                                                                  stream.name, condition, 
-                                                                                  stream.session.wait);
-                                    delete self._sn_state[stream.name];
+        var on_stream_terminated_handler = function(stream, condition) {
+            /* Function to call when stream is terminated */
+            helper.save_terminate_condition_for_wait_time(this._terminated_streams,
+                                                          stream.name, condition, 
+                                                          stream.session.wait);
+            delete this._sn_state[stream.name];
 
-                                    self.stat_stream_terminate();
-                                });
+            this.stat_stream_terminate();
+        }.bind(this);
+
+        var stream = new Stream(session, node, this._bosh_options, this._bep, on_stream_terminated_handler);
+
         session.add_stream(stream);
         this._sn_state[stream.name] = stream;
         this.stat_stream_add();
