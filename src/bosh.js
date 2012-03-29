@@ -236,14 +236,23 @@ exports.createServer = function (options) {
 
     // When a response is received from the connector, try to send it out to the
     // real client if possible.
-    function _on_repsponse(connector_response, stream) {
-        log.trace("%s %s response: %s", stream.state.sid, stream.name, connector_response);
+    function _on_response(stanza, stream) {
+        log.trace("%s %s response: %s", stream.state.sid, stream.name, stanza);
         var session = stream.session;
-        session.enqueue_stanza(connector_response, stream);
+
+        session.enqueue_stanza(stanza, stream);
+
+        // Send a stream termination tag in the <body> element
+        // if the stanza is a <stream:error> stanza.
+        // 
+        // https://github.com/dhruvbird/node-xmpp-bosh/issues/21
+        if (stanza.is('error')) {
+            stream.send_stream_terminate_response('remote-stream-error');
+        }
     }
 
     // This event is raised when the server terminates the connection.
-    // The Connector typically raises this even so that we can tell
+    // The Connector typically raises this event so that we can tell
     // the client (user) that such an event has occurred.
     function _on_terminate(stream, error) {
         // We send a terminate response to the client.
@@ -255,7 +264,7 @@ exports.createServer = function (options) {
         // Should we terminate the BOSH session as well?
         if (session.no_of_streams === 0) {
             session.send_terminate_response(session.get_response_object(),
-                condition);
+                                            condition);
             session.terminate(condition);
         }
     }
@@ -267,11 +276,14 @@ exports.createServer = function (options) {
     // events from this guy. We return an instance of BoshEventPipe
     // to the outside world when anyone calls createServer()
     bep = new bee.BoshEventPipe(server.http_server);
+
     bep.on('stream-added', _on_stream_added);
-    bep.on('response', _on_repsponse);
-    bep.on('terminate', _on_terminate);
+    bep.on('response',     _on_response);
+    bep.on('terminate',    _on_terminate);
+
     session_store = new sess.SessionStore(bosh_options, bep);
-    stream_store = new strm.StreamStore(bosh_options, bep);
+    stream_store  = new strm.StreamStore(bosh_options, bep);
+
     bep.set_session_data(session_store);
     bep.set_stream_data(stream_store);
     return bep;
