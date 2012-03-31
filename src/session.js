@@ -768,34 +768,38 @@ Session.prototype = {
     // degrade the experience for the client. Hence, we stick with
     // the current implementation.
     //
-    _pop_and_send: function () {
-        if (this.res.length === 0) {
-            // dont stitch responses as well.
-            log.trace("%s pop_and_send - Holding 0 ro - return", this.sid);
-            return;
-        }
+    send_pending_responses: function () {
+        log.trace("%s send_pending_responses - pending.length: %s, Holding %d response objects", this.sid, this.pending_stitched_responses.length, this.res.length);
         
-        if (!this.pending_stitched_responses.length) {
-            this._stitch_new_response();
-        }
+        while (true) {
+            if (this.res.length === 0) {
+                // dont stitch responses as well.
+                break;
+            }
+        
+            if (!this.pending_stitched_responses.length) {
+                this._stitch_new_response();
+            }
 
-        if (this.pending_stitched_responses.length > 0) {
-            var ro = this.get_response_object();
-            log.trace("%s pop_and_send - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
+            if (this.pending_stitched_responses.length > 0) {
+                var ro = this.get_response_object();
+                log.trace("%s send_pending_responses - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
             
-            var _p = this.pending_stitched_responses.shift();
-            var response = _p.response;
-            var stream = _p.stream;
+                var _p = this.pending_stitched_responses.shift();
+                var response = _p.response;
+                var stream = _p.stream;
 
-            // We dont do anything on error, we assume
-            // that the client will request the missing
-            // RID. 
-            this._send_no_requeue(ro, response);
+                // We dont do anything on error, we assume
+                // that the client will request the missing
+                // RID. 
+                this._send_no_requeue(ro, response);
 
-            // We try sending more queued responses
-            this.send_pending_responses();
-        } else {
-            log.trace("%s pop_and_send - nothing to send, 0 pending - return");
+                // We try sending more queued responses
+                this.send_pending_responses();
+            } else {
+                log.trace("%s send_pending_responses - nothing to send, 0 pending - return", this.sid);
+                break;
+            }
         }
     },
 
@@ -815,7 +819,7 @@ Session.prototype = {
         if (!this.has_next_tick) {
             process.nextTick(function () {
                 this.has_next_tick = false;
-                this._pop_and_send();
+                this.send_pending_responses();
             }.bind(this));
             this.has_next_tick = true;
         }
@@ -893,22 +897,6 @@ Session.prototype = {
         var res_str = msg.toString();
 
         ro.send_response(res_str);
-    },
-
-    send_pending_responses: function () {
-        log.trace("%s send_pending_responses - pending.length: %s", this.sid, this.pending_stitched_responses.length);
-
-        if (this.res.length === 0) {
-            return;
-        }
-
-        if (!this.pending_stitched_responses.length) {
-            this._stitch_new_response();
-        }
-
-        if (this.pending_stitched_responses.length > 0) {
-            this._pop_and_send();
-        }
     },
 
     // Raise the 'nodes' event on 'bep' for every node in 'nodes'.
