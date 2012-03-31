@@ -64,6 +64,13 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
 
     this._max_xmpp_buffer_size = options.max_xmpp_buffer_size || 500000;
 
+    // Suppress the <stream:stream> tag (stream-restart event) if it
+    // is a response to a STARTTLS request that we (the proxy
+    // initiated).
+    // 
+    // https://github.com/dhruvbird/node-xmpp-bosh/issues/16
+    this._suppress_stream_restart_event = false;
+
     this._no_tls_domains = { };
     var _ntd = options.no_tls_domains || [ ];
     _ntd.forEach(function(domain) {
@@ -187,6 +194,7 @@ dutil.copy(XMPPProxy.prototype, {
         } else if (stanza.is('proceed')) {
             /* Server is waiting for TLS handshake */
             this._starttls();
+            this._suppress_stream_restart_event = true;
         }
         else {
             // No it is neither. We just handle it as a normal stanza.
@@ -282,7 +290,10 @@ dutil.copy(XMPPProxy.prototype, {
     _on_stream_restart: function(attrs, stanza) {
         log.trace("%s %s _on_stream_restart: stream restarted", this._void_star.session.sid, this._void_star.name);
         dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
-        this.emit('restart', stanza, this._void_star);
+        if (!this._suppress_stream_restart_event) {
+            this.emit('restart', stanza, this._void_star);
+        }
+        _suppress_stream_restart_event = false;
 	},
 
     _on_stream_end: function(attr) {
