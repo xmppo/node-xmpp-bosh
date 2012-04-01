@@ -45,19 +45,11 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     // expectation.
     function handle_get_bosh_request(req, res, u) {
         var ppos = u.pathname.search(bosh_options.path);
-        if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data')) {
+        var bosh_request_parser = new BoshRequestParser();
+        if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data') && bosh_request_parser.parse(u.query.data)) {
             res = new helper.JSONPResponseProxy(req, res);
-            var bosh_request_parser = new BoshRequestParser();
-            var err = false;
-            if (!bosh_request_parser.parse(u.query.data)) {
-                err = new Error("Parse Error");
-            }
-            if (err) {
-                req.destroy();
-            } else {
-                res.request_headers = req.headers;
-                bosh_request_handler(res, bosh_request_parser.parsedBody);
-            }
+            res.request_headers = req.headers;
+            bosh_request_handler(res, bosh_request_parser.parsedBody);
             return false;
         }
     }
