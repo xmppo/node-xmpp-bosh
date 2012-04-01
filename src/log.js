@@ -1,12 +1,5 @@
 var log4js = require("log4js");
 
-// There is an issue with log4js release
-// right now which has been fixed in their
-// master, they replace plain old console.log
-// with their logger. Turning off this conf
-// crashes in their current release. We will
-// turn it off as soon as they release.
-
 log4js.configure({
     doNotReplaceConsole: true
 });
