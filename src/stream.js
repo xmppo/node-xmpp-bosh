@@ -198,7 +198,7 @@ StreamStore.prototype = {
         return stream;
     },
 
-    send_invalid_stream_terminate_response: function (res, sname) {
+    send_invalid_stream_terminate_response: function (ro, sname) {
         var terminate_condition;
         if (this._terminated_streams[sname]) {
             terminate_condition = this._terminated_streams[sname].condition;
@@ -208,7 +208,6 @@ StreamStore.prototype = {
             message: terminate_condition ? '' : 'Invalid stream name',
             stream: sname
         };
-        var ro = new responsejs.Response(res, null, "invalid-stream", this._bosh_options);
         ro.send_termination_stanza(attrs);
     },
 

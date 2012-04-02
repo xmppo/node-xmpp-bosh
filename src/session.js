@@ -392,7 +392,8 @@ Session.prototype = {
                     // FIXME: Subtle bug alert: We have implicitly ACKed all
                     // 'rids' till now since we didn't send an 'ack'
                     this.queued_requests[node.attrs.rid].node = $body();
-                    stream_store.send_invalid_stream_terminate_response(res, stream_name);
+                    var ro = new responsejs.Response(res, node.attrs.rid, this.sid, this._options);
+                    stream_store.send_invalid_stream_terminate_response(ro, stream_name);
                     return true;
                 }
             }
