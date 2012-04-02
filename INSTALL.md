@@ -7,20 +7,25 @@ detailed step-by-step instructions on how-to to install node-xmpp-bosh:
 http://code.google.com/p/node-xmpp-bosh/wiki/DebianHowTo
 
 
-1. Install node.js http://nodejs.org/
-(possibly at /opt/node-VERSION so that you can have multiple versions)
-node-xmpp-bosh has been tested with node v0.4.x - v0.6.x
+1. Install [node.js](http://nodejs.org/) (possibly at
+/opt/node-VERSION so that you can have multiple
+versions). node-xmpp-bosh has been tested with node v0.4.x - v0.6.x
 
-2. Set the node executable in the path (if not already set):
+2. Set the node executable in the path (if not already set and also
+add to .bashrc):
+```
 $ export PATH=/opt/PATH-TO-NODE/bin/:$PATH
-(also add to .bashrc)
+```
 
-3. Set the NODE_PATH variable:
+3. Set the NODE_PATH variable and add to .bashrc:
+```
 $ export NODE_PATH=/opt/PATH-TO-NODE/lib/node_modules/:$NODE_PATH
-(also add to .bashrc)
+```
 
 4. Test node:
+```
 $ node
+```
 
 5. Install npm: https://github.com/isaacs/npm
 curl http://npmjs.org/install.sh | sh
