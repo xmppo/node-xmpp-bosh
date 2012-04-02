@@ -38,10 +38,8 @@ add to .bashrc):
 6. If you are a developer, goto step [10]
 
 7. The following command will install node-xmpp-bosh along with all
-its dependencies.
-
-Go to the directory where you want to install node-xmpp-bosh (for 
-a local install and move to step-9) or follow step-8
+its dependencies. Go to the directory where you want to install
+node-xmpp-bosh.
 
     ```
     $ cd ~/
