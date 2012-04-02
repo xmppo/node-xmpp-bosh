@@ -393,7 +393,7 @@ Session.prototype = {
                     // 'rids' till now since we didn't send an 'ack'
                     this.queued_requests[node.attrs.rid].node = $body();
                     stream_store.send_invalid_stream_terminate_response(res, stream_name);
-                    return;
+                    return true;
                 }
             }
 
