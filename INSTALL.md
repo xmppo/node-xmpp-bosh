@@ -84,7 +84,6 @@ node-xmpp-bosh.
     ```
     $ node node_modules/node-xmpp-bosh/run-server.js
     ```
-
 Now press Ctrl+C to exit (assuming it ran fine)
 
 16. Goto step [9]
