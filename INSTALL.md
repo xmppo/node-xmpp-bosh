@@ -13,21 +13,21 @@ versions). node-xmpp-bosh has been tested with node v0.4.x - v0.6.x
 2. Set the node executable in the path (if not already set and also
 add to .bashrc):
 
-```
-$ export PATH=/opt/PATH-TO-NODE/bin/:$PATH
-```
+    ```
+    $ export PATH=/opt/PATH-TO-NODE/bin/:$PATH
+    ```
 
 3. Set the NODE_PATH variable and add to .bashrc:
 
-```
-$ export NODE_PATH=/opt/PATH-TO-NODE/lib/node_modules/:$NODE_PATH
-```
+    ```
+    $ export NODE_PATH=/opt/PATH-TO-NODE/lib/node_modules/:$NODE_PATH
+    ```
 
 4. Test node:
 
-```
-$ node
-```
+    ```
+    $ node
+    ```
 
 5. Install npm: https://github.com/isaacs/npm
 curl http://npmjs.org/install.sh | sh
