@@ -30,7 +30,10 @@ add to .bashrc):
     ```
 
 5. Install npm: https://github.com/isaacs/npm
-curl http://npmjs.org/install.sh | sh
+
+    ```
+    curl http://npmjs.org/install.sh | sh
+    ```
 
 6. If you are a developer, goto step [10]
 
@@ -40,37 +43,51 @@ its dependencies.
 Go to the directory where you want to install node-xmpp-bosh (for 
 a local install and move to step-9) or follow step-8
 
-$ cd ~/
-$ npm install node-xmpp-bosh
+    ```
+    $ cd ~/
+    $ npm install node-xmpp-bosh
+    ```
 
 8. Run the proxy (test it)
 
-$ node node_modules/node-xmpp-bosh/run-server.js
+    ```
+    $ node node_modules/node-xmpp-bosh/run-server.js
+    ```
 
 Now press Ctrl+C to exit (assuming it ran fine)
 
 9. Report any bugs at https://github.com/dhruvbird/node-xmpp-bosh/issues
 
+You are done!
 
-* If you are a developer and want a bleeding edge version of the server, 
-pull it from GIT and link it to your node module using npm.
 
-10. $ cd <your project directory>
+10. These instructions are only for developers who want to get the latest version from git.
 
-11. $ git clone https://github.com/dhruvbird/node-xmpp-bosh
+    ```
+    $ cd <your project directory>
+    ```
 
-12. $ cd node-xmpp-bosh
+11. ```$ git clone https://github.com/dhruvbird/node-xmpp-bosh```
+
+12. ```$ cd node-xmpp-bosh```
 
 13. Install all dependencies
 
-$ npm install .
+    ```
+    $ npm install .
+    ```
 
 14. Set the executable flag on run-server.js:
-$ chmod +x run-server.js
+
+    ```
+    $ chmod +x run-server.js
+    ```
 
 15. Test it out!
 
-$ node node_modules/node-xmpp-bosh/run-server.js
+    ```
+    $ node node_modules/node-xmpp-bosh/run-server.js
+    ```
 
 Now press Ctrl+C to exit (assuming it ran fine)
 
