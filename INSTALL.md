@@ -51,13 +51,11 @@ node-xmpp-bosh.
     ```
     $ node node_modules/node-xmpp-bosh/run-server.js
     ```
+    Now press Ctrl+C to exit (assuming it ran fine)
 
-Now press Ctrl+C to exit (assuming it ran fine)
 
 9. Report any bugs at https://github.com/dhruvbird/node-xmpp-bosh/issues
-
-You are done!
-
+    You are done!
 
 10. These instructions are only for developers who want to get the latest version from git.
 
