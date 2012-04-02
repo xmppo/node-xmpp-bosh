@@ -1,6 +1,5 @@
-+---------------------------+
-| Installing node-xmpp-bosh |
-+---------------------------+
+## Installing node-xmpp-bosh
+
 
 NOTE: Debian and Debian-based system users may use the following 
 detailed step-by-step instructions on how-to to install node-xmpp-bosh:
