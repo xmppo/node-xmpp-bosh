@@ -46,10 +46,16 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     function handle_get_bosh_request(req, res, u) {
         var ppos = u.pathname.search(bosh_options.path);
         var bosh_request_parser = new BoshRequestParser();
-        if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data') && bosh_request_parser.parse(u.query.data)) {
-            res = new helper.JSONPResponseProxy(req, res);
-            res.request_headers = req.headers;
-            bosh_request_handler(res, bosh_request_parser.parsedBody);
+        if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data')) {
+            if (!bosh_request_parser.parse(u.query.data)) {
+                req.destroy();
+            } else {
+                res = new helper.JSONPResponseProxy(req, res);
+                res.request_headers = req.headers;
+                bosh_request_handler(res, bosh_request_parser.parsedBody);
+            }
+            bosh_request_parser.end();
+            bosh_request_parser = null;
             return false;
         }
     }
@@ -67,6 +73,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         var _on_end_callback = us.once(function (err) {
             if (end_timeout) {
                 clearTimeout(end_timeout);
+                end_timeout = null;
             }
 
             if (err) {
