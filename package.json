@@ -8,7 +8,7 @@
   "description": "An XMPP BOSH server written for node.js in javascript",
   "author": "Dhruv Matani",
   "dependencies": {
-    "node-expat": ">=1.2.0",
+    "node-expat": ">=1.4.5",
     "ltx": ">= 0.0.4",
     "node-uuid": ">= 0.0.0",
     "tav": ">= 0.1.0",

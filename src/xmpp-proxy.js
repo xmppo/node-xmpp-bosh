@@ -63,7 +63,8 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
     this.stream_start_attrs = stream_start_attrs || { };
 
     this._max_xmpp_stanza_size = options.max_xmpp_stanza_size || 500000;
-    this._current_stanza_size = 0;
+    this._prev_byte_index = -1;
+
     // Suppress the <stream:stream> tag (stream-restart event) if it
     // is a response to a STARTTLS request that we (the proxy
     // initiated).
@@ -157,7 +158,9 @@ dutil.copy(XMPPProxy.prototype, {
 
     _on_stanza: function(stanza) {
         log.trace("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
-        this._current_stanza_size = 0;
+
+        this._prev_byte_index = this._parser.getCurrentByteIndex;
+
         dutil.extend(stanza.attrs, this._stream_attrs);
 
         // TODO: Check for valid Namespaces too.
@@ -213,6 +216,7 @@ dutil.copy(XMPPProxy.prototype, {
     restart: function(stream_attrs) {
         var _ss_open = this._get_stream_xml_open(stream_attrs);
         this.send(_ss_open);
+        this._prev_byte_index = -1;
         this._parser.restart();
     },
 
@@ -278,9 +282,12 @@ dutil.copy(XMPPProxy.prototype, {
 
     _on_data: function(d) {
         log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
-        this._current_stanza_size += d.length;
-        if (this._current_stanza_size > this._max_xmpp_stanza_size) {
-            log.info("% %s _on_data: will terminate stream - the max_xmpp_stanza_size(%s) exceeded", this._void_star.session.sid, this._void_star.name, this._max_xmpp_stanza_size);
+
+        var stanza_size = this._parser.getCurrentByteIndex - this._prev_byte_index;
+
+        if (stanza_size > this._max_xmpp_stanza_size) {
+            log.info("%s %s _on_data: will terminate stream - the max_xmpp_stanza_size(%s) has been exceeded", 
+                     this._void_star.session.sid, this._void_star.name, this._max_xmpp_stanza_size);
             this._on_stream_end();
         } else {
             this._parser.parse(d);

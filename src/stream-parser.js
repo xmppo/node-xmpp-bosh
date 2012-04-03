@@ -31,6 +31,11 @@ var expat  = require('node-expat');
 
 function XmppStreamParser() {
     events.EventEmitter.apply(this);
+
+    this.__defineGetter__("getCurrentByteIndex", function () {
+        return this._parser.getCurrentByteIndex();
+    });
+
     this._start();
 }
 
