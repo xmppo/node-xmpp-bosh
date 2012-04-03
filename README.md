@@ -92,7 +92,8 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 
 * **max_data_held**: The maximum allowable number of bytes that a POST request body may contain. Any request exceeding this value will be dropped **(default: 100000)**
 
-* **max_xmpp_buffer_size**: The maximum size of an incoming XMPP buffer in bytes. If the buffer exceeds this size, then the stream is terminated **(default: 500000)**
+* **max_xmpp_stanza_size**: The maximum size of an incoming XMPP
+    stanza in bytes. If the stanza size exceeds this size, then the stream is terminated **(default: 500000)**
 
 * **max_bosh_connections**: The maximum number of simultaneous connections that the BOSH server will entertain for any open BOSH session **(default: 2)**
 
