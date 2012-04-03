@@ -10,9 +10,13 @@ want to check this file every time you update your copy.
 ### v0.3.0
 
 The following configuraions variable names were changed:
+
 * *max_data_held_bytes* to *max_data_held*
+
 * *max_xmpp_buffer_bytes* to *max_xmpp_buffer_size*
+
 * *default_inactivity_sec* to *default_inactivity*
+
 * *max_inactivity_sec* to *max_inactivity*
 
 
