@@ -293,7 +293,7 @@ dutil.copy(XMPPProxy.prototype, {
         if (!this._suppress_stream_restart_event) {
             this.emit('restart', stanza, this._void_star);
         }
-        _suppress_stream_restart_event = false;
+        this._suppress_stream_restart_event = false;
 	},
 
     _on_stream_end: function(attr) {
