@@ -7,6 +7,10 @@ want to check this file every time you update your copy.
 
 * Configuration variable *max_xmpp_buffer_size* changed to *max_xmpp_stanza_size*.
 
+* node-xmpp-bosh is now optionally compatible with pidgin (and all
+  xmpp clients that use libpurple) if the configuration variable
+  *pidgin_compatible* is set to *true*.
+
 * Bug-fixes to the websockets implementation - many thanks to @astro
   for finding these.
 
