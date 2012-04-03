@@ -280,7 +280,7 @@ dutil.copy(XMPPProxy.prototype, {
         log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
         this._current_stanza_size += d.length;
         if (this._current_stanza_size > this._max_xmpp_stanza_size) {
-            log.info("% %s _on_data: will terminate stream - the max_xmpp_stanza_size exceeded", this._void_star.session.sid, this._void_star.name);
+            log.info("% %s _on_data: will terminate stream - the max_xmpp_stanza_size(%s) exceeded", this._void_star.session.sid, this._void_star.name, this._max_xmpp_stanza_size);
             this._on_stream_end();
         } else {
             this._parser.parse(d);
