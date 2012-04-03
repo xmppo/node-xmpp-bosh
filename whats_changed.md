@@ -7,6 +7,11 @@ want to check this file every time you update your copy.
 
 * Configuration variable *max_xmpp_buffer_size* changed to *max_xmpp_stanza_size*.
 
+* Bug-fixes to the websockets implementation - many thanks to @astro for finding these
+
+* Most DOM (ltx) parser references replaced with SAX (node-expat)
+  parser references. This should make things faster in general.
+
 ### v0.3.0
 
 * The following configuraions variable names were changed:
