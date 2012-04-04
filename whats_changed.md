@@ -28,8 +28,8 @@ want to check this file every time you update your copy.
 ### v0.3.0
 
 * The following configuraions variable names were changed ([issue
-  #15](http://code.google.com/p/node-xmpp-bosh/issues/detail?id=15) on
-  google code details these changes as well):
+  \#15](http://code.google.com/p/node-xmpp-bosh/issues/detail?id=15)
+  on google code details these changes as well):
 
     * *max_data_held_bytes* to *max_data_held*
 
