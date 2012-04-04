@@ -11,17 +11,25 @@ want to check this file every time you update your copy.
   xmpp clients that use libpurple) if the configuration variable
   *pidgin_compatible* is set to *true*.
 
-* Bug-fixes to the websockets implementation - many thanks to @astro
-  for finding these.
+* Bug-fixes to the websockets implementation - many thanks to
+  [@astro](https://github.com/astro) for finding these.
 
 * Most DOM (ltx) parser references replaced with SAX (node-expat)
   parser references. This should make things faster in general.
 
 * Logging uses log4js instead of "logging invented here".
 
+### v0.4.0
+
+* Change in the public API. If you are embedding node-xmpp-bosh within
+  your application, please note that the method *start()* has been
+  renamed to *start_bosh()*.
+
 ### v0.3.0
 
-* The following configuraions variable names were changed:
+* The following configuraions variable names were changed ([issue
+  #15](http://code.google.com/p/node-xmpp-bosh/issues/detail?id=15) on
+  google code details these changes as well):
 
     * *max_data_held_bytes* to *max_data_held*
 
@@ -31,5 +39,9 @@ want to check this file every time you update your copy.
 
     * *max_inactivity_sec* to *max_inactivity*
 
+### v0.2.3
 
+* Fixes the [Billion
+  Laughs](https://en.wikipedia.org/wiki/Billion_laughs) (XML Entity
+  Expansion) vulnerability.
 
