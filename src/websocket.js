@@ -1,7 +1,7 @@
 // -*-  tab-width:4  -*-
 
 /*
- * Copyright (c) 2011 Dhruv Matani
+ * Copyright (c) 2011 Dhruv Matani, Sonny Piers
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ const STREAM_OPENED   = 2;
 //
 
 exports.createServer = function(bosh_server, webSocket) {
-    webSocket = webSocket || require('websocket');
+    webSocket = webSocket || require('ws');
 
 	// State information for XMPP streams
 	var sn_state = { };
@@ -81,10 +81,10 @@ exports.createServer = function(bosh_server, webSocket) {
 
 	var wsep = new WebSocketEventPipe(bosh_server);
 
-	var websocket_server = new webSocket.server({
-        httpServer:  bosh_server.server,
-        autoAcceptConnections: true,
-		subprotocol: 'xmpp'
+	var websocket_server = new webSocket.Server({
+        server:  bosh_server.server,
+        // autoAcceptConnections: true,
+		// subprotocol: 'xmpp'
 	});
 
 	wsep.server = websocket_server;
@@ -102,7 +102,7 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending data: %s", sstate.name, ss_xml);
-		sstate.conn.sendUTF(ss_xml);
+		sstate.conn.send(ss_xml);
 	});
 
     // Special case for WebSockets due to https://github.com/dhruvbird/node-xmpp-bosh/issues/16
@@ -112,14 +112,14 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
-        sstate.conn.sendUTF(ss_xml);
+        sstate.conn.send(ss_xml);
     });
 
 	wsep.on('response', function(response, sstate) {
 		// Send the data back to the client
 
 		// TODO: Handle send() failed
-		sstate.conn.sendUTF(response.toString());
+		sstate.conn.send(response.toString());
 	});
 
 	wsep.on('terminate', function(sstate, had_error) {
@@ -133,7 +133,7 @@ exports.createServer = function(bosh_server, webSocket) {
 		sstate.conn.close();
 	});
 
-	websocket_server.on('connect', function(conn) {
+	websocket_server.on('connection', function(conn) {
 		var stream_name = uuid();
 
 		// Note: xmpp-proxy.js relies on the session object
@@ -161,30 +161,28 @@ exports.createServer = function(bosh_server, webSocket) {
 
 		conn.on('message', function(message) {
             // console.log("message:", message);
-            if (message.type !== 'utf8') {
+            if (typeof message != 'string') {
                 log.warn("Only utf-8 supported...");
                 return;
             }
 
-            var message_data = message.utf8Data;
-
             // Check if this is a stream open message
-            if (message_data.search('<stream:stream') != -1) {
+            if (message.search('<stream:stream') != -1) {
                 // Yes, it is. Now, check if it is closed or unclosed
-                if (message_data.search('/>') === -1) {
+                if (message.search('/>') === -1) {
                     // Unclosed - Close it to continue parsing
-                    message_data += '</stream:stream>';
+                    message += '</stream:stream>';
                     sstate.has_open_stream_tag = true;
                 }
             }
 
             // TODO: Maybe use a SAX based parser instead
-			message_data = '<dummy>' + message_data + '</dummy>';
+			message = '<dummy>' + message + '</dummy>';
 
-			log.debug("%s - Processing: %s", stream_name, message_data);
+			log.debug("%s - Processing: %s", stream_name, message);
 
 			// XML parse the message
-			var nodes = dutil.xml_parse(message_data);
+			var nodes = dutil.xml_parse(message);
 			if (!nodes) {
 				log.warn("%s Closing connection due to invalid packet", stream_name);
 				sstate.conn.close();
