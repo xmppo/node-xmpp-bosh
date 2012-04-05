@@ -7,8 +7,7 @@ Project Home Page:
 
 ### [What's Changed?](https://github.com/dhruvbird/node-xmpp-bosh/blob/master/whats_changed.md)
 
-Please see the
-[whats_changed.md](https://github.com/dhruvbird/node-xmpp-bosh/blob/master/whats_changed.md)
+Please see [whats_changed.md](https://github.com/dhruvbird/node-xmpp-bosh/blob/master/whats_changed.md)
 to see the major changes in releases.
 
 
