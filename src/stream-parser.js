@@ -73,8 +73,8 @@ dutil.copy(XmppStreamParser.prototype, {
         }
 
         if (this.stanza) {
-            var stream_name = name.split(/:/).reverse()[0];
-            if (!this.stanza.is(stream_name)) {
+            // var stream_name = name.split(/:/).reverse()[0];
+            if (!this.stanza.name == name) {
                 // Some other stanza was closed.
                 this.emit("error", "ending '" + name + "' but started '" + this.stanza.getName() + "'");
                 this.end();
