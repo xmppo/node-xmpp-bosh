@@ -72,13 +72,20 @@ dutil.copy(XmppStreamParser.prototype, {
             return;
         }
 
-        if (this.stanza && this.stanza.parent) {
-            this.stanza = this.stanza.parent;
-        } else if (this.stanza) {
-            this.emit("stanza", this.stanza);
-            delete this.stanza;
+        if (this.stanza) {
+            var stream_name = name.split(/:/).reverse()[0];
+            if (!this.stanza.is(stream_name)) {
+                // Some other stanza was closed.
+                this.emit("error", "ending '" + name + "' but started '" + this.stanza.getName() + "'");
+                this.end();
+            } else if (this.stanza.parent) {
+                this.stanza = this.stanza.parent;
+            } else {
+                this.emit("stanza", this.stanza);
+                delete this.stanza;
+            }
         } else {
-            // this happens some-times.
+            // This happens at times.
             this.emit("error", "end-element w/o start");
             this.end();
         }
