@@ -62,10 +62,7 @@ dutil.copy(BoshRequestParser.prototype, {
 
     _handle_end_element: function(name, attrs) {
         if (this.stanza) {
-            if (!(this.stanza.name == name)) {
-                // Some other stanza was closed.
-                this.end();
-            } else if (this.stanza.parent) {
+            if (this.stanza.parent) {
                 this.stanza = this.stanza.parent;
             } else {
                 this.parsedBody = this.stanza;

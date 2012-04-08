@@ -73,11 +73,7 @@ dutil.copy(XmppStreamParser.prototype, {
         }
 
         if (this.stanza) {
-            if (!(this.stanza.name == name)) {
-                // Some other stanza was closed.
-                this.emit("error", "ending '" + name + "' but started '" + this.stanza.getName() + "'");
-                this.end();
-            } else if (this.stanza.parent) {
+            if (this.stanza.parent) {
                 this.stanza = this.stanza.parent;
             } else {
                 this.emit("stanza", this.stanza);
