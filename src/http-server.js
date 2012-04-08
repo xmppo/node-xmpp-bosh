@@ -43,10 +43,11 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
     function parse_request(buffers) {
         var valid_request = true;
-        buffers.forEach(function (buffer) {
-            if (!valid_request) return;
-            valid_request = bosh_request_parser.parse(buffer);
-        });
+        for (var i = 0, len = buffers.length; i < len; i++) {
+            if (!valid_request) return null;
+            valid_request = bosh_request_parser.parse(buffers[i]);
+        }
+
         if (valid_request && bosh_request_parser.parsedBody) {
             return bosh_request_parser.parsedBody;
         } else {

@@ -157,14 +157,14 @@ exports.createServer = function (options) {
                 session_store.send_invalid_session_terminate_response(res, node);
                 return;
             }
-            try {
-                // This is enclosed in a try/catch block since invalid requests
-                // at this point MAY not have these attributes
-                log.trace("%s %s req.rid: %s, session.rid: %s", session.sid, 
+
+            log.trace("%s %s req.rid: %s, session.rid: %s", session.sid, 
                           node.attrs.stream || "NO_Stream", node.attrs.rid, 
                           session.rid);
-            } catch (ex) { }
-
+            
+            // are comments like this good?
+            // I was also thinking if logging(log statements) can
+            // replace comments all together??
             // Check the validity of the packet and the BOSH session
             if (!session.is_valid_packet(node)) {
                 log.trace("%s Invalid Packet", session.sid);
