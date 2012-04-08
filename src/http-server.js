@@ -39,13 +39,27 @@ var BoshRequestParser = require('./bosh-request-parser').BoshRequestParser;
 function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_handler,
                     bosh_options) {
 
+    var bosh_request_parser = new BoshRequestParser();
+
+    function parse_request(buffers) {
+        var valid_request = true;
+        buffers.forEach(function (buffer) {
+            if (!valid_request) return;
+            valid_request = bosh_request_parser.parse(buffer);
+        });
+        if (valid_request && bosh_request_parser.parsedBody) {
+            return bosh_request_parser.parsedBody;
+        } else {
+            bosh_request_parser = new BoshRequestParser();
+        }
+    }
+    
     // All request handlers return 'false' on successful handling
     // of the request and 'undefined' if they did NOT handle the
     // request. This is according to the EventPipe listeners API
     // expectation.
     function handle_get_bosh_request(req, res, u) {
         var ppos = u.pathname.search(bosh_options.path);
-        var bosh_request_parser = new BoshRequestParser();
         if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data')) {
             if (!bosh_request_parser.parse(u.query.data)) {
                 req.destroy();
@@ -67,27 +81,32 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         }
 
         var end_timeout;
+        var req_parts = [ ];
         var req_body_length = 0;
-        var bosh_request_parser = new BoshRequestParser();
 
         var _on_end_callback = us.once(function (err) {
             if (end_timeout) {
                 clearTimeout(end_timeout);
                 end_timeout = null;
             }
-
             if (err) {
                 log.warn("%s - destroying connection from '%s'", err, req.socket.remoteAddress);
                 req.destroy();
             } else {
-                var body = bosh_request_parser.parsedBody;
-                log.debug("RECD: %s", body);
-                res.request_headers = req.headers;
-                bosh_request_handler(res, body);
-                bosh_request_parser.end();
+                var body = parse_request(req_parts);
+                if (body) {
+                    log.debug("RECD: %s", body);
+                    res.request_headers = req.headers;
+                    bosh_request_handler(res, body);
+                }
+                else {
+                    req_parts.forEach(function (p) {
+                        log.warn("XML parsing Error: %s", p);
+                    });
+                    res.end("XML parsing Error");
+                }
             }
-
-            bosh_request_parser = null;
+            req_parts = null;
         });
 
         // Timeout the request of we don't get an 'end' event within
@@ -101,8 +120,8 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             if (req_body_length > bosh_options.MAX_DATA_HELD) {
                 _on_end_callback(new Error("max_data_held exceeded"));
             }
-            else if (!bosh_request_parser.parse(d)) {
-                _on_end_callback(new Error("Parse Error"));
+            else {
+                req_parts.push(d);
             }
         })
         .on('end', function () {
