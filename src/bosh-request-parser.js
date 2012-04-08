@@ -30,6 +30,8 @@ var expat  = require('node-expat');
 
 function BoshRequestParser() {
     this._parser = new expat.Parser('UTF-8');
+    this._parser.parse("<bosh>");
+
     this._started = false;
     this.parsedBody = null;
 
