@@ -288,6 +288,7 @@ Session.prototype = {
             // Check if this is a new stream start packet (multiple streams)
             log.trace("%s: Stream Add", this.sid);
             if (this.is_max_streams_violation(node)) {
+                log.trace("%s %s max stream voilation - will terminate", this.sid, stream_log_name);
                 // Make this a session terminate request.
                 node.attrs.type = 'terminate';
                 node.attrs.condition = 'policy-violation';
@@ -299,7 +300,7 @@ Session.prototype = {
 
         // Check for stream terminate
         if (helper.is_stream_terminate_request(node)) {
-            log.trace("%s Stream Terminate", this.sid);
+            log.info("%s Stream Terminate Request", this.sid);
             // We may be required to terminate one stream, or all
             // the open streams on this BOSH session.
             this.handle_client_stream_terminate_request(stream, nodes,
@@ -408,7 +409,7 @@ Session.prototype = {
             // Process pending (queued) responses (if any)
             // this.send_pending_responses();
         } else {
-            log.trace("%s broken-request - no-need-to-process - session.rid: %s", this.sid, this.rid);
+            log.info("%s broken-request - no-need-to-process - session.rid: %s", this.sid, this.rid);
             should_process = false;
         }
         if (this.queued_requests.hasOwnProperty(node.attrs.rid)) {
@@ -444,6 +445,7 @@ Session.prototype = {
         // because of the rule below.
         if (this.res.length > this._options.MAX_BOSH_CONNECTIONS) {
             // Just send the termination message and destroy the socket.
+            log.info("%s will terminate due to MAX_BOSH_CONNECTION exceeded", this.sid);
             var condition = 'policy-violation';
             this.send_terminate_response(ro, condition);
 
@@ -484,7 +486,7 @@ Session.prototype = {
     // all open streams (on the XMPP server side)
     terminate: function (condition) {
         if (this.streams.length !== 0) {
-            log.trace("%s terminate - Terminating potentially non-empty BOSH session", this.sid);
+            log.warn("%s terminate - Terminating potentially non-empty BOSH session", this.sid);
         }
 
         // Clear out this.streams to aid GC
@@ -524,7 +526,7 @@ Session.prototype = {
 
         var self = this;
         this.timeout = setTimeout(function () {
-            log.trace("%s terminating Session due to inactivity", self.sid);
+            log.info("%s terminating Session due to inactivity", self.sid);
             // Raise a no-client event on pending, unstitched as well as unacked 
             // responses.
             var _p = us.pluck(self.pending_stitched_responses, 'response');
@@ -556,7 +558,7 @@ Session.prototype = {
     // These functions actually send responses to the client
 
     send_invalid_packet_terminate_response: function (res, node) {
-        log.trace("%s send_invalid_packet_terminate_response", this.sid);
+        log.info("%s send_invalid_packet_terminate_response -- will terminate", this.sid);
         var attrs = {
             condition   : 'item-not-found',
             message     : 'Invalid packet'
@@ -581,7 +583,7 @@ Session.prototype = {
     // send to the client as to why the session was closed.
     // 
     send_terminate_response: function (ro, condition) {
-        log.trace("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
+        log.info("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
         var attrs = { };
         if (condition) {
             attrs.condition = condition;

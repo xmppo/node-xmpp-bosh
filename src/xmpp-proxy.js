@@ -222,7 +222,7 @@ dutil.copy(XMPPProxy.prototype, {
 
     terminate: function() {
         if (this._is_connected) {
-            log.trace("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
+            log.info("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
             // Detach the 'data' handler so that we don't get any more events.
             this._sock.removeAllListeners('data');
             this._parser.end();
@@ -241,7 +241,7 @@ dutil.copy(XMPPProxy.prototype, {
             this._sock.end();
         }
         else {
-            log.trace("%s %s terminate - will terminate on connect", this._void_star.session.sid, this._void_star.name);
+            log.info("%s %s terminate - will terminate on connect", this._void_star.session.sid, this._void_star.name);
             this._terminate_on_connect = true;
         }
     },
@@ -310,7 +310,7 @@ dutil.copy(XMPPProxy.prototype, {
 	},
 
     _on_stream_end: function(attr) {
-        log.trace("%s %s _on_stream_end: stream terminated", this._void_star.session.sid, this._void_star.name);
+        log.info("%s %s _on_stream_end: stream terminated", this._void_star.session.sid, this._void_star.name);
         this.terminate();
     },
 
@@ -320,18 +320,18 @@ dutil.copy(XMPPProxy.prototype, {
     },
 
     _close_connection: function(error) {
-        log.trace("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
+        log.info("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
         this.emit('close', error, this._void_star);
     },
     
     _on_close: function(had_error) {
         had_error = had_error || false;
-        log.trace("%s %s _on_close error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
+        log.info("%s %s _on_close error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
         this._close_connection(had_error ? 'remote-connection-failed' : null);
     },
 
     _on_lookup_error: function(error) {
-        log.warn("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name, error);
+        log.info("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name, error);
         this._close_connection(error);
     }
 });

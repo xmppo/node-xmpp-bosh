@@ -59,7 +59,7 @@ function XMPPProxyConnector(bosh_server, options) {
 
 	// Fired when an 'close' event is raised by the XMPP Proxy.
 	this._on_xmpp_proxy_close = function(error, stream) {
-		log.trace("%s %s _on_xmpp_proxy_close - terminate stream", stream.session.sid, stream.name);
+		log.info("%s %s _on_xmpp_proxy_close - terminate stream", stream.session.sid, stream.name);
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[stream.name];
 		if (!ss) {
@@ -191,7 +191,7 @@ XMPPProxyConnector.prototype = {
 			return;
 		}
 
-		log.trace("%s %s stream_terminate", stream.session.sid, stream.name);
+		log.info("%s %s stream_terminate", stream.session.sid, stream.name);
 		ss.proxy.terminate();
 		delete this.streams[stream.name];
 	}
