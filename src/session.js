@@ -288,7 +288,7 @@ Session.prototype = {
             // Check if this is a new stream start packet (multiple streams)
             log.trace("%s: Stream Add", this.sid);
             if (this.is_max_streams_violation(node)) {
-                log.trace("%s %s max stream voilation - will terminate", this.sid, stream_log_name);
+                log.info("%s %s max stream violation - will terminate", this.sid, stream_log_name);
                 // Make this a session terminate request.
                 node.attrs.type = 'terminate';
                 node.attrs.condition = 'policy-violation';
