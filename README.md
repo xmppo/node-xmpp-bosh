@@ -51,7 +51,7 @@ $ bosh-server --help
 * A client may request a custom inactivity period from the server by setting the 'inactivity' attribute in the session creation request
 * HTTP POST & GET (for older browsers) are suported (see below for more details)
 * A websocket server on the same port as the BOSH server
-* Benchmarks: http://code.google.com/p/node-xmpp-bosh/wiki/Benchmarks
+* Benchmarks: https://github.com/dhruvbird/node-xmpp-bosh/wiki/Benchmarks
 * Monitor the BOSH server [http://localhost:5280/](http://localhost:5280/) (available only if you have node-xmpp-bosh running on your system)
 
 
