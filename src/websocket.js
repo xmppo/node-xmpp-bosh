@@ -56,56 +56,57 @@ const STREAM_OPENED   = 2;
 //
 
 exports.createServer = function(bosh_server, webSocket) {
-  webSocket = webSocket || require('ws');
-
-  // State information for XMPP streams
-  var sn_state = { };
-
-  function WebSocketEventPipe(bosh_server) {
-    this.bosh_server = bosh_server;
-  }
-
-  util.inherits(WebSocketEventPipe, EventPipe);
-
-  dutil.copy(WebSocketEventPipe.prototype, {
-    stop: function() {
-      return websocket_server.close();
-    },
-    stat_stream_add: function() {
-      return this.bosh_server.stat_stream_add();
-    },
-    stat_stream_terminate: function() {
-      return this.bosh_server.stat_stream_terminate();
+    webSocket = webSocket || require('ws');
+    
+    // State information for XMPP streams
+    var sn_state = { };
+    
+    function WebSocketEventPipe(bosh_server) {
+        this.bosh_server = bosh_server;
     }
-  });
-
-  var wsep = new WebSocketEventPipe(bosh_server);
-
-  var websocket_server = new webSocket.Server({
-    server:  bosh_server.server,
-    // autoAcceptConnections: true,
-    // subprotocol: 'xmpp'
-  });
-
-  wsep.server = websocket_server;
-
-  wsep.on('stream-added', function(sstate) {
-    var to = sstate.to || '';
-    var ss_xml = new ltx.Element('stream:stream', {
-      'xmlns': 'jabber:client',
-      'xmlns:stream': 'http://etherx.jabber.org/streams',
-      'version': '1.0',
-      'xml:lang': 'en',
-      'from': to
+    
+    util.inherits(WebSocketEventPipe, EventPipe);
+    
+    dutil.copy(WebSocketEventPipe.prototype, {
+        stop: function() {
+            return websocket_server.close();
+        },
+        stat_stream_add: function() {
+            return this.bosh_server.stat_stream_add();
+        },
+        stat_stream_terminate: function() {
+            return this.bosh_server.stat_stream_terminate();
+        }
+    });
+    
+    var wsep = new WebSocketEventPipe(bosh_server);
+    
+    var websocket_server = new webSocket.Server({
+        server:  bosh_server.server,
+        // autoAcceptConnections: true,
+        // subprotocol: 'xmpp'
+    });
+    
+    wsep.server = websocket_server;
+    
+    wsep.on('stream-added', function(sstate) {
+        var to = sstate.to || '';
+        var ss_xml = new ltx.Element('stream:stream', {
+            'xmlns': 'jabber:client',
+            'xmlns:stream': 'http://etherx.jabber.org/streams',
+            'version': '1.0',
+            'xml:lang': 'en',
+            'from': to
     }).toString();
-    if (sstate.has_open_stream_tag) {
-      ss_xml = ss_xml.replace('/>', '>');
-    }
-    log.trace("%s sending data: %s", sstate.name, ss_xml);
-    sstate.conn.send(ss_xml);
-  });
-
-    // Special case for WebSockets due to https://github.com/dhruvbird/node-xmpp-bosh/issues/16
+        if (sstate.has_open_stream_tag) {
+            ss_xml = ss_xml.replace('/>', '>');
+        }
+        log.trace("%s sending data: %s", sstate.name, ss_xml);
+        sstate.conn.send(ss_xml);
+    });
+    
+    // Special case for WebSockets due to
+    // https://github.com/dhruvbird/node-xmpp-bosh/issues/16
     wsep.on('stream-restarted', function(sstate, stanza) {
       var ss_xml = stanza.toString();
       if (sstate.has_open_stream_tag) {
@@ -115,151 +116,151 @@ exports.createServer = function(bosh_server, webSocket) {
       sstate.conn.send(ss_xml);
     });
 
-  wsep.on('response', function(response, sstate) {
-    // Send the data back to the client
+    wsep.on('response', function(response, sstate) {
+        // Send the data back to the client
+        
+        // TODO: Handle send() failed
+        sstate.conn.send(response.toString());
+    });
 
-    // TODO: Handle send() failed
-    sstate.conn.send(response.toString());
-  });
-
-  wsep.on('terminate', function(sstate, had_error) {
-    if (!sn_state.hasOwnProperty(sstate.name)) {
-      return;
-    }
-    delete sn_state[sstate.name];
-
-    // Note: Always delete before closing
-    // TODO: Handle close() failed
-    sstate.conn.close();
-  });
-
-  websocket_server.on('connection', function(conn) {
-    var stream_name = uuid();
-
-    // Note: xmpp-proxy.js relies on the session object
-    // to have a sid attribute and the stream object to
-    // contain a name attribute. This is done to improve
-    // readability of the logs, even though it introduces
-    // coupling. We may choose to get rid of it later.
-    // Deviation from this behaviour for now might lead to
-    // a crash or unreadable logs.
-
-    var sstate = {
-      name: stream_name,
-      stream_state: STREAM_UNOPENED,
-      conn: conn,
-      // Compatibility with xmpp-proxy-connector
-      state: {
-        sid: "WEBSOCKET"
-      },
-      session: {
-        sid: "WEBSOCKET"
-      },
-      has_open_stream_tag: false
-    };
-    sn_state[stream_name] = sstate;
-
-    conn.on('message', function(message) {
-      // console.log("message:", message);
-      if (typeof message != 'string') {
-        log.warn("Only utf-8 supported...");
-        return;
-      }
-
-      // Check if this is a stream open message
-      if (message.search('<stream:stream') != -1) {
-        // Yes, it is. Now, check if it is closed or unclosed
-        if (message.search('/>') === -1) {
-          // Unclosed - Close it to continue parsing
-          message += '</stream:stream>';
-          sstate.has_open_stream_tag = true;
+    wsep.on('terminate', function(sstate, had_error) {
+        if (!sn_state.hasOwnProperty(sstate.name)) {
+            return;
         }
-      }
-
-      // TODO: Maybe use a SAX based parser instead
-      message = '<dummy>' + message + '</dummy>';
-
-      log.debug("%s - Processing: %s", stream_name, message);
-
-      // XML parse the message
-      var nodes = dutil.xml_parse(message);
-      if (!nodes) {
-        log.warn("%s Closing connection due to invalid packet", stream_name);
+        delete sn_state[sstate.name];
+        
+        // Note: Always delete before closing
+        // TODO: Handle close() failed
         sstate.conn.close();
-        return;
-      }
-
-      // console.log("xml nodes:", nodes);
-      nodes = nodes.children;
-
-      // The stream start node is special since we trigger a stream-add
-      // event when we get it.
-      var ss_node = nodes.filter(function(node) {
-        return typeof node.is === 'function' && node.is('stream');
-      });
-
-      ss_node = us.first(ss_node);
-
-      nodes = nodes.filter(function(node) {
-        return typeof node.is === 'function' ? !node.is('stream') : true;
-      });
-
-      if (ss_node) {
-        if (sstate.stream_state === STREAM_UNOPENED) {
-          // Start a new stream
-          wsep.stat_stream_add();
-          sstate.stream_state = STREAM_OPENED;
-          // console.log("stream start attrs:", ss_node.attrs);
-
-          sstate.to = ss_node.attrs.to;
-          wsep.emit('stream-add', sstate, ss_node.attrs);
-        } else if (sstate.stream_state === STREAM_OPENED) {
-          // Restart the current stream
-          wsep.emit('stream-restart', sstate, ss_node.attrs);
+    });
+    
+    websocket_server.on('connection', function(conn) {
+        var stream_name = uuid();
+        
+        // Note: xmpp-proxy.js relies on the session object
+        // to have a sid attribute and the stream object to
+        // contain a name attribute. This is done to improve
+        // readability of the logs, even though it introduces
+        // coupling. We may choose to get rid of it later.
+        // Deviation from this behaviour for now might lead to
+        // a crash or unreadable logs.
+        
+        var sstate = {
+            name: stream_name,
+            stream_state: STREAM_UNOPENED,
+            conn: conn,
+            // Compatibility with xmpp-proxy-connector
+            state: {
+                sid: "WEBSOCKET"
+            },
+            session: {
+                sid: "WEBSOCKET"
+            },
+            has_open_stream_tag: false
+        };
+        sn_state[stream_name] = sstate;
+        
+        conn.on('message', function(message) {
+            // console.log("message:", message);
+            if (typeof message != 'string') {
+                log.warn("Only utf-8 supported...");
+                return;
+            }
+            
+            // Check if this is a stream open message
+            if (message.search('<stream:stream') != -1) {
+                // Yes, it is. Now, check if it is closed or unclosed
+                if (message.search('/>') === -1) {
+                    // Unclosed - Close it to continue parsing
+                    message += '</stream:stream>';
+                    sstate.has_open_stream_tag = true;
+                }
+            }
+            
+            // TODO: Maybe use a SAX based parser instead
+            message = '<dummy>' + message + '</dummy>';
+            
+            log.debug("%s - Processing: %s", stream_name, message);
+            
+            // XML parse the message
+            var nodes = dutil.xml_parse(message);
+            if (!nodes) {
+                log.warn("%s Closing connection due to invalid packet", stream_name);
+                sstate.conn.close();
+                return;
+            }
+            
+            // console.log("xml nodes:", nodes);
+            nodes = nodes.children;
+            
+            // The stream start node is special since we trigger a
+            // stream-add event when we get it.
+            var ss_node = nodes.filter(function(node) {
+                return typeof node.is === 'function' && node.is('stream');
+            });
+            
+            ss_node = us.first(ss_node);
+            
+            nodes = nodes.filter(function(node) {
+                return typeof node.is === 'function' ? !node.is('stream') : true;
+            });
+            
+            if (ss_node) {
+                if (sstate.stream_state === STREAM_UNOPENED) {
+                    // Start a new stream
+                    wsep.stat_stream_add();
+                    sstate.stream_state = STREAM_OPENED;
+                    // console.log("stream start attrs:", ss_node.attrs);
+                    
+                    sstate.to = ss_node.attrs.to;
+                    wsep.emit('stream-add', sstate, ss_node.attrs);
+                } else if (sstate.stream_state === STREAM_OPENED) {
+                    // Restart the current stream
+                    wsep.emit('stream-restart', sstate, ss_node.attrs);
+                }
+            }
+            
+            // console.log("nodes:", nodes);
+            assert(nodes instanceof Array);
+            
+            // Process the nodes normally.
+            wsep.emit('nodes', nodes, sstate);
+        });
+        
+        conn.on('close', function() {
+            log.trace("%s Stream close requested", stream_name);
+            
+            if (!sn_state.hasOwnProperty(stream_name)) {
+                // Already terminated
+                return;
+            }
+            
+            wsep.stat_stream_terminate();
+            delete sn_state[stream_name];
+            
+            // Note: Always delete before emitting events
+            
+            // Raise the stream-terminate event on wsep
+            wsep.emit('stream-terminate', sstate);
+        });
+        
+    });
+    
+    websocket_server.on('disconnect', function(conn) {
+    });
+    
+    function emit_error(ex) {
+        // We enforce similar semantics as the rest of the node.js for
+        // the 'error' event and throw an exception if it is unhandled
+        if (!wsep.emit('error', ex)) {
+            throw new Error(ex.toString());
         }
-      }
-
-      // console.log("nodes:", nodes);
-      assert(nodes instanceof Array);
-
-      // Process the nodes normally.
-      wsep.emit('nodes', nodes, sstate);
-    });
-
-    conn.on('close', function() {
-      log.trace("%s Stream close requested", stream_name);
-
-      if (!sn_state.hasOwnProperty(stream_name)) {
-        // Already terminated
-        return;
-      }
-
-      wsep.stat_stream_terminate();
-      delete sn_state[stream_name];
-
-      // Note: Always delete before emitting events
-
-      // Raise the stream-terminate event on wsep
-      wsep.emit('stream-terminate', sstate);
-    });
-
-  });
-
-  websocket_server.on('disconnect', function(conn) {
-  });
-
-  function emit_error(ex) {
-    // We enforce similar semantics as the rest of the node.js for the 'error'
-    // event and throw an exception if it is unhandled
-    if (!wsep.emit('error', ex)) {
-      throw new Error(ex.toString());
     }
-  }
-
-  // Handle the 'error' event on the bosh_server and re-emit it.
-  // Throw an exception if no one handles the exception we threw
-  bosh_server.on('error', emit_error);
-  websocket_server.on('error', emit_error);
-
-  return wsep;
+    
+    // Handle the 'error' event on the bosh_server and re-emit it.
+    // Throw an exception if no one handles the exception we threw
+    bosh_server.on('error', emit_error);
+    websocket_server.on('error', emit_error);
+    
+    return wsep;
 };
