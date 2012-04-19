@@ -119,8 +119,10 @@ exports.createServer = function(bosh_server, webSocket) {
     wsep.on('response', function(response, sstate) {
         // Send the data back to the client
         
-        // TODO: Handle send() failed
-        sstate.conn.send(response.toString());
+        if (!sstate.terminated) {
+            // TODO: Handle send() failed
+            sstate.conn.send(response.toString());
+        }
     });
 
     wsep.on('terminate', function(sstate, had_error) {
@@ -131,6 +133,7 @@ exports.createServer = function(bosh_server, webSocket) {
         
         // Note: Always delete before closing
         // TODO: Handle close() failed
+        sstate.terminated = true;
         sstate.conn.close();
     });
     
