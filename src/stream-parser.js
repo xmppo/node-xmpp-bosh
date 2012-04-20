@@ -33,7 +33,8 @@ function XmppStreamParser() {
     events.EventEmitter.apply(this);
 
     this.__defineGetter__("getCurrentByteIndex", function () {
-        return this._parser.getCurrentByteIndex();
+        if (!this._parser) return 0;
+        else return this._parser.getCurrentByteIndex();
     });
 
     this._start();

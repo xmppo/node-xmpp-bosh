@@ -142,6 +142,7 @@ function save_terminate_condition_for_wait_time(obj, attr, condition, wait) {
         timer: setTimeout(function () {
             if (obj.hasOwnProperty(attr)) {
                 delete obj[attr];
+                clearTimeout(obj[attr].timer);
             }
         }, (wait + 5) * 1000)
     };
