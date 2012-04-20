@@ -40,6 +40,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                     bosh_options) {
 
     var bosh_request_parser = new BoshRequestParser();
+    var req_list1 = [ ], req_list2 = [ ];
 
     function parse_request(buffers) {
         var valid_request = true;
@@ -81,15 +82,10 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             return;
         }
 
-        var end_timeout;
         var req_parts = [ ];
         var req_body_length = 0;
 
         var _on_end_callback = us.once(function (err) {
-            if (end_timeout) {
-                clearTimeout(end_timeout);
-                end_timeout = null;
-            }
             if (err) {
                 log.warn("%s - destroying connection from '%s'", err, req.socket.remoteAddress);
                 req.destroy();
@@ -111,11 +107,9 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         });
 
         // Timeout the request of we don't get an 'end' event within
-        // 20 sec of the request being made.
-        end_timeout = setTimeout(function () {
-            _on_end_callback(new Error("Timed Out"));
-        }, 20 * 1000);
-        
+        // 15 sec of the request being made.
+        req_list1.push(_on_end_callback);
+
         req.on('data', function (d) {
             req_body_length += d.length;
             if (req_body_length > bosh_options.MAX_DATA_HELD) {
@@ -193,8 +187,14 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         return false;
     }
 
-    // TODO: Read off the Headers request from the request and set that in the
-    // response.
+    function handle_request_timeout() {
+        var i;
+        for (i = 0; i < req_list2.length; ++i) {
+            req_list2[i](new Error("Timed Out"));
+        }
+        req_list2 = req_list1;
+        req_list1 = [ ];
+    }
 
     var router = new EventPipe();
     router.on('request', handle_post_bosh_request, 1)
@@ -215,6 +215,8 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     var server = http.createServer(http_request_handler);
     server.on('error', http_error_handler);
     server.listen(port, host);
+
+    var req_timeout_interval = setInterval(handle_request_timeout, 15 * 1000);
 
     this.http_server = server;
 }
