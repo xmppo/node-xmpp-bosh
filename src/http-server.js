@@ -84,9 +84,9 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 log.debug("RECD: %s", body);
                 res.request_headers = req.headers;
                 bosh_request_handler(res, body);
-                bosh_request_parser.end();
             }
 
+            bosh_request_parser.end();
             bosh_request_parser = null;
         });
 
