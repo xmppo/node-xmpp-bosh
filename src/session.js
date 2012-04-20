@@ -796,9 +796,6 @@ Session.prototype = {
                 // that the client will request the missing
                 // RID. 
                 this._send_no_requeue(ro, response);
-
-                // We try sending more queued responses
-                this.send_pending_responses();
             } else {
                 log.trace("%s send_pending_responses - nothing to send, 0 pending - return", this.sid);
                 break;
