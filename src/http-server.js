@@ -219,6 +219,8 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     var req_timeout_interval = setInterval(handle_request_timeout, 15 * 1000);
 
     this.http_server = server;
+
+    // TODO: Provide a stop() method to stop the server.
 }
 
 exports.HTTPServer = HTTPServer;
