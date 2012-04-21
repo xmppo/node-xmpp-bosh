@@ -106,7 +106,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             req_parts = null;
         });
 
-        // Timeout the request of we don't get an 'end' event within
+        // Timeout the request if we don't get an 'end' event within
         // 15 sec of the request being made.
         req_list1.push(_on_end_callback);
 

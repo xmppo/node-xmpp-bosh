@@ -445,7 +445,7 @@ Session.prototype = {
         // because of the rule below.
         if (this.res.length > this._options.MAX_BOSH_CONNECTIONS) {
             // Just send the termination message and destroy the socket.
-            log.info("%s will terminate due to MAX_BOSH_CONNECTION exceeded", this.sid);
+            log.info("%s will terminate due to MAX_BOSH_CONNECTIONS exceeded", this.sid);
             var condition = 'policy-violation';
             this.send_terminate_response(ro, condition);
 
