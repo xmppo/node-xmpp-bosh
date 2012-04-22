@@ -458,19 +458,18 @@ Session.prototype = {
         }
 
         ro.set_socket_options(this.wait);
-        var self = this;
         ro.set_timeout(function () {
-            var pos = self.res.indexOf(ro);
+            var pos = this.res.indexOf(ro);
             if (pos === -1) {
                 return;
             }
-            // Remove self from list of held connections.
-            self.res.splice(pos, 1);
+            // Remove ourself from list of held connections.
+            this.res.splice(pos, 1);
             // Send back an empty body element.
             // We don't add this to unacked_responses since it's wasteful. NO
             // WE ACTUALLY DO add it to unacked_responses
-            self._send_no_requeue(ro, $body());
-        }, this.wait * 1000);
+            this._send_no_requeue(ro, $body());
+        }.bind(this), this.wait * 1000);
 
         // Insert into its correct position (in RID order)
         var pos;
@@ -701,6 +700,7 @@ Session.prototype = {
             log.trace("%s get_response_object - return ro with rid: %s", this.sid, ro.rid);
         }
 
+        // Q. Is 'res' ever NOT an object?
         log.trace("%s get_response_object - holding %s ro", this.sid, (res ? res.length : 0));
         return ro;
     },

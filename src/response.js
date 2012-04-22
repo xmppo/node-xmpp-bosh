@@ -46,12 +46,15 @@ Response.prototype = {
 	},
 
     clear_timeout: function () {
-		clearTimeout(this.timeout);
+        if (this.timeout) {
+		    clearTimeout(this.timeout);
+            delete this.timeout;
+        }
 	},
 
     set_error: function (error_func) {
 		this._res.on('error', error_func);
-	},
+    },
 
 	// Sends a stream termination response on an HTTP response (res) object.
 	// This method is generally used to terminate rogue connections.
