@@ -1050,8 +1050,12 @@ Session.prototype = {
 
         var self = this;
 
-        // can we get rid of this forEach and check
+        // Q. can we get rid of this forEach and check
         // only for the node.attrs.rid value??
+        // 
+        // A. No idea - will need to think about it. However, a
+        // standard for loop seems more readable here.
+        // 
         _queued_request_keys.forEach(function (rid) {
             // There should be exactly 1 'rid' in state.queued_requests
             // that is less than state.rid + 1. -- such requests are
