@@ -100,7 +100,8 @@ function do_test(domain, route) {
 		port: u.port, 
 		path: u.pathname, 
 		method: 'POST', 
-		body: sess_create.toString()
+		body: sess_create.toString(), 
+        agent: false
     };
 
     console.log('Connecting to:', domain);
@@ -156,7 +157,7 @@ function do_test(domain, route) {
 function start_test(options) {
     var u = url.parse(options.endpoint);
     //var agent = http.getAgent(u.hostname, u.port);
-    http.globalAgent.maxSockets = options.nconn;
+    // http.globalAgent.maxSockets = options.nconn;
 
 	var i;
     for (i = 0; i < options.nsess; ++i) {

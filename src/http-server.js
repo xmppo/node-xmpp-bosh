@@ -84,6 +84,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
         var req_parts = [ ];
         var req_body_length = 0;
+        var req_list_idx = -1;
 
         var _on_end_callback = us.once(function (err) {
             if (err) {
@@ -104,11 +105,21 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                 }
             }
             req_parts = null;
+
+            // Clear the callback to help free memory.
+            if (req_list_idx > -1) {
+                if (req_list1[req_list_idx] == _on_end_callback) {
+                    req_list1[req_list_idx] = null;
+                } else if (req_list2[req_list_idx] == _on_end_callback) {
+                    req_list2[req_list_idx] = null;
+                }
+            }
         });
 
         // Timeout the request if we don't get an 'end' event within
         // 15 sec of the request being made.
         req_list1.push(_on_end_callback);
+        req_list_idx = req_list1.length - 1;
 
         req.on('data', function (d) {
             req_body_length += d.length;
@@ -190,7 +201,9 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     function handle_request_timeout() {
         var i;
         for (i = 0; i < req_list2.length; ++i) {
-            req_list2[i](new Error("Timed Out"));
+            if (req_list2[i]) {
+                req_list2[i](new Error("Timed Out"));
+            }
         }
         req_list2 = req_list1;
         req_list1 = [ ];
