@@ -49,7 +49,7 @@ function SingletonHTTPServer() {
     var http_error_handler = function (options) {
         return function (ex) {
             throw new Error('ERROR on listener at endpoint: http://' + 
-                        options.host + ':' + options.port + '/' + options.path);
+                            options.host + ':' + options.port + '/' + options.path);
         };
     };
 
@@ -66,49 +66,49 @@ function SingletonHTTPServer() {
 var http_server_factory = new SingletonHTTPServer();
 
 exports.start_bosh = function(options) {
-	options = options || { };
-	options = dutil.extend(options, {
-		path: /^\/http-bind(\/+)?$/, 
-		port: 5280, 
-		logging: "INFO"
-	});
+    options = options || { };
+    options = dutil.extend(options, {
+        path: /^\/http-bind(\/+)?$/,
+        port: 5280, 
+        logging: "INFO"
+    });
     
     var http_server = http_server_factory.getInstance({
         port: options.port,
         host: options.host
     });
 
-	logger.set_log_level(options.logging);
+    logger.set_log_level(options.logging);
 
-	log.trace("Starting the BOSH server");
+    log.trace("Starting the BOSH server");
 
-	var bosh_server = bosh.createServer(options, http_server);
+    var bosh_server = bosh.createServer(options, http_server);
 
-	// The connector is responsible for communicating with the real XMPP server.
-	// We allow different types of connectors to exist.
-	var conn = new xpc.Connector(bosh_server, options);
+    // The connector is responsible for communicating with the real XMPP server.
+    // We allow different types of connectors to exist.
+    var conn = new xpc.Connector(bosh_server, options);
 
-	//
-	// Responses we may hook on to:
-	// 01. stream-add
-	// 02. stream-terminate (when the user terminates the stream)
-	// 03. stream-restart
-	// 04. no-client
-	// 05. response-acknowledged
-	// 06. nodes (from user to server)
-	// 07. response (from server to user)
-	// 08. terminate (when the server terminates the stream)
-	// 09. stream-added (when the XMPP server starts a <stream:stream>
-	// 10. error: Will throw an unhandled exception if the 'error' event is not handled
-	//
+    //
+    // Responses we may hook on to:
+    // 01. stream-add
+    // 02. stream-terminate (when the user terminates the stream)
+    // 03. stream-restart
+    // 04. no-client
+    // 05. response-acknowledged
+    // 06. nodes (from user to server)
+    // 07. response (from server to user)
+    // 08. terminate (when the server terminates the stream)
+    // 09. stream-added (when the XMPP server starts a <stream:stream>
+    // 10. error: Will throw an unhandled exception if the 'error' event is not handled
+    //
 
-	// Example:
-	bosh_server.on("response-acknowledged", function(wrapped_response, session) {
-		// What to do with this response??
+    // Example:
+    bosh_server.on("response-acknowledged", function(wrapped_response, session) {
+        // What to do with this response??
         log.trace("%s Response Acknowledged: %s", session.sid, wrapped_response.rid);
-	});
+    });
 
-	return bosh_server;
+    return bosh_server;
 };
 
 //
@@ -123,10 +123,10 @@ exports.start_websocket = function(options, webSocket) {
         host: options.host
     });
 
-	var ws_server = websocket.createServer(http_server, webSocket);
+    var ws_server = websocket.createServer(http_server, webSocket);
 
-	// The connector is responsible for communicating with the real XMPP server.
-	// We allow different types of connectors to exist.
-	var conn = new xpc.Connector(ws_server, { });
+    // The connector is responsible for communicating with the real XMPP server.
+    // We allow different types of connectors to exist.
+    var conn = new xpc.Connector(ws_server, { });
     return ws_server;
 };

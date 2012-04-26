@@ -38,8 +38,8 @@ var log          = require('./log.js').getLogger(filename);
 var BoshRequestParser   = require('./bosh-request-parser').BoshRequestParser;
 var bosh_request_parser = new BoshRequestParser();
 
+var stats_markup_template        = fs.readFileSync(__dirname + "/stats.xml", "utf-8");
 var cross_domain_policy_template = fs.readFileSync(__dirname + "/cross-domain.xml", "utf-8");
-var stats_markup_template = fs.readFileSync(__dirname + "/stats.xml", "utf-8");
 
 function RequestHandler(options, bosh_request_handler) {
     var req_list1 = [ ], req_list2 = [ ];

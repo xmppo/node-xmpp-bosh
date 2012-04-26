@@ -23,20 +23,16 @@
  *
  */
 
-var ltx         = require('ltx');
-var dutil       = require('./dutil.js');
-var us          = require('underscore');
-var sess        = require('./session.js');
-var strm        = require('./stream.js');
-var helper      = require('./helper.js');
-var opt         = require('./options.js');
-var path        = require('path');
-var bee         = require('./bosh-event-emitter.js');
+var ltx            = require('ltx');
+var dutil          = require('./dutil.js');
+var us             = require('underscore');
+var sess           = require('./session.js');
+var strm           = require('./stream.js');
+var helper         = require('./helper.js');
+var opt            = require('./options.js');
+var path           = require('path');
+var bee            = require('./bosh-event-emitter.js');
 var RequestHandler = require('./http-request-handler.js').RequestHandler;
-
-var toNumber    = us.toNumber;
-var sprintf     = dutil.sprintf;
-var sprintfd    = dutil.sprintfd;
 
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
 var log         = require('./log.js').getLogger(filename);
