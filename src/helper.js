@@ -68,53 +68,6 @@ function add_to_headers(dest, src) {
     dest['Access-Control-Allow-Headers'] = acah.join(', ');
 }
 
-function JSONPResponseProxy(req, res) {
-    this.req_ = req;
-    this.res_ = res;
-    this.wrote_ = false;
-
-    var _url = url.parse(req.url, true);
-    this.jsonp_cb_ = _url.query.callback || '';
-    // console.log("DATA:", _url.query.data);
-    // console.log("JSONP CB:", this.jsonp_cb_);
-
-    // The proxy is used only if this is a JSONP response
-    if (!this.jsonp_cb_) {
-        return res;
-    }
-}
-
-JSONPResponseProxy.prototype = {
-    on: function () {
-        return this.res_.on.apply(this.res_, arguments);
-    },
-    writeHead: function (status_code, headers) {
-        var _headers = { };
-        dutil.copy(_headers, headers);
-        _headers['Content-Type'] = 'application/json; charset=utf-8';
-        return this.res_.writeHead(status_code, _headers);
-    },
-    write: function (data) {
-        if (!this.wrote_) {
-            this.res_.write(this.jsonp_cb_ + '({"reply":"');
-            this.wrote_ = true;
-        }
-
-        data = data || '';
-        data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
-        return this.res_.write(data);
-    },
-    end: function (data) {
-        this.write(data);
-        if (this.jsonp_cb_) {
-            this.res_.write('"});');
-        }
-        return this.res_.end();
-    }, 
-    setHeader: function(name, value) {
-        return this.res_.setHeader(name, value);
-    }
-};
 // End HTTP header helpers
 
 // Begin misc. helpers
@@ -203,7 +156,6 @@ function is_session_creation_packet(node) {
 // End misc. helpers
 
 exports.add_to_headers              = add_to_headers;
-exports.JSONPResponseProxy          = JSONPResponseProxy;
 exports.route_parse                 = route_parse;
 exports.save_terminate_condition_for_wait_time = save_terminate_condition_for_wait_time;
 exports.$terminate                  = $terminate;

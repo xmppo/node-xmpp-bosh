@@ -32,6 +32,7 @@ var xp        = require('./xmpp-proxy.js');
 var ls        = require('./lookup-service.js');
 var us        = require('underscore');
 var path      = require('path');
+var http      = require("http");
 
 var filename  = "[" + path.basename(path.normalize(__filename)) + "]";
 var logger    = require('./log.js');
@@ -43,6 +44,27 @@ exports.proxy      = xp;
 exports.lookup     = ls;
 exports.dutil      = dutil;
 
+function SingletonHTTPServer() {
+    var http_server = null;
+    var http_error_handler = function (options) {
+        return function (ex) {
+            throw new Error('ERROR on listener at endpoint: http://' + 
+                        options.host + ':' + options.port + '/' + options.path);
+        };
+    };
+
+    this.getInstance = function (options) {
+        if (!http_server) {
+            http_server = http.createServer();
+            http_server.on("error", http_error_handler(options));
+            http_server.listen(options.port, options.host);
+        }
+        return http_server;
+    };
+}
+
+var http_server_factory = new SingletonHTTPServer();
+
 exports.start_bosh = function(options) {
 	options = options || { };
 	options = dutil.extend(options, {
@@ -50,13 +72,17 @@ exports.start_bosh = function(options) {
 		port: 5280, 
 		logging: "INFO"
 	});
+    
+    var http_server = http_server_factory.getInstance({
+        port: options.port,
+        host: options.host
+    });
 
 	logger.set_log_level(options.logging);
 
-	// Instantiate a bosh server with the connector as a parameter.
-	var bosh_server = bosh.createServer(options);
-
 	log.trace("Starting the BOSH server");
+
+	var bosh_server = bosh.createServer(options, http_server);
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
@@ -91,8 +117,13 @@ exports.start_bosh = function(options) {
 // webSocket: An optional reference to the 'websocket' module - in
 // case you need to provide your own proxy object
 //
-exports.start_websocket = function(bosh_server, webSocket) {
-	var ws_server = websocket.createServer(bosh_server, webSocket);
+exports.start_websocket = function(options, webSocket) {
+    var http_server = http_server_factory.getInstance({
+        port: options.port,
+        host: options.host
+    });
+
+	var ws_server = websocket.createServer(http_server, webSocket);
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.

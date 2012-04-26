@@ -170,7 +170,7 @@ function main() {
 										  new Date())
 					   );
 
-	var ws_server   = nxb.start_websocket(bosh_server);
+	var ws_server   = nxb.start_websocket(server_options);
 }
 
 // Go!!

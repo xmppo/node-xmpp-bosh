@@ -23,24 +23,25 @@
  *
  */
 
-var us          = require('underscore');
-var dutil       = require('./dutil.js');
-var helper      = require('./helper.js');
-var NULL_FUNC   = dutil.NULL_FUNC;
-var path        = require('path');
+var url          = require('url');
+var us           = require('underscore');
+var dutil        = require('./dutil.js');
+var helper       = require('./helper.js');
+var http_headers = require('./http-headers.js');
+var NULL_FUNC    = dutil.NULL_FUNC;
 
+var path        = require('path');
 var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
 var log         = require('./log.js').getLogger(filename);
 
-function Response(res, request_id, sid, options) {
+function BoshResponse(res, request_id, sid, options) {
     this.rid        = request_id;
     this._sid       = sid;
 	this._res		= res;
-	this._options   = options;
+    this._options   = options;
 }
 
-Response.prototype = {
-
+BoshResponse.prototype = {
     set_timeout: function (func, wait) {
 		this.timeout = setTimeout(func, wait);
 	},
@@ -52,25 +53,25 @@ Response.prototype = {
     set_error: function (error_func) {
 		this._res.on('error', error_func);
 	},
-
-	// Sends a stream termination response on an HTTP response (res) object.
-	// This method is generally used to terminate rogue connections.
-	send_termination_stanza: function (attrs) {
-		attrs = attrs || { };
-		// why this set to true??
-		this.send_response(helper.$terminate(attrs).toString(), true);
-	},
+    // Sends a stream termination response on an HTTP response (res) object.
+    // This method is generally used to terminate rogue connections.
+    send_termination_stanza: function (attrs) {
+        attrs = attrs || { };
+        // why this set to true??
+        this.send_response(helper.$terminate(attrs).toString(), true);
+    },
 
 	// Allow Cross-Domain access
 	// https://developer.mozilla.org/En/HTTP_access_control
 	send_response: function (msg, no_error_handler) {
 		// To prevent an unhandled exception later
-		if (!no_error_handler) {
-            this.set_error(NULL_FUNC);
-        }
+        
+		// if (!no_error_handler) {
+        //     this.set_error(NULL_FUNC);
+        // }
         // According to the spec. we need to send a Content-Length header
         this._res.setHeader("Content-Length", Buffer.byteLength(msg, 'utf8'));
-		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
+		this._res.writeHead(200, http_headers.POST);
 		this._res.end(msg);
 		log.debug("%s SENT(%s): %s", this._sid, this.rid, msg);
 	},
@@ -93,4 +94,54 @@ Response.prototype = {
 	}
 };
 
-exports.Response = Response;
+function JSONPResponseProxy(req, res) {
+    this.req_ = req;
+    this.res_ = res;
+    this.wrote_ = false;
+
+    var _url = url.parse(req.url, true);
+    this.jsonp_cb_ = _url.query.callback || '';
+    // console.log("DATA:", _url.query.data);
+    // console.log("JSONP CB:", this.jsonp_cb_);
+
+    // The proxy is used only if this is a JSONP response
+    if (!this.jsonp_cb_) {
+        return res;
+    }
+}
+
+JSONPResponseProxy.prototype = {
+    on: function () {
+        return this.res_.on.apply(this.res_, arguments);
+    },
+    writeHead: function (status_code, headers) {
+        var _headers = { };
+        dutil.copy(_headers, headers);
+        _headers['Content-Type'] = 'application/json; charset=utf-8';
+        return this.res_.writeHead(status_code, _headers);
+    },
+    write: function (data) {
+        if (!this.wrote_) {
+            this.res_.write(this.jsonp_cb_ + '({"reply":"');
+            this.wrote_ = true;
+        }
+
+        data = data || '';
+        data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
+        return this.res_.write(data);
+    },
+    end: function (data) {
+        this.write(data);
+        if (this.jsonp_cb_) {
+            this.res_.write('"});');
+        }
+        return this.res_.end();
+    }, 
+    setHeader: function(name, value) {
+        return this.res_.setHeader(name, value);
+    }
+};
+
+
+exports.Response = BoshResponse;
+exports.JSONPProxy = JSONPResponseProxy;

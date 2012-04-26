@@ -55,14 +55,13 @@ const STREAM_OPENED   = 2;
 // https://github.com/superfeedr/strophejs/tree/protocol-ed
 //
 
-exports.createServer = function(bosh_server, webSocket) {
+exports.createServer = function(http_server, webSocket) {
     webSocket = webSocket || require('ws');
     
     // State information for XMPP streams
     var sn_state = { };
     
-    function WebSocketEventPipe(bosh_server) {
-        this.bosh_server = bosh_server;
+    function WebSocketEventPipe() {
     }
     
     util.inherits(WebSocketEventPipe, EventPipe);
@@ -79,10 +78,10 @@ exports.createServer = function(bosh_server, webSocket) {
         }
     });
     
-    var wsep = new WebSocketEventPipe(bosh_server);
+    var wsep = new WebSocketEventPipe();
     
     var websocket_server = new webSocket.Server({
-        server:  bosh_server.server,
+        server:  http_server
         // autoAcceptConnections: true,
         // subprotocol: 'xmpp'
     });
@@ -262,7 +261,7 @@ exports.createServer = function(bosh_server, webSocket) {
     
     // Handle the 'error' event on the bosh_server and re-emit it.
     // Throw an exception if no one handles the exception we threw
-    bosh_server.on('error', emit_error);
+    http_server.on('error', emit_error);
     websocket_server.on('error', emit_error);
     
     return wsep;

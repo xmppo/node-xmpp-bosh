@@ -32,7 +32,7 @@ var helper      = require('./helper.js');
 var opt         = require('./options.js');
 var path        = require('path');
 var bee         = require('./bosh-event-emitter.js');
-var http        = require('./http-server.js');
+var RequestHandler = require('./http-request-handler.js').RequestHandler;
 
 var toNumber    = us.toNumber;
 var sprintf     = dutil.sprintf;
@@ -70,7 +70,7 @@ var log         = require('./log.js').getLogger(filename);
 //
 
 
-exports.createServer = function (options) {
+exports.createServer = function (options, http_server) {
     //
     // +-------+
     // | NOTE: |
@@ -82,44 +82,10 @@ exports.createServer = function (options) {
     // (and only) place of reference for object structure.
     //
 
-    var started;
     var session_store;
     var stream_store;
     var bep;
     var bosh_options;
-    var server;
-
-    started = new Date(); // When was this server started?
-
-    function get_statistics() {
-        var stats = [ ];
-        stats.push('<?xml version="1.0" encoding="utf-8"?>');
-        stats.push('<!DOCTYPE html>');
-        var content = new ltx.Element('html', {
-            'xmlns':    'http://www.w3.org/1999/xhtml',
-            'xml:lang': 'en'
-        })
-            .c('head')
-            .c('title').t('node-xmpp-bosh').up()
-            .up()
-            .c('body')
-            .c('h1')
-            .c('a', {'href': 'https://github.com/dhruvbird/node-xmpp-bosh'})
-            .t('node-xmpp-bosh')
-            .up()
-            .up()
-            .c('h3').t('Bidirectional-streams Over Synchronous HTTP').up()
-            .c('p').t(sprintf('Uptime: %s', dutil.time_diff(started, new Date()))).up()
-            .c('p').t(sprintf('%s/%s active %s', session_store.get_active_no(),
-                            session_store.get_total_no(),
-                            dutil.pluralize(session_store.get_total_no(), 'session'))).up()
-            .c('p').t(sprintf('%s/%s active %s', stream_store.get_active_no(),
-                            stream_store.get_total_no(),
-                            dutil.pluralize(stream_store.get_total_no(), 'stream'))).up()
-            .tree();
-        stats.push(content.toString());
-        return stats.join('\n');
-    }
 
     function process_bosh_request(res, node) {
         // This will eventually contain all the nodes to be processed.
@@ -129,7 +95,6 @@ exports.createServer = function (options) {
         var stream = null;
 
         node = helper.sanitize_request_node(node);
-
         // Check if this is a session start packet.
         if (helper.is_session_creation_packet(node)) {
             log.trace("Session Creation");
@@ -199,28 +164,6 @@ exports.createServer = function (options) {
     }
 
 
-    function http_error_handler(ex) {
-        // We enforce similar semantics as the rest of the node.js for the 'error'
-        // event and throw an exception if it is unhandled
-        if (!bep.emit('error', ex)) {
-            throw new Error(
-                sprintf('ERROR on listener at endpoint: http://%s:%s%s',
-                    options.host, options.port, options.path)
-            );
-        }
-    }
-
-    //Called when the 'end' event for the request is fired by the HTTP request handler
-    function bosh_request_handler(res, node) {
-        if (!node) {
-            res.writeHead(200, bosh_options.HTTP_POST_RESPONSE_HEADERS);
-            res.end(helper.$terminate({ condition: 'bad-request' }).toString());
-            return;
-        }
-        log.trace("Processing Request");
-        process_bosh_request(res, node);
-    }
-
     // When the Connector is able to add the stream, we too do the same and
     // respond to the client accordingly.
     function _on_stream_added(stream) {
@@ -268,15 +211,20 @@ exports.createServer = function (options) {
             session.terminate(condition);
         }
     }
-
+    
     bosh_options = new opt.BOSH_Options(options);
-    server = new http.HTTPServer(options.port, options.host, get_statistics,
-        bosh_request_handler, http_error_handler, bosh_options);
+
+    var request_handler = new RequestHandler({
+        host: options.host,
+        port: options.port,
+        path: options.path,
+        MAX_DATA_HELD: bosh_options.max_data_held || 100000
+    }, process_bosh_request);
+
     // The BOSH event emitter. People outside will subscribe to
     // events from this guy. We return an instance of BoshEventPipe
     // to the outside world when anyone calls createServer()
-    bep = new bee.BoshEventPipe(server.http_server);
-
+    bep = new bee.BoshEventPipe();
     bep.on('stream-added', _on_stream_added);
     bep.on('response',     _on_response);
     bep.on('terminate',    _on_terminate);
@@ -286,5 +234,8 @@ exports.createServer = function (options) {
 
     bep.set_session_data(session_store);
     bep.set_stream_data(stream_store);
+    
+    request_handler.start(http_server);
+
     return bep;
 };
