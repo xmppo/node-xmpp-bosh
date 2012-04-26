@@ -163,7 +163,6 @@ function RequestHandler(options, bosh_request_handler) {
     function handle_get_crossdomainXML(req, res) {
         res.writeHead(200, http_headers.GET);
         res.end(cross_domain_policy);
-        process.exit(0);
     }
 
     function handle_unhandled_request(req, res) {
