@@ -23,7 +23,6 @@
  *
  */
 
-var uuid        = require('node-uuid');
 var us          = require('underscore');
 var dutil       = require('./dutil.js');
 var helper      = require('./helper.js');
@@ -78,43 +77,40 @@ var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind'; //TODO: might not be req
 //        associated
 // }
 
-function Session(node, options, bep, call_on_terminate) {
-    this._on_terminate = call_on_terminate;
-    this._options = options;
+function Session(sid, options, bep) {
     this._bep = bep;
 
-    this.sid = uuid();
-    this.rid = Math.floor(toNumber(node.attrs.rid));
-    this.wait = Math.floor(toNumber(node.attrs.wait));
-    this.hold = Math.floor(toNumber(node.attrs.hold));
+    this.sid  = sid;
+    this.rid  = options.rid;
+    this.wait = options.wait;
+    this.hold = options.hold;
+    this.hold = options.hold;
+    this.content = options.content;
+
+    this.hold        = this.hold > options.MAX_BOSH_CONNECTIONS ? options.MAX_BOSH_CONNECTIONS : this.hold;
+
+    this.MAX_BOSH_CONNECTIONS    = options.MAX_BOSH_CONNECTIONS;
+    this.MAX_STREAMS_PER_SESSION = options.MAX_STREAMS_PER_SESSION;
     // The 'inactivity' attribute is an extension
-    this.inactivity = Math.floor(toNumber(node.attrs.inactivity ||
-        options.DEFAULT_INACTIVITY));
-    this.content = "text/xml; charset=utf-8";
+    this.inactivity = options.inactivity;
 
-    if (this.hold <= 0) {
-        this.hold = 1;
-    } // Sanitize hold
-
-    if (node.attrs.content) { // If the client included a content attribute, we mimic it.
-        this.content = node.attrs.content;
+    if (!this.wait || this.wait > this.inactivity) {
+        this.wait = this.inactivity * 0.8;
     }
 
-    if (node.attrs.ack) { // If the client included an ack attribute, we support ACKs.
+    if (options.ack) { // If the client included an ack attribute, we support ACKs.
         this.ack = 1;
     }
 
-    if (node.attrs.route) {
-        this.route = node.attrs.route;
+    if (options.route) {
+        this.route = options.route;
     }
 
     // The 'ua' (user-agent) attribute is an extension. This may
     // (optionally) be set by the client.
-    if (node.attrs.ua) {
-        this.ua = node.attrs.ua;
+    if (options.ua) {
+        this.ua = options.ua;
     }
-
-    this.hold = this.hold > options.MAX_BOSH_CONNECTIONS ? options.MAX_BOSH_CONNECTIONS : this.hold;
 
     this.res = [ ]; // res needs is sorted in 'rid' order.
 
@@ -161,24 +157,11 @@ function Session(node, options, bep, call_on_terminate) {
     // request that we supposedly responded to.
     this.max_rid_sent = this.rid - 1;
 
-    if (this.inactivity) {
-        // We squeeze options.inactivity between the min and max allowable values
-        this.inactivity = [ Math.floor(toNumber(this.inactivity)),
-                            options.MAX_INACTIVITY,
-                            options.DEFAULT_INACTIVITY].sort(dutil.num_cmp)[1];
-    } else {
-        this.inactivity = options.DEFAULT_INACTIVITY;
-    }
-
-    if (this.wait <= 0 || this.wait > this.inactivity) {
-        this.wait = Math.floor(this.inactivity * 0.8);
-    }
-
     // The number of responses to cache so that re-requests for these
     // RIDs can be safely satisfied.
-    this.window = options.WINDOW_SIZE;
+    this.window = options.window_size;
 
-    this.ver = node.attrs.ver || '1.6';
+    this.ver = options.ver;
 
     // There is just 1 inactivity timeout for the whole BOSH session
     // (as opposed to for each response as it was earlier)
@@ -190,6 +173,7 @@ function Session(node, options, bep, call_on_terminate) {
     // Is this the first response? Helpful only if
     // options.pidgin_compatible is true.
     this.first_response = true;
+    this.pidgin_compatible = options.pidgin_compatible;
 
     this.__defineGetter__("no_of_streams", function () {
         return this.streams.length;
@@ -284,7 +268,7 @@ Session.prototype = {
             // the XML nodes in a restart request should be ignored.
             // Hence, we comply.
             nodes = [ ];
-        } else if (helper.is_stream_add_request(node, this._options)) {
+        } else if (helper.is_stream_add_request(node, this.pidgin_compatible)) {
             // Check if this is a new stream start packet (multiple streams)
             log.trace("%s: Stream Add", this.sid);
             if (this.is_max_streams_violation(node)) {
@@ -443,7 +427,7 @@ Session.prototype = {
         // However, if the client specifies a 'hold' value greater than
         // 'MAX_BOSH_CONNECTIONS', then the session will be terminated
         // because of the rule below.
-        if (this.res.length > this._options.MAX_BOSH_CONNECTIONS) {
+        if (this.res.length > this.MAX_BOSH_CONNECTIONS) {
             // Just send the termination message and destroy the socket.
             log.info("%s will terminate due to MAX_BOSH_CONNECTIONS exceeded", this.sid);
             var condition = 'policy-violation';
@@ -607,7 +591,7 @@ Session.prototype = {
             ver                 : this.ver, 
             polling             : this.inactivity / 2,
             inactivity          : this.inactivity,
-            requests            : this._options.WINDOW_SIZE,
+            requests            : this.window,
             hold                : this.hold,
             from                : stream.to,
             content             : this.content,
@@ -619,7 +603,7 @@ Session.prototype = {
             // by the send_no_requeue function since it is the last one to
             // touch responses before they go out on the wire.
             // Handle window size mismatches
-            "window"            : this._options.WINDOW_SIZE
+            "window"            : this.window
         };
 
         if (stream.from) {
@@ -841,7 +825,7 @@ Session.prototype = {
         log.trace("%s %s enqueue_bosh_response", this.sid, stream.name);
         this.pending_bosh_responses[stream.name].push(attrs);
 
-        if (this._options.PIDGIN_COMPATIBLE && this.first_response) {
+        if (this.pidgin_compatible && this.first_response) {
             this.first_response = false;
         } else {
             this.try_sending();
@@ -962,7 +946,7 @@ Session.prototype = {
         _uar_keys.sort(dutil.num_cmp);
 
         //We are fairly generous
-        if (_uar_keys.length > this._options.WINDOW_SIZE * 4) {
+        if (_uar_keys.length > this.window * 4) {
             // The client seems to be buggy. It has not ACKed the last
             // WINDOW_SIZE * 4 requests. We turn off ACKs.
             delete this.ack;
@@ -1109,102 +1093,8 @@ Session.prototype = {
     },
 
     is_max_streams_violation: function () {
-        return (this.streams.length > this._options.MAX_STREAMS_PER_SESSION);
+        return (this.streams.length > this.MAX_STREAMS_PER_SESSION);
     }
 };
 
-
-function SessionStore(bosh_options, bep) {
-
-    this._bosh_options = bosh_options;
-
-    this._bep = bep;
-
-    this._sid_state = {
-    };
-
-    this._sid_info = {
-        length  : 0,     // Stores the number of active sessions
-        total   : 0     // Stores the total number of sessions
-    };
-
-    // This holds the terminate condition for terminated
-    // sessions. Both this, and terminated_streams are used when the
-    // connection between nxb and xmpp server breaks and all the
-    // session related info is wiped out. We preserve the condition in
-    // this case to let the client know why its connection broke.
-    this._terminated_sessions = {
-    };
-
-}
-
-// Ideally, the session_* functions shouldn't worry about anything except for 
-// session state maintenance. They should specifically NOT know about streams.
-// There may be some exceptions where the abstractions leak into one another, 
-// but they should be the exceptions (and there should be a good reason for 
-// such an occurence) and not the rule.
-// 
-SessionStore.prototype = {
-
-    get_active_no: function () {
-        return this._sid_info.length;
-    },
-
-    get_total_no: function () {
-        return this._sid_info.total;
-    },
-
-    //Fetches a BOSH session object given a BOSH stanza (<body> tag)
-    get_session: function (node) {
-        var sid = node.attrs.sid;
-        var session = sid ? this._sid_state[sid] : null;
-        return session;
-    },
-
-    get_sessions_obj: function () {
-        return this._sid_state;
-    },
-
-    add_session: function (node, res) {
-        var self = this;
-        // TODO: Log the number of entries in this._terminated_sessions
-        var session = new Session(node, this._bosh_options, this._bep,
-            function (session, condition) {
-                helper.save_terminate_condition_for_wait_time(self._terminated_sessions,
-                    session.sid, condition, session.wait);
-                delete self._sid_state[session.sid];
-                self.stat_session_terminate();
-            });
-        session.reset_inactivity_timeout();
-        session.add_held_http_connection(node.attrs.rid, res);
-        this._sid_state[session.sid] = session;
-        this.stat_session_add();
-        return session;
-    },
-
-    send_invalid_session_terminate_response: function (res, node) {
-        log.trace("Sending invalid sid");
-        var terminate_condition;
-        if (this._terminated_sessions[node.attrs.sid]) {
-            terminate_condition = this._terminated_sessions[node.attrs.sid].condition;
-        }
-        var attrs = {
-            condition   : terminate_condition || 'item-not-found',
-            message     : terminate_condition ? '' : 'Invalid session ID'
-        };
-        var ro = new responsejs.Response(res, null, "invalid-sid", this._bosh_options);
-        ro.send_termination_stanza(attrs);
-    },
-
-    stat_session_add: function () {
-        ++this._sid_info.length;
-        ++this._sid_info.total;
-    },
-
-    stat_session_terminate: function () {
-        --this._sid_info.length;
-    }
-
-};
-
-exports.SessionStore = SessionStore;
+exports.Session = Session;

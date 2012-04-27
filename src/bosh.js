@@ -26,7 +26,7 @@
 var ltx            = require('ltx');
 var dutil          = require('./dutil.js');
 var us             = require('underscore');
-var sess           = require('./session.js');
+var session_store  = require('./session-store.js');
 var strm           = require('./stream.js');
 var helper         = require('./helper.js');
 var opt            = require('./options.js');
@@ -78,7 +78,6 @@ exports.createServer = function (options, http_server) {
     // (and only) place of reference for object structure.
     //
 
-    var session_store;
     var stream_store;
     var bep;
     var bosh_options;
@@ -94,7 +93,10 @@ exports.createServer = function (options, http_server) {
         // Check if this is a session start packet.
         if (helper.is_session_creation_packet(node)) {
             log.trace("Session Creation");
-            session = session_store.add_session(node, res);
+            session = session_store.add_session(node.attrs);
+            session.reset_inactivity_timeout();
+            session.add_held_http_connection(node.attrs.rid, res);
+
             stream  = stream_store.add_stream(session, node);
 
             // Respond to the client.
@@ -112,7 +114,7 @@ exports.createServer = function (options, http_server) {
             }
 
         } else {
-            session = session_store.get_session(node);
+            session = session_store.get_session(node.attrs.sid);
             if (!session) { //No (valid) session ID in BOSH request. Not phare enuph.
                 log.trace("%s Invalid Session", node.attrs.sid || "No_Session_ID");
                 session_store.send_invalid_session_terminate_response(res, node);
@@ -225,12 +227,12 @@ exports.createServer = function (options, http_server) {
     bep.on('response',     _on_response);
     bep.on('terminate',    _on_terminate);
 
-    session_store = new sess.SessionStore(bosh_options, bep);
+    session_store.initialize(bep, bosh_options);
     stream_store  = new strm.StreamStore(bosh_options, bep);
 
-    bep.set_session_data(session_store);
-    bep.set_stream_data(stream_store);
-    
+    // bep.set_session_data(session_store);
+    // bep.set_stream_data(stream_store);
+
     request_handler.start(http_server);
 
     return bep;

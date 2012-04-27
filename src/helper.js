@@ -144,8 +144,8 @@ function is_stream_restart_packet(node) {
 
 // Coded according to the rules mentioned here:
 // http://xmpp.org/extensions/xep-0124.html#multi-add
-function is_stream_add_request(node, options) {
-    if (options.PIDGIN_COMPATIBLE) {
+function is_stream_add_request(node, piding_compatible) {
+    if (piding_compatible) {
         return false;
     }
     return node.attrs.to && node.attrs.sid && node.attrs.rid &&
