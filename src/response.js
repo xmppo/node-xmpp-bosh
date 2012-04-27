@@ -89,7 +89,7 @@ BoshResponse.prototype = {
             // Increasing the timeout of the underlying socket to allow
             // wait > 120 sec
             this._res.socket.setTimeout(wait * 1000 + 10);
-            this._res.socket.setKeepAlive(true, this._options.HTTP_SOCKET_KEEPALIVE);
+            // this._res.socket.setKeepAlive(true, this._options.HTTP_SOCKET_KEEPALIVE);
         }
     }
 };
