@@ -106,15 +106,31 @@ function get_stream_name(node) {
 
 // Sanitize all attributes in node.attr that the BOSH server cares
 // about.
+function make_number_and_floor(x) {
+    return Math.floor(toNumber(x));
+}
 function sanitize_request_node(node) {
-    // TODO: Implement
     if (node.attrs.rid) {
-        node.attrs.rid = toNumber(node.attrs.rid);
+        node.attrs.rid = make_number_and_floor(node.attrs.rid);
     }
 
     if (node.attrs.ack) {
-        node.attrs.ack = toNumber(node.attrs.ack);
+        node.attrs.ack = make_number_and_floor(node.attrs.ack);
     }
+
+    if (node.attrs.wait) {
+        node.attrs.wait = make_number_and_floor(node.attrs.wait);
+    }
+
+    if (node.attrs.hold) {
+        node.attrs.hold = make_number_and_floor(node.attrs.hold);
+        if (node.attrs.hold < 0) node.attrs.hold = 1;
+    }
+
+    if (node.attrs.inactivity) {
+        node.attrs.inactivity = make_number_and_floor(node.attrs.inactivity);
+    }
+
     return node;
 }
 
