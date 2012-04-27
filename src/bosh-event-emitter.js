@@ -36,7 +36,7 @@ util.inherits(BoshEventPipe, EventPipe);
 
 dutil.copy(BoshEventPipe.prototype, {
 	stop: function () {
-		return this.server.close();
+		return this.server.stop();
 	},
 
 	set_session_data: function (session_store) {

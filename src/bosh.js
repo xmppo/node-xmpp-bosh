@@ -222,7 +222,7 @@ exports.createServer = function (options, http_server) {
     // The BOSH event emitter. People outside will subscribe to
     // events from this guy. We return an instance of BoshEventPipe
     // to the outside world when anyone calls createServer()
-    bep = new bee.BoshEventPipe();
+    bep = new bee.BoshEventPipe(http_server);
     bep.on('stream-added', _on_stream_added);
     bep.on('response',     _on_response);
     bep.on('terminate',    _on_terminate);
