@@ -254,7 +254,7 @@ function sprintf(fmt_str) {
 
 function ToStringPromise(proc, args) {
 	this._proc = proc;
-	this._args = args;
+	this._args = args || [ ];
 }
 
 ToStringPromise.prototype = {
@@ -268,6 +268,10 @@ ToStringPromise.prototype = {
 // Delayed sprintf()
 function sprintfd() {
 	return new ToStringPromise(sprintf, arguments);
+}
+
+function trim_promise(s, len) {
+    return new ToStringPromise(s.substr.bind(s), [ 0, len < 0 ? 1024 : len ]);
 }
 
 
@@ -542,4 +546,5 @@ exports.find_module        = find_module;
 exports.require_again      = require_again;
 exports.pluralize          = pluralize;
 exports.inflated_attrs     = inflated_attrs;
+exports.trim_promise       = trim_promise;
 exports.NULL_FUNC          = function() { };
