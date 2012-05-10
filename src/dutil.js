@@ -271,9 +271,10 @@ function sprintfd() {
 }
 
 function trim_promise(s, len) {
-    return new ToStringPromise(s.substr.bind(s), [ 0, len < 0 ? 1024 : len ]);
+    return new ToStringPromise(function() {
+        return String(s).substr(0, len < 0 ? 1024 : len);
+    }, [ ]);
 }
-
 
 function not(proc) {
 	return function() {
