@@ -157,7 +157,8 @@ dutil.copy(XMPPProxy.prototype, {
     }, 
 
     _on_stanza: function(stanza) {
-        log.trace("%s %s _on_stanza parsed: %s", this._void_star.session.sid, this._void_star.name, stanza);
+        log.trace("%s %s _on_stanza parsed: %s", this._void_star.session.sid, 
+                  this._void_star.name, dutil.trim_promise(stanza));
 
         this._prev_byte_index = this._parser.getCurrentByteIndex;
 
@@ -250,11 +251,13 @@ dutil.copy(XMPPProxy.prototype, {
         if (this._is_connected) {
             try {
                 this._sock.write(data);
-                log.trace("%s %s Sent: %s", this._void_star.session.sid, this._void_star.name, data);
+                log.trace("%s %s Sent: %s", this._void_star.session.sid, 
+                          this._void_star.name, dutil.trim_promise(data));
             }
             catch (ex) {
                 this._is_connected = false;
-                log.error("%s %s Couldnot send: %s", this._void_star.session.sid, this._void_star.name, data);
+                log.error("%s %s Could Not Send Data: %s", this._void_star.session.sid, 
+                          this._void_star.name, dutil.trim_promise(data));
                 // this.on_close(true, ex);
             }
         }
@@ -281,7 +284,7 @@ dutil.copy(XMPPProxy.prototype, {
     }, 
 
     _on_data: function(d) {
-        log.debug("%s %s _on_data RECD: %s", this._void_star.session.sid, this._void_star.name, d);
+        log.debug("%s %s _on_data RECD %s bytes", this._void_star.session.sid, this._void_star.name, d.length);
 
         var stanza_size = this._parser.getCurrentByteIndex - this._prev_byte_index;
 

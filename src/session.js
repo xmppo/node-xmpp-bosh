@@ -772,7 +772,8 @@ Session.prototype = {
     // the current implementation.
     //
     send_pending_responses: function () {
-        log.trace("%s send_pending_responses - pending.length: %s, Holding %d response objects", this.sid, this.pending_stitched_responses.length, this.res.length);
+        log.trace("%s send_pending_responses - pending.length: %s, Holding %d response objects", 
+                  this.sid, this.pending_stitched_responses.length, this.res.length);
         
         while (true) {
             if (this.res.length === 0) {
@@ -786,15 +787,15 @@ Session.prototype = {
 
             if (this.pending_stitched_responses.length > 0) {
                 var ro = this.get_response_object();
-                log.trace("%s send_pending_responses - ro: %s, pending_stitched_responses: %s - sending", this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
-            
-                var _p = this.pending_stitched_responses.shift();
-                var response = _p.response;
-                var stream = _p.stream;
+                log.trace("%s send_pending_responses - ro: %s, pending_stitched_responses: %s - sending", 
+                          this.sid, us.isTruthy(ro), this.pending_stitched_responses.length);
 
-                // We dont do anything on error, we assume
-                // that the client will request the missing
-                // RID. 
+                var _p       = this.pending_stitched_responses.shift();
+                var response = _p.response;
+                var stream   = _p.stream;
+
+                // We dont do anything on error, we assume that the
+                // client will request the missing RID.
                 this._send_no_requeue(ro, response);
             } else {
                 log.trace("%s send_pending_responses - nothing to send, 0 pending - return", this.sid);
@@ -906,14 +907,14 @@ Session.prototype = {
         if (!stream) {
             // No stream name specified. This packet needs to be
             // broadcast to all open streams on this BOSH session.
-            log.trace("%s emit_nodes_event - emitting to all streams: %s", this.sid, nodes);
+            log.trace("%s emit_nodes_event - emitting %s nodes to all streams", this.sid, nodes.length);
             this.streams.forEach(function (stream) {
                 if (stream) {
                     this._bep.emit('nodes', nodes, stream);
                 }
             }.bind(this));
         } else {
-            log.trace("%s %s emit_nodes_event - emitting: %s", this.sid, stream.name, nodes);
+            log.trace("%s %s emit_nodes_event - emitting %s nodes", this.sid, stream.name, nodes.length);
             this._bep.emit('nodes', nodes, stream);
         }
     },
@@ -947,7 +948,7 @@ Session.prototype = {
      * not in sequence.
      */
     _send_immediate: function (res, response_obj) {
-        log.trace("%s send_immediate - ro: %s", this.sid, response_obj);
+        log.trace("%s send_immediate - ro: %s", this.sid, !!response_obj);
         var ro = new responsejs.Response(res, null, this.sid, this._options);
         ro.send_response(response_obj.toString());
     },

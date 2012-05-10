@@ -121,7 +121,7 @@ function XMPPProxyConnector(bosh_server, options) {
 XMPPProxyConnector.prototype = {
 
 	stanza: function(stanza, stream) {
-		log.trace("%s %s bosh-stanza: %s", stream.session.sid, stream.name, stanza);
+		log.trace("%s %s bosh-stanza: %s", stream.session.sid, stream.name, dutil.trim_promise(stanza));
 		var ss = this.streams[stream.name];
 		if (!ss) {
 			log.warn("%s %s bosh-stanza - stream not available", stream.session.sid, stream.name);
