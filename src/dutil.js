@@ -272,7 +272,16 @@ function sprintfd() {
 
 function trim_promise(s, len) {
     return new ToStringPromise(function() {
-        return String(s).substr(0, len < 0 ? 1024 : len);
+        len = len || 1024;
+        len = len < 0 || len > 1024 ? 1024 : len;
+        if (typeof(s) !== "string") {
+            s = String(s);
+        }
+        if (s.length <= len) {
+            return s;
+        }
+        var diff = s.length - len;
+        return String(s).substr(0, len) + "... [" + diff + " more " + pluralize(diff, "character") + "]";
     }, [ ]);
 }
 
