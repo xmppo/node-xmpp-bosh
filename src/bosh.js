@@ -237,7 +237,8 @@ exports.createServer = function (options) {
     // When a response is received from the connector, try to send it out to the
     // real client if possible.
     function _on_response(stanza, stream) {
-        log.trace("%s %s response: %s", stream.state.sid, stream.name, dutil.trim_promise(stanza));
+        log.trace("%s %s response: %s", stream.state.sid, stream.name, 
+                  dutil.replace_promise(dutil.trim_promise(stanza), '\n', ' '));
         var session = stream.session;
 
         session.enqueue_stanza(stanza, stream);

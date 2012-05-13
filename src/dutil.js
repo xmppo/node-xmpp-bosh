@@ -270,6 +270,19 @@ function sprintfd() {
 	return new ToStringPromise(sprintf, arguments);
 }
 
+function replace_promise(s, victim, replacement) {
+    return new ToStringPromise(function() {
+        if (typeof(s) !== "string") {
+            s = String(s);
+        }
+        var re = victim;
+        if (typeof(victim) === 'string') {
+            re = new RegExp(victim, 'g');
+        }
+        return s.replace(re, replacement);
+    });
+}
+
 function trim_promise(s, len) {
     return new ToStringPromise(function() {
         len = len || 1024;
@@ -557,4 +570,5 @@ exports.require_again      = require_again;
 exports.pluralize          = pluralize;
 exports.inflated_attrs     = inflated_attrs;
 exports.trim_promise       = trim_promise;
+exports.replace_promise    = replace_promise;
 exports.NULL_FUNC          = function() { };

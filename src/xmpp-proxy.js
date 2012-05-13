@@ -158,7 +158,7 @@ dutil.copy(XMPPProxy.prototype, {
 
     _on_stanza: function(stanza) {
         log.trace("%s %s _on_stanza parsed: %s", this._void_star.session.sid, 
-                  this._void_star.name, dutil.trim_promise(stanza));
+                  this._void_star.name, dutil.replace_promise(dutil.trim_promise(stanza), '\n', ' '));
 
         this._prev_byte_index = this._parser.getCurrentByteIndex;
 
@@ -252,12 +252,12 @@ dutil.copy(XMPPProxy.prototype, {
             try {
                 this._sock.write(data);
                 log.trace("%s %s Sent: %s", this._void_star.session.sid, 
-                          this._void_star.name, dutil.trim_promise(data));
+                          this._void_star.name, dutil.replace_promise(dutil.trim_promise(data), '\n', ' '));
             }
             catch (ex) {
                 this._is_connected = false;
                 log.error("%s %s Could Not Send Data: %s", this._void_star.session.sid, 
-                          this._void_star.name, dutil.trim_promise(data));
+                          this._void_star.name, dutil.replace_promise(dutil.trim_promise(data), '\n', ' '));
                 // this.on_close(true, ex);
             }
         }
