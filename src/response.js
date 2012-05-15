@@ -66,9 +66,9 @@ Response.prototype = {
 
 	// Allow Cross-Domain access
 	// https://developer.mozilla.org/En/HTTP_access_control
-	send_response: function (msg, no_error_handler) {
+	send_response: function (msg, do_not_attach_error_handler) {
 		// To prevent an unhandled exception later
-		if (!no_error_handler) {
+		if (!do_not_attach_error_handler) {
             this.set_error(NULL_FUNC);
         }
         // According to the spec. we need to send a Content-Length header
