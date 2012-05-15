@@ -283,10 +283,12 @@ function replace_promise(s, victim, replacement) {
     });
 }
 
+var TRIM_DEFAULT_LENGTH = 80;
+
 function trim_promise(s, len) {
     return new ToStringPromise(function() {
-        len = len || 1024;
-        len = len < 0 || len > 1024 ? 1024 : len;
+        len = len || TRIM_DEFAULT_LENGTH;
+        len = len < 0 || len > TRIM_DEFAULT_LENGTH ? TRIM_DEFAULT_LENGTH : len;
         if (typeof(s) !== "string") {
             s = String(s);
         }

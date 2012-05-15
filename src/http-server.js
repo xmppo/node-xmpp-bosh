@@ -93,7 +93,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             } else {
                 var body = parse_request(req_parts);
                 if (body) {
-                    log.debug("RECD: %s", body);
+                    log.debug("RECD: %s", dutil.replace_promise(dutil.trim_promise(body), '\n', ' '));
                     res.request_headers = req.headers;
                     bosh_request_handler(res, body);
                 }
