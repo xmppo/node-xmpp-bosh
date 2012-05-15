@@ -52,7 +52,7 @@ Response.prototype = {
         }
 	},
 
-    set_error: function (error_func) {
+    set_error_handler: function (error_func) {
 		this._res.on('error', error_func);
     },
 
@@ -69,7 +69,7 @@ Response.prototype = {
 	send_response: function (msg, do_not_attach_error_handler) {
 		// To prevent an unhandled exception later
 		if (!do_not_attach_error_handler) {
-            this.set_error(NULL_FUNC);
+            this.set_error_handler(NULL_FUNC);
         }
         // According to the spec. we need to send a Content-Length header
         this._res.setHeader("Content-Length", Buffer.byteLength(msg, 'utf8'));
