@@ -13,7 +13,7 @@
     "node-uuid": ">= 0.0.0",
     "tav": ">= 0.1.0",
     "underscore": ">= 1.1.5",
-    "eventpipe": "= 0.0.3",
+    "eventpipe": "= 0.0.4",
     "dns-srv": ">= 0.0.6",
     "semver": ">= 1.0.8",
     "ws": "~0.4.12",
