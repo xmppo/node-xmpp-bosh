@@ -79,6 +79,8 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 
 * **host**: The host to listen on **(default: 0.0.0.0)**
 
+* **logging**: The logging level to start the BOSH server with **(default: INFO)**. Options: ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF.
+
 * **max_data_held**: The maximum allowable number of bytes that a POST request body may contain. Any request exceeding this value will be dropped **(default: 100000)**
 
 * **max_xmpp_stanza_size**: The maximum size of an incoming XMPP
