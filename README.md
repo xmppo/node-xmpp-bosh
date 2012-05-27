@@ -265,6 +265,7 @@ if the *callback=* GET query parameter is supplied.
     3. [dojox.xmpp] (http://dojoapi-mirror.devs.nu/jsdoc/dojox/1.2/dojox.xmpp) (modified since node-xmpp-bosh doesn't support the authid attribute)
     4. libpurple (pidgin as a client)
     5. [strophe.js websocket client] (https://github.com/superfeedr/strophejs/tree/protocol-ed)
+    6. [node-xmpp] (https://github.com/astro/node-xmpp)
 
 
 ### Tested using
