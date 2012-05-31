@@ -1,9 +1,7 @@
 ## Installing node-xmpp-bosh
 
 
-NOTE: Debian and Debian-based system users may use the following 
-detailed step-by-step instructions on how-to to install node-xmpp-bosh:
-http://code.google.com/p/node-xmpp-bosh/wiki/DebianHowTo
+NOTE: Debian and Debian-based system users may use the detailed step-by-step instructions on how-to to install node-xmpp-bosh, contained in DEBIAN_HOW_TO.TXT
 
 
 1. Install [node.js](http://nodejs.org/) (possibly at

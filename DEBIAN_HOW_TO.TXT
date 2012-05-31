@@ -30,7 +30,7 @@ Note: configure may tell you to install some missing packages if the required co
 
 node-xmpp-bosh depends on external node.js modules. These module dependencies may change with future node-xmpp-bosh versions, so that you will need to manually update them by checking the "dependencies" section in the "package.json" file of the version that you are using.
 
-Alternatively, you may completely leave the dependency bits to [http://npmjs.org/ npm] and follow the installation instructions in [http://code.google.com/p/node-xmpp-bosh/source/browse/trunk/INSTALL.TXT INSTALL.TXT]
+Alternatively, you may completely leave the dependency bits to [http://npmjs.org/ npm] and follow the installation instructions in INSTALL.TXT
 
 First, we create the required folders:
 
