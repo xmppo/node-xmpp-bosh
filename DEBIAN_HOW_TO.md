@@ -40,7 +40,7 @@ Once node.js and node-xmpp-bosh dependencies are installed, we can install node-
 
 ## node-xmpp-bosh itself (from GIT)
 
-Get the latest node-xmpp-bosh version from [here](https://github.com/dhruvbird/node-xmpp-bosh/tags), or get the master branch from (github)[https://github.com/dhruvbird/node-xmpp-bosh].
+Get the latest node-xmpp-bosh version from [here](https://github.com/dhruvbird/node-xmpp-bosh/tags), or get the master branch from [github](https://github.com/dhruvbird/node-xmpp-bosh).
 
 ```cd /usr/local/lib/bosh```
 
