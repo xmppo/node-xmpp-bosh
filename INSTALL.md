@@ -1,8 +1,9 @@
 ## Installing node-xmpp-bosh
 
 
-NOTE: Debian and Debian-based system users may use the detailed step-by-step instructions on how-to to install node-xmpp-bosh, contained in DEBIAN_HOW_TO.TXT
-
+NOTE: Debian and Debian-based system users may use the detailed
+step-by-step instructions on how-to to install node-xmpp-bosh,
+contained in [DEBIAN_HOW_TO.TXT](https://github.com/dhruvbird/node-xmpp-bosh/blob/master/DEBIAN_HOW_TO.TXT)
 
 1. Install [node.js](http://nodejs.org/) (possibly at
 /opt/node-VERSION so that you can have multiple
@@ -51,9 +52,11 @@ node-xmpp-bosh.
     ```
 Now press Ctrl+C to exit (assuming it ran fine)
 
-9. Report any bugs at https://github.com/dhruvbird/node-xmpp-bosh/issues. You are done!
+9. Report any bugs at https://github.com/dhruvbird/node-xmpp-bosh/issues.
+You are done!
 
-10. These instructions are only for developers who want to get the latest version from git.
+10. These instructions are only for developers who want to get the
+latest version from git.
 
     ```
     $ cd <your project directory>
