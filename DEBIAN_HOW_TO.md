@@ -82,7 +82,7 @@ Finally, apply permissive rights to the whole:
 
 ```chmod 777 -R /var/log/bosh```
 
-## Startup scripts installation =
+## Installing startup scripts
 
 Some startup scripts may be useful to make the node-xmpp-bosh process management faster.
 
@@ -210,4 +210,4 @@ Then, at the end of the file, paste this:
 
 Save it (CTRL+O using nano), the cronjobs will be updated.
 
-Remember this solution is not the best (not really clean), but is simple and works fine. Advanced users may want to use [http://cr.yp.to/daemontools.html daemontools].
+Remember this solution is not the best (not really clean), but is simple and works fine. Advanced users may want to use [daemontools](http://cr.yp.to/daemontools.html).
