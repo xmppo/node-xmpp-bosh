@@ -8,20 +8,20 @@
   "description": "An XMPP BOSH server written for node.js in javascript",
   "author": "Dhruv Matani",
   "dependencies": {
-    "node-expat": ">=1.4.5",
-    "ltx": ">= 0.0.4",
-    "node-uuid": ">= 0.0.0",
-    "tav": ">= 0.1.0",
-    "underscore": ">= 1.1.5",
+    "node-expat": "=1.4.5",
+    "ltx": "= 0.0.4",
+    "node-uuid": "= 0.0.0",
+    "tav": "= 0.1.0",
+    "underscore": "= 1.1.5",
     "eventpipe": "= 0.0.5",
-    "dns-srv": ">= 0.0.6",
-    "semver": ">= 1.0.8",
-    "ws": "~0.4.12",
-    "log4js": ">= 0.4.2"
+    "dns-srv": "= 0.0.6",
+    "semver": "= 1.0.8",
+    "ws": "0.4.12",
+    "log4js": "= 0.4.2"
   },
   "devDependencies": {
-    "jsdom": ">= 0.2.0",
-    "jslint": ">= 0.1.2"
+    "jsdom": "= 0.2.0",
+    "jslint": "= 0.1.2"
   },
   "repositories": [
     {
