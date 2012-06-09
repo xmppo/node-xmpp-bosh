@@ -16,7 +16,7 @@
     "eventpipe": "= 0.0.5",
     "dns-srv": "= 0.0.6",
     "semver": "= 1.0.8",
-    "ws": "0.4.12",
+    "ws": "= 0.4.12",
     "log4js": "= 0.4.2"
   },
   "devDependencies": {
