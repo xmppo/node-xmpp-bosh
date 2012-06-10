@@ -61,7 +61,7 @@ function print_boxed_message(msg) {
 function main() {
 	var opts = require('tav').set({
 		logging: {
-			note: "The logging level to use (default: DEBUG)", 
+			note: "The logging level to use (default: INFO)", 
 			value: -1
 		}, 
 		path: {
@@ -148,7 +148,7 @@ function main() {
 
 	if (opts.logging === -1) {
 		if (!server_options.logging) {
-			server_options.logging = 'DEBUG';
+			server_options.logging = 'INFO';
 		}
 	}
 	else {
