@@ -34,7 +34,7 @@ var us     = require('underscore');
 var XmppParser = require('./stream-parser.js').XmppStreamParser;
 
 var path        = require('path');
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 var NS_XMPP_TLS =     'urn:ietf:params:xml:ns:xmpp-tls';

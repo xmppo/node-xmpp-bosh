@@ -30,7 +30,7 @@ var us     = require('underscore');
 var events = require('events');
 var path   = require('path');
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 /* The XMPPLookupService tries to resolve the host name to connect to

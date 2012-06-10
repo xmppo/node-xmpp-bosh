@@ -31,7 +31,7 @@ var responsejs  = require('./response.js');
 var assert      = require('assert').ok;
 var path        = require('path');
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 var toNumber = us.toNumber;
@@ -728,7 +728,7 @@ Session.prototype = {
         return response;
     },
     
-    _stitch_new_response: function () {
+    _stitch_new_response: function _stitch_new_response() {
         var len = this.streams.length;
         this.next_stream = this.next_stream % len;
         log.trace("%s _stitch_new_response - #streams: %s, next_stream: %s", this.sid, len, this.next_stream);
@@ -771,10 +771,10 @@ Session.prototype = {
     // degrade the experience for the client. Hence, we stick with
     // the current implementation.
     //
-    send_pending_responses: function () {
-        log.trace("%s send_pending_responses - pending.length: %s, Holding %d response objects", 
+    send_pending_responses: function send_pending_responses() {
+        log.trace("%s send_pending_responses - pending.length: %s, Holding %s response objects", 
                   this.sid, this.pending_stitched_responses.length, this.res.length);
-        
+
         while (true) {
             if (this.res.length === 0) {
                 // dont stitch responses as well.
@@ -808,7 +808,7 @@ Session.prototype = {
     // If and when a new HTTP request on this BOSH session is detected,
     // it will clear the pending response and send the packet
     // (in FIFO order).
-    _on_no_client_found: function (response, stream) {
+    _on_no_client_found: function _on_no_client_found(response, stream) {
         var _po = {
             response: response,
             stream: stream
@@ -816,7 +816,7 @@ Session.prototype = {
         this.pending_stitched_responses.push(_po);
     },
 
-    try_sending: function () {
+    try_sending: function try_sending() {
         if (!this.has_next_tick) {
             process.nextTick(function () {
                 this.has_next_tick = false;
@@ -986,7 +986,7 @@ Session.prototype = {
         // If the request from the client includes an ACK, we delete all
         // packets with an 'rid' less than or equal to this value since
         // the client has seen all those packets.
-        _uar_keys.forEach(function (rid) {
+        _uar_keys.forEach(function purge_acknowledged_responses(rid) {
             if (rid <= node.attrs.ack) {
                 // Raise the 'response-acknowledged' event.
                 log.trace("%s handle_acks - received ack: %s", this.sid, rid);
