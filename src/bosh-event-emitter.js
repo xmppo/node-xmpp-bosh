@@ -28,6 +28,9 @@ var util        = require('util');
 var dutil       = require('./dutil.js');
 var us          = require('underscore');
 
+var filename    = path.basename(path.normalize(__filename));
+var log         = require('./log.js').getLogger(filename);
+
 function BoshEventPipe(http_server) {
     this.server = http_server;
 }
