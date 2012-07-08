@@ -51,7 +51,7 @@ function Stream(session, node, options, bep, call_on_terminate) {
     }
 
     this.__defineGetter__("state", function () { //For backward API compatibility.
-    return this.session;
+        return this.session;
     });
 
 }
