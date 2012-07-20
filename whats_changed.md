@@ -9,6 +9,8 @@ want to check this file every time you update your copy.
 
 * Minor fixes, which reduce the memory footprint.
 
+* Updated EventPipe dependency to v0.0.5
+
 ### v0.6.1
 
 * Configuration variable *max_xmpp_buffer_size* changed to *max_xmpp_stanza_size*.
