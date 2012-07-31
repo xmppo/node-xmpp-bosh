@@ -26,7 +26,7 @@
 var us = require('underscore');
 
 // The maximum number of characters that a single log line can contain
-var MAX_CHARS_IN_LOG_LINE = 4096;
+var TRIM_DEFAULT_LENGTH = 256;
 
 var _log_level = 4;
 var _log_levels = {
@@ -282,8 +282,6 @@ function replace_promise(s, victim, replacement) {
         return s.replace(re, replacement);
     });
 }
-
-var TRIM_DEFAULT_LENGTH = 80;
 
 function trim_promise(s, len) {
     return new ToStringPromise(function() {
