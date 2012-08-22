@@ -1,12 +1,11 @@
 var log4js = require("log4js");
 
 log4js.configure({
-    doNotReplaceConsole: true
+    appenders:[
+        { type:"console" }
+    ]
 });
 
-var appender = log4js.consoleAppender(log4js.basicLayout);
-log4js.clearAppenders();
-log4js.addAppender(appender);
 log4js.setGlobalLogLevel("INFO");
 
 var set_log_level = function (level) {
