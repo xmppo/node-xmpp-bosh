@@ -39,7 +39,6 @@ var log         = require('./log.js').getLogger(filename);
 
 var sprintf  = dutil.sprintf;
 var sprintfd = dutil.sprintfd;
-var log_it   = dutil.log_it;
 
 const STREAM_UNOPENED = 1;
 const STREAM_OPENED   = 2;

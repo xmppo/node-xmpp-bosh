@@ -23,7 +23,11 @@
  *
  */
 
-var us = require('underscore');
+var us       = require('underscore');
+var path     = require('path');
+
+var filename = "[" + path.basename(path.normalize(__filename)) + "]";
+var log      = require('./log.js').getLogger(filename);
 
 // The maximum number of characters that a single log line can contain
 var TRIM_DEFAULT_LENGTH = 256;
@@ -245,7 +249,7 @@ function sprintf(fmt_str) {
 		var estr = sprintf("The number of arguments in your format string (%s)[%s] " + 
 			"does NOT match the number of arguments passed[%s]", 
 			fmt_str, fs_parts.length-1, args.length);
-		log_it("WARN", estr);
+		log.warn("%s", estr);
 		throw new Error(estr);
 	}
 
@@ -333,8 +337,8 @@ function _real_xml_parse(xml, ltx) {
 		node = ltx.parse(xml);
 	}
 	catch (ex) {
-		log_it("WARN", "_real_xml_parse::Error parsing XML:", xml, ex.toString());
-		log_it("WARN", ex.stack);
+        log.warn("_real_xml_parse::Error (%s) parsing XML: %s", String(ex), xml);
+		log.warn("%s", ex.stack);
 	}
 	return node;
 }
@@ -559,7 +563,7 @@ exports.sprintfd           = sprintfd;
 exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
 exports.set_log_level      = require("./log.js").set_log_level;
-exports.log_it             = log_it;
+// exports.log_it             = log_it; // DO NOT export to track usage outside this module.
 exports.json_parse         = json_parse;
 exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;
