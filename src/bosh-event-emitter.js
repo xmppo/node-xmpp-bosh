@@ -27,6 +27,7 @@ var EventPipe   = require('eventpipe').EventPipe;
 var util        = require('util');
 var dutil       = require('./dutil.js');
 var us          = require('underscore');
+var path        = require('path');
 
 function BoshEventPipe(http_server) {
     this.server = http_server;
