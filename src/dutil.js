@@ -96,11 +96,11 @@ function log_it(level) {
 				astr = arg.toString();
 
 				// console.log(astr.length);
-				if (astr.length > MAX_CHARS_IN_LOG_LINE) {
+				if (astr.length > TRIM_DEFAULT_LENGTH) {
 					// We limit the writes because we are running into a 
 					// bug at this point of time.
-					more_hint = ' ... ' + (astr.length - MAX_CHARS_IN_LOG_LINE) + ' more characters';
-					astr = astr.substr(0, MAX_CHARS_IN_LOG_LINE);
+					more_hint = ' ... ' + (astr.length - TRIM_DEFAULT_LENGTH) + ' more characters';
+					astr = astr.substr(0, TRIM_DEFAULT_LENGTH);
 				}
 
 				process.stdout.write(astr);
