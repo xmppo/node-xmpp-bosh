@@ -76,6 +76,12 @@ function JSONPResponseProxy(req, res) {
     this.headers_ = { };
     this.status_code_ = 200;
 
+    // Provide a getter to access the 'socket' property of this
+    // response object.
+    this.__defineGetter__('socket', function() {
+        return this.res_.socket;
+    });
+
     var _url = url.parse(req.url, true);
     this.jsonp_cb_ = _url.query.callback || '';
     // console.log("DATA:", _url.query.data);
