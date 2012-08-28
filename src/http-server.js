@@ -89,12 +89,13 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             res = new helper.JSONPResponseProxy(req, res);
             res.request_headers = req.headers;
 
-            if (parse_request([ u.query.data ]) === null) {
+            var body = parse_request([u.query.data]);
+            if (body === null) {
                 // FIXME: If we got an invalid JSON, we should respond
                 // with an error condition.
                 res.end("XML Parsing Error!");
             } else {
-                bosh_request_handler(res, bosh_request_parser.parsedBody);
+                bosh_request_handler(res, body);
             }
             return false;
         }
