@@ -58,27 +58,42 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         // the request.
         //
         var i;
-        var randInt = String(Math.floor(Math.random() * 1000000))
-        bosh_request_parser.parse('<DUMMY_' + randInt + '>');
+        bosh_request_parser.parse('<DUMMY>');
 
         for (i = 0; i < buffers.length; i++) {
             // log.trace("Request fragment: %s", buffers[i]);
             valid_request = bosh_request_parser.parse(buffers[i]);
-            if (!valid_request) return null;
+            if (!valid_request) {
+                bosh_request_parser.reset();
+                return null;
+            }
         }
-        valid_request = bosh_request_parser.parse('</DUMMY_' + randInt + '>');
+        valid_request = bosh_request_parser.parse('</DUMMY>');
 
-        if (valid_request && bosh_request_parser.parsedBody
-            && bosh_request_parser.parsedBody.getChild('body')) {
-            var bodyTag = bosh_request_parser.parsedBody.getChild('body');
-            bodyTag.parent = null;
-            return bodyTag;
+        if (valid_request && bosh_request_parser.parsedBody) {
+            if (bosh_request_parser.parsedBody.getChild('body')) {
+                var bodyTag = bosh_request_parser.parsedBody.getChild('body');
+                bodyTag.parent = null;
+                return bodyTag;
+            } else {
+                // We don't reset the parser if we got a valid
+                // bodyTag, but didn't get a <body> child element in
+                // the <DUMMY> wrapper tag since the parser state
+                // isn't corrupted.
+                return null;
+            }
         } else {
-            bosh_request_parser = new BoshRequestParser();
+            // We reset the parser state if we either got a 'false'
+            // return from the parse() method or if the bodyTag is
+            // absent because the bodyTag could be absent due to an
+            // unclosed tag (which might occur due to malicious
+            // input). Reseting the parser state clears out the
+            // currently being processed stanza.
+            bosh_request_parser.reset();
             return null;
         }
     }
-    
+
     // All request handlers return 'false' on successful handling
     // of the request and 'undefined' if they did NOT handle the
     // request. This is according to the EventPipe listeners API
