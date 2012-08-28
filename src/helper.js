@@ -71,9 +71,8 @@ function add_to_headers(dest, src) {
 function JSONPResponseProxy(req, res) {
     this.req_ = req;
     this.res_ = res;
-    this.wrote_ = false;
     this.has_content_length_header_ = false;
-    this.write_buffer_ = [ ];
+    this.response_json_ = { reply: '' };
     this.headers_ = { };
     this.status_code_ = 200;
 
@@ -98,29 +97,19 @@ JSONPResponseProxy.prototype = {
         this.headers_['Content-Type'] = 'application/json; charset=utf-8';
     },
     write: function (data) {
-        if (!this.wrote_) {
-            this.write_buffer_.push(this.jsonp_cb_ + '({"reply":"');
-            this.wrote_ = true;
-        }
-
         data = data || '';
-        data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
-        return this.write_buffer_.push(data);
+        this.response_json_.reply += data;
     },
     end: function (data) {
         this.write(data);
-        this.write('"});');
+        var data_to_write = this.jsonp_cb_ + "(" + JSON.stringify(this.response_json_) + ");";
+
         if (this.has_content_length_header_) {
-            var content_length = this.write_buffer_.map(function(entry) {
-                return entry.length;
-            }).reduce(function(prev, curr, index, array) {
-                return prev + curr;
-            });
+            var content_length = Buffer.byteLength(data_to_write, 'utf8');
             this.headers_['Content-Length'] = content_length;
         }
         this.res_.writeHead(this.status_code_, this.headers_);
-        var data_to_write = this.write_buffer_.join('');
-        this.write_buffer_ = null;
+        this.response_json_ = null;
         return this.res_.end(data_to_write);
     }, 
     setHeader: function(name, value) {
