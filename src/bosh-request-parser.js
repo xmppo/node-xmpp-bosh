@@ -44,7 +44,7 @@ dutil.copy(BoshRequestParser.prototype, {
         this._parser.removeAllListeners();
         this._parser.parse("<bosh>");
 
-        this._started = false;
+        this.started_   = false;
         this.parsedBody = null;
         if (this.hasOwnProperty('stanza')) {
             delete this.stanza;
@@ -67,10 +67,10 @@ dutil.copy(BoshRequestParser.prototype, {
     },
 
     _handle_start_element: function(name, attrs) {
-        if (!this._started) {
+        if (!this.started_) {
             // The first node MUST be <DUMMY>.
             assert(name === 'DUMMY');
-            this._started = true;
+            this.started_ = true;
         }
 
         var stanza = new ltx.Element(name, attrs);
@@ -95,8 +95,12 @@ dutil.copy(BoshRequestParser.prototype, {
         } else {
             // The user tried to close the top level <bosh> tag. We
             // set this.parsedBody to null to indicate that we
-            // encountered a parsing error. We don't do anything else
-            // since the caller will reset() the parser.
+            // encountered a parsing error. If the user sent XML like:
+            // <body/></DUMMY></bosh><DUMMY> then expat will fail to
+            // parse the part after </bosh> and will return 'false' in
+            // the parse() method (as discussed with
+            // @satyamshekhar). We don't do anything else since the
+            // caller will reset() the parser.
             this.parsedBody = null;
         }
     },
