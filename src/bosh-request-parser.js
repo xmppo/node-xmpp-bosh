@@ -44,7 +44,7 @@ function BoshRequestParser() {
 dutil.copy(BoshRequestParser.prototype, {
     _handle_start_element: function(name, attrs) {
         if (!this._started) {
-            if (name === "body") {
+            if (name.substr(0, 5) === "DUMMY") {
                 this._started = true;
             } else {
                 this.end();

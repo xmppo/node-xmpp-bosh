@@ -44,15 +44,38 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
     function parse_request(buffers) {
         var valid_request = true;
-        for (var i = 0, len = buffers.length; i < len; i++) {
-            if (!valid_request) return null;
-            valid_request = bosh_request_parser.parse(buffers[i]);
-        }
 
-        if (valid_request && bosh_request_parser.parsedBody) {
-            return bosh_request_parser.parsedBody;
+        // We wrap every request in a <DUMMY_randomint> request
+        // </DUMMY_randomint> tag. This prevents the user from hacking
+        // the parser's stream by sending in a request like: <body>
+        // <blah/> </body> <body>
+        //
+        // If the user sent a reuqest like <body> <blah/> <DUMMY> or
+        // any such thing, then the parser will be able to detect it.
+        //
+        // We use a random (upto 7 digit) integer so that the attaker
+        // can not "guess" the name of the tag we are using to delimit
+        // the request.
+        //
+        var i;
+        var randInt = String(Math.floor(Math.random() * 1000000))
+        bosh_request_parser.parse('<DUMMY_' + randInt + '>');
+
+        for (i = 0; i < buffers.length; i++) {
+            // log.trace("Request fragment: %s", buffers[i]);
+            valid_request = bosh_request_parser.parse(buffers[i]);
+            if (!valid_request) return null;
+        }
+        valid_request = bosh_request_parser.parse('</DUMMY_' + randInt + '>');
+
+        if (valid_request && bosh_request_parser.parsedBody
+            && bosh_request_parser.parsedBody.getChild('body')) {
+            var bodyTag = bosh_request_parser.parsedBody.getChild('body');
+            bodyTag.parent = null;
+            return bodyTag;
         } else {
             bosh_request_parser = new BoshRequestParser();
+            return null;
         }
     }
     
@@ -63,15 +86,16 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     function handle_get_bosh_request(req, res, u) {
         var ppos = u.pathname.search(bosh_options.path);
         if (req.method === 'GET' && ppos !== -1 && u.query.hasOwnProperty('data')) {
-            if (!bosh_request_parser.parse(u.query.data)) {
-                req.destroy();
+            res = new helper.JSONPResponseProxy(req, res);
+            res.request_headers = req.headers;
+
+            if (parse_request([ u.query.data ]) === null) {
+                // FIXME: If we got an invalid JSON, we should respond
+                // with an error condition.
+                res.end("XML Parsing Error!");
             } else {
-                res = new helper.JSONPResponseProxy(req, res);
-                res.request_headers = req.headers;
                 bosh_request_handler(res, bosh_request_parser.parsedBody);
             }
-            bosh_request_parser.end();
-            bosh_request_parser = null;
             return false;
         }
     }
@@ -101,6 +125,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                     req_parts.forEach(function (p) {
                         log.warn("XML parsing Error: %s", p);
                     });
+                    // FIXME: Send back valid XML.
                     res.end("XML parsing Error");
                 }
             }
