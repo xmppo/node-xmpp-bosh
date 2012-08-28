@@ -125,8 +125,6 @@ dutil.copy(BoshRequestParser.prototype, {
     parse: function(data) {
         this.parsedBody = null;
         if (this._parser && !this._parser.parse(data)) {
-            // this.end();
-            this.reset();
             return false;
         }
         else if (!this._parser) {
