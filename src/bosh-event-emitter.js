@@ -27,6 +27,7 @@ var EventPipe   = require('eventpipe').EventPipe;
 var util        = require('util');
 var dutil       = require('./dutil.js');
 var us          = require('underscore');
+var path        = require('path');
 
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
