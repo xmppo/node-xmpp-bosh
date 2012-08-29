@@ -45,18 +45,13 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
     function parse_request(buffers) {
         var valid_request = true;
 
-        // We wrap every request in a <DUMMY_randomint> request
-        // </DUMMY_randomint> tag. This prevents the user from hacking
+        // We wrap every request in a <DUMMY> request
+        // </DUMMY> tag. This prevents the user from hacking
         // the parser's stream by sending in a request like: <body>
         // <blah/> </body> <body>
         //
         // If the user sent a reuqest like <body> <blah/> <DUMMY> or
         // any such thing, then the parser will be able to detect it.
-        //
-        // We use a random (upto 7 digit) integer so that the attaker
-        // can not "guess" the name of the tag we are using to delimit
-        // the request.
-        //
         var i;
         bosh_request_parser.parse('<DUMMY>');
 
