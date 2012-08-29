@@ -71,7 +71,16 @@ function add_to_headers(dest, src) {
 function JSONPResponseProxy(req, res) {
     this.req_ = req;
     this.res_ = res;
-    this.wrote_ = false;
+    this.has_content_length_header_ = false;
+    this.response_json_ = { reply: '' };
+    this.headers_ = { };
+    this.status_code_ = 200;
+
+    // Provide a getter to access the 'socket' property of this
+    // response object.
+    this.__defineGetter__('socket', function() {
+        return this.res_.socket;
+    });
 
     var _url = url.parse(req.url, true);
     this.jsonp_cb_ = _url.query.callback || '';
@@ -89,30 +98,32 @@ JSONPResponseProxy.prototype = {
         return this.res_.on.apply(this.res_, arguments);
     },
     writeHead: function (status_code, headers) {
-        var _headers = { };
-        dutil.copy(_headers, headers);
-        _headers['Content-Type'] = 'application/json; charset=utf-8';
-        return this.res_.writeHead(status_code, _headers);
+        dutil.copy(this.headers_, headers);
+        this.status_code_ = status_code;
+        this.headers_['Content-Type'] = 'application/json; charset=utf-8';
     },
     write: function (data) {
-        if (!this.wrote_) {
-            this.res_.write(this.jsonp_cb_ + '({"reply":"');
-            this.wrote_ = true;
-        }
-
         data = data || '';
-        data = data.replace(/\n/g, '\\n').replace(/"/g, '\\"');
-        return this.res_.write(data);
+        this.response_json_.reply += data;
     },
     end: function (data) {
         this.write(data);
-        if (this.jsonp_cb_) {
-            this.res_.write('"});');
+        var data_to_write = this.jsonp_cb_ + "(" + JSON.stringify(this.response_json_) + ");";
+
+        if (this.has_content_length_header_) {
+            var content_length = Buffer.byteLength(data_to_write, 'utf8');
+            this.headers_['Content-Length'] = content_length;
         }
-        return this.res_.end();
+        this.res_.writeHead(this.status_code_, this.headers_);
+        this.response_json_ = null;
+        return this.res_.end(data_to_write);
     }, 
     setHeader: function(name, value) {
-        return this.res_.setHeader(name, value);
+        if (name.toLowerCase() == 'content-length') {
+            this.has_content_length_header_ = true;
+        } else {
+            return this.res_.setHeader(name, value);
+        }
     }
 };
 // End HTTP header helpers

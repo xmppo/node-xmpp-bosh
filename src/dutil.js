@@ -23,10 +23,14 @@
  *
  */
 
-var us = require('underscore');
+var us       = require('underscore');
+var path     = require('path');
+
+var filename = "[" + path.basename(path.normalize(__filename)) + "]";
+var log      = require('./log.js').getLogger(filename);
 
 // The maximum number of characters that a single log line can contain
-var MAX_CHARS_IN_LOG_LINE = 4096;
+var TRIM_DEFAULT_LENGTH = 256;
 
 var _log_level = 4;
 var _log_levels = {
@@ -96,11 +100,11 @@ function log_it(level) {
 				astr = arg.toString();
 
 				// console.log(astr.length);
-				if (astr.length > MAX_CHARS_IN_LOG_LINE) {
+				if (astr.length > TRIM_DEFAULT_LENGTH) {
 					// We limit the writes because we are running into a 
 					// bug at this point of time.
-					more_hint = ' ... ' + (astr.length - MAX_CHARS_IN_LOG_LINE) + ' more characters';
-					astr = astr.substr(0, MAX_CHARS_IN_LOG_LINE);
+					more_hint = ' ... ' + (astr.length - TRIM_DEFAULT_LENGTH) + ' more characters';
+					astr = astr.substr(0, TRIM_DEFAULT_LENGTH);
 				}
 
 				process.stdout.write(astr);
@@ -245,7 +249,7 @@ function sprintf(fmt_str) {
 		var estr = sprintf("The number of arguments in your format string (%s)[%s] " + 
 			"does NOT match the number of arguments passed[%s]", 
 			fmt_str, fs_parts.length-1, args.length);
-		log_it("WARN", estr);
+		log.warn("%s", estr);
 		throw new Error(estr);
 	}
 
@@ -282,8 +286,6 @@ function replace_promise(s, victim, replacement) {
         return s.replace(re, replacement);
     });
 }
-
-var TRIM_DEFAULT_LENGTH = 80;
 
 function trim_promise(s, len) {
     return new ToStringPromise(function() {
@@ -335,8 +337,8 @@ function _real_xml_parse(xml, ltx) {
 		node = ltx.parse(xml);
 	}
 	catch (ex) {
-		log_it("WARN", "_real_xml_parse::Error parsing XML:", xml, ex.toString());
-		log_it("WARN", ex.stack);
+        log.warn("_real_xml_parse::Error (%s) parsing XML: %s", String(ex), xml);
+		log.warn("%s", ex.stack);
 	}
 	return node;
 }
@@ -561,7 +563,7 @@ exports.sprintfd           = sprintfd;
 exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
 exports.set_log_level      = require("./log.js").set_log_level;
-exports.log_it             = log_it;
+// exports.log_it             = log_it; // DO NOT export to track usage outside this module.
 exports.json_parse         = json_parse;
 exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;

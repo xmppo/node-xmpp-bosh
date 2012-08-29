@@ -26,7 +26,6 @@
 var util   = require('util');
 var SRV    = require('dns-srv');
 var dutil  = require('./dutil.js');
-var us     = require('underscore');
 var events = require('events');
 var path   = require('path');
 
@@ -103,7 +102,7 @@ dutil.copy(XMPPLookupService.prototype, {
         }
 
         function try_connect_SRV_lookup() {
-            log.trace('try_connect_SRV_lookup - %s',self._domain_name);
+            log.trace('try_connect_SRV_lookup - %s, %s',self._domain_name, self._port);
 
             // Then try a normal SRV lookup.
 
