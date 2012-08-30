@@ -101,9 +101,12 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
 
             var body = parse_request([u.query.data]);
             if (body === null) {
-                // FIXME: If we got an invalid JSON, we should respond
-                // with an error condition.
-                res.end("XML Parsing Error!");
+                // If we got an invalid JSON, we should respond with
+                // valid XML that has an error condition.
+                res.end(helper.$terminate({
+                    condition: "bad-request",
+                    message: "Invalid XML"
+                }).toString());
             } else {
                 bosh_request_handler(res, body);
             }
@@ -136,8 +139,11 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
                     req_parts.forEach(function (p) {
                         log.warn("XML parsing Error: %s", p);
                     });
-                    // FIXME: Send back valid XML.
-                    res.end("XML parsing Error");
+                    // Send back valid XML with an appropriate error code.
+                    res.end(helper.$terminate({
+                        condition: "bad-request",
+                        message: "Invalid XML"
+                    }).toString());
                 }
             }
             req_parts = null;
