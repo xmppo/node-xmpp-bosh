@@ -1,6 +1,6 @@
 {
   "name": "node-xmpp-bosh",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "main": "./src/main",
   "bin": {
     "bosh-server": "./run-server.js"
