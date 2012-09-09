@@ -99,7 +99,8 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 * **no_tls_domains**: A list of Domains for which TLS should NOT be used if the XMPP server supports STARTTLS but does NOT require it **(default: [ ])**
 
 * **pidgin_compatible**: Set to 'true' if you want to be able to use pidgin (any any other libpurple based client) with node-xmpp-bosh. If you set this to 'true', then you lose the ability to create multiple streams on a session **(default: false)**
-       
+
+* **trim_default_length**: The maximum length of an XML stanza to be printed. Set to -1 for unlimited line length. **(default: 256)**
 
 
 ### Architecture

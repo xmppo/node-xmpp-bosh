@@ -30,7 +30,7 @@ function BOSH_Options(opts) {
     var _opts = opts;
 
     this.HTTP_GET_RESPONSE_HEADERS = {
-        'Content-Type': 'application/xhtml+xml; charset=UTF-8',
+        'Content-Type': 'text/html; charset=UTF-8',
         'Cache-Control': 'no-cache, no-store',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',

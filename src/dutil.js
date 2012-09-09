@@ -289,12 +289,14 @@ function replace_promise(s, victim, replacement) {
 
 function trim_promise(s, len) {
     return new ToStringPromise(function() {
-        len = len || TRIM_DEFAULT_LENGTH;
-        len = len < 0 || len > TRIM_DEFAULT_LENGTH ? TRIM_DEFAULT_LENGTH : len;
+        if (typeof(len) === 'undefined') {
+            len = TRIM_DEFAULT_LENGTH;
+        }
+        assert(typeof(len) === 'number');
         if (typeof(s) !== "string") {
             s = String(s);
         }
-        if (s.length <= len) {
+        if (len < 0 || s.length <= len) {
             return s;
         }
         var diff = s.length - len;
@@ -551,6 +553,21 @@ us.mixin({
 	not: not
 });
 
+
+// Define a getter & setter to get & set TRIM_DEFAULT_LENGTH
+exports.__defineGetter__("TRIM_DEFAULT_LENGTH", function() {
+    return TRIM_DEFAULT_LENGTH;
+});
+
+exports.__defineSetter__("TRIM_DEFAULT_LENGTH", function(def_trim_length) {
+    if (typeof(def_trim_length) === 'string') {
+        def_trim_length = toNumber(def_trim_length);
+    }
+    if (typeof(def_trim_length) !== 'number') {
+        def_trim_length = TRIM_DEFAULT_LENGTH;
+    }
+    def_trim_length = def_trim_length || TRIM_DEFAULT_LENGTH;
+});
 
 exports.copy               = copy;
 exports.extend             = extend;

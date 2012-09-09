@@ -93,7 +93,6 @@ exports.createServer = function (options) {
 
     function get_statistics() {
         var stats = [ ];
-        stats.push('<?xml version="1.0" encoding="utf-8"?>');
         stats.push('<!DOCTYPE html>');
         var content = new ltx.Element('html', {
             'xmlns':    'http://www.w3.org/1999/xhtml',

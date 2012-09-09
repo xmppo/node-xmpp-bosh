@@ -24,10 +24,10 @@
  *
  */
 
-var fs   = require('fs');
-var path = require('path');
-var nxb  = require("./src/main.js");
-
+var fs    = require('fs');
+var path  = require('path');
+var nxb   = require("./src/main.js");
+var dutil = require('./src/dutil.js');
 
 var BOSH_DEFAULT_CONFIG_PATH = '/etc/bosh.js.conf';
 
@@ -155,6 +155,10 @@ function main() {
 		server_options.logging = opts.logging.toUpperCase();
 	}
 
+    // Set the default line trim length.
+    if (typeof(server_options.trim_default_length) !== 'undefined') {
+        dutil.TRIM_DEFAULT_LENGTH = server_options.trim_default_length;
+    }
 
 	print_boxed_message(nxb.dutil.sprintf("Starting BOSH server 'v%s' on 'http://%s:%s%s' at '%s'", 
 										  get_version(), server_options.host, server_options.port, 

@@ -57,6 +57,10 @@ exports.config = {
     // 
     // Useful to work around a pidgin (libpurple) bug.
     // 
-    pidgin_compatible: true
+    pidgin_compatible: true,
+
+    // The maximum length of an XML stanza to be printed. Set to -1
+    // for unlimited line length.
+    trim_default_length: 256
 
 };
