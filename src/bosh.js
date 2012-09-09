@@ -93,11 +93,7 @@ exports.createServer = function (options) {
 
     function get_statistics() {
         var stats = [ ];
-        stats.push('<!DOCTYPE html>');
-        var content = new ltx.Element('html', {
-            'xmlns':    'http://www.w3.org/1999/xhtml',
-            'xml:lang': 'en'
-        })
+        var content = new ltx.Element('html')
             .c('head')
             .c('title').t('node-xmpp-bosh').up()
             .up()
