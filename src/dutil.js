@@ -25,6 +25,7 @@
 
 var us       = require('underscore');
 var path     = require('path');
+var assert   = require('assert').ok;
 
 var filename = "[" + path.basename(path.normalize(__filename)) + "]";
 var log      = require('./log.js').getLogger(filename);
@@ -32,100 +33,9 @@ var log      = require('./log.js').getLogger(filename);
 // The maximum number of characters that a single log line can contain
 var TRIM_DEFAULT_LENGTH = 256;
 
-var _log_level = 4;
-var _log_levels = {
-	"NONE":  0, 
-	"FATAL": 1, 
-	"ERROR": 2,
-	"WARN":  3, 
-	"INFO":  4, 
-	"DEBUG": 5
-};
-
-
 function arguments_to_array(args) {
 	return Array.prototype.slice.call(args, 0);
 }
-
-function get_numeric_log_level(level) {
-	level = level.toUpperCase();
-	var nll = 6;
-
-	if (_log_levels.hasOwnProperty(level)) {
-		nll = _log_levels[level];
-	}
-
-	return nll;
-}
-	
-function set_log_level(level) {
-	_log_level = get_numeric_log_level(level);
-}
-
-function log_it(level) {
-	/* Logs stuff (2nd parameter onwards) according to the logging level
-	 * set using the set_log_level() function. The default logging level
-	 * is INFO logging only. The order of logging is as follows:
-	 * NONE < INFO < WARN < ERROR < FATAL < DEBUG < anything else
-	 *
-	 * If the 2nd paramater is the only other parameter and it is a 
-	 * function, then it is evaluated and the result is expected to be
-	 * an array, which contains the elements to be logged.
-	 *
-	 */
-	level = level.toUpperCase();
-	var numeric_level = get_numeric_log_level(level);
-
-	if (numeric_level > 0 && numeric_level <= _log_level) {
-		var args = arguments_to_array(arguments).slice(1);
-		if (args.length === 1 && typeof args[0] === 'function') {
-			// Lazy evaluation.
-			args = args[0]();
-
-			// args can be either an array, or something else. If it is
-			// anything but an array, we set it to an array with args being
-			// the only element of that array.
-			if (!(args instanceof Array)) {
-				args = [ args ];
-			}
-		}
-
-		args.unshift(level, new Date());
-
-		args.forEach(function(arg, i) {
-			var astr = '';
-			var more_hint = '';
-
-			try {
-				astr = arg.toString();
-
-				// console.log(astr.length);
-				if (astr.length > TRIM_DEFAULT_LENGTH) {
-					// We limit the writes because we are running into a 
-					// bug at this point of time.
-					more_hint = ' ... ' + (astr.length - TRIM_DEFAULT_LENGTH) + ' more characters';
-					astr = astr.substr(0, TRIM_DEFAULT_LENGTH);
-				}
-
-				process.stdout.write(astr);
-				if (more_hint) {
-					process.stdout.write(more_hint);
-				}
-				process.stdout.write(i < args.length - 1 ? ' ' : '');
-			}
-			catch (ex) {
-				console.error("DUTIL::args:", args);
-				console.error("DUTIL::arg:", arg);
-				console.error("DUTIL::log_it:astr.length:", astr.length);
-				console.error("DUTIL::log_it:Exception:\n", ex.stack);
-				process.exit(3);
-			}
-		});
-
-		process.stdout.write('\n');
-	}
-}
-
 
 function copy(dest, src, restrict) {
 	/* Copy keys from the hash 'src' to the hash 'dest'.
@@ -212,7 +122,6 @@ function alternator() {
 		exhausted = true;
 		for (i = 0; i < nseq; ++i) {
 			if (ctrs[i] < arguments[i].length) {
-				// log_it('debug', "Adding to buff:", arguments[i][ctrs[i]]);
 				buff.push(arguments[i][ctrs[i]]);
 				ctrs[i] += 1;
 				exhausted = false;
@@ -239,11 +148,8 @@ function map(a, f) {
 }
 
 function sprintf(fmt_str) {
-	// log_it('debug', "sprintf", arguments);
 	var fs_parts = fmt_str.split("%s");
 	var args = map(arguments_to_array(arguments).slice(1), 'toString');
-
-	// log_it('debug', "fs_parts, args:", fs_parts, args);
 
 	if (fs_parts.length !== args.length + 1) {
 		var estr = sprintf("The number of arguments in your format string (%s)[%s] " + 
@@ -450,7 +356,6 @@ function ends_with(haystack, needle) {
 	 * haystack
 	 *
 	 */
-	var re = new RegExp(needle + '$');
 	return haystack.search(needle) !== -1;
 }
 
@@ -515,7 +420,7 @@ function inflated_attrs(node) {
 	//
 	var xmlns = { };
 	var attrs = { };
-	var k, m, xk;
+	var k, m;
 	var re = new RegExp("^([^:]+):([\\s\\S]+)$");
 
 	for (k in node.attrs) {
@@ -531,7 +436,7 @@ function inflated_attrs(node) {
 	for (k in node.attrs) {
 		if (node.attrs.hasOwnProperty(k)) {
 			// Extract the bit before the : and check if it is present in xmlns
-			var m = k.match(re);
+			m = k.match(re);
 			// console.log("m:", m);
 			if (m && m.length === 3 && xmlns.hasOwnProperty(m[1])) {
 				attrs[xmlns[m[1]] + ":" + m[2]] = node.attrs[k];
@@ -566,7 +471,7 @@ exports.__defineSetter__("TRIM_DEFAULT_LENGTH", function(def_trim_length) {
     if (typeof(def_trim_length) !== 'number') {
         def_trim_length = TRIM_DEFAULT_LENGTH;
     }
-    def_trim_length = def_trim_length || TRIM_DEFAULT_LENGTH;
+    TRIM_DEFAULT_LENGTH = def_trim_length || TRIM_DEFAULT_LENGTH;
 });
 
 exports.copy               = copy;
@@ -580,7 +485,6 @@ exports.sprintfd           = sprintfd;
 exports.rev_hash           = rev_hash;
 exports.xml_parse          = _xml_parse();
 exports.set_log_level      = require("./log.js").set_log_level;
-// exports.log_it             = log_it; // DO NOT export to track usage outside this module.
 exports.json_parse         = json_parse;
 exports.jid_parse          = jid_parse;
 exports.num_cmp            = num_cmp;
