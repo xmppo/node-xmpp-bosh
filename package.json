@@ -16,8 +16,8 @@
     "eventpipe": "= 0.0.5",
     "dns-srv": "= 0.0.6",
     "semver": "= 1.0.8",
-    "node-lumberjack": "= 0.0.4"
-    "ws": "= 0.4.19",
+    "node-lumberjack": "= 0.0.4",
+    "ws": "= 0.4.19"
   },
   "devDependencies": {
     "jsdom": "= 0.2.15",
