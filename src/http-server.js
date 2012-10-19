@@ -31,7 +31,7 @@ var url         = require('url');
 var path        = require('path');
 var EventPipe   = require('eventpipe').EventPipe;
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 var BoshRequestParser = require('./bosh-request-parser').BoshRequestParser;
@@ -124,7 +124,7 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         var req_body_length = 0;
         var req_list_idx = -1;
 
-        var _on_end_callback = us.once(function (err) {
+        var _on_end_callback = us.once(function _unwrapped_on_end_callback(err) {
             if (err) {
                 log.warn("%s - destroying connection from '%s'", err, req.socket.remoteAddress);
                 req.destroy();

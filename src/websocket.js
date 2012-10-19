@@ -34,11 +34,8 @@ var assert = require('assert').ok;
 var EventPipe = require('eventpipe').EventPipe;
 
 var path        = require('path');
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
-
-var sprintf  = dutil.sprintf;
-var sprintfd = dutil.sprintfd;
 
 const STREAM_UNOPENED = 1;
 const STREAM_OPENED   = 2;

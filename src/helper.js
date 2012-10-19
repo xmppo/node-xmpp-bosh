@@ -34,7 +34,7 @@ var path  = require('path');
 var toNumber   = us.toNumber;
 var BOSH_XMLNS = 'http://jabber.org/protocol/httpbind';
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 // Begin packet builders

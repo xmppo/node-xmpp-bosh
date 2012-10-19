@@ -1,16 +1,8 @@
-var log4js = require("log4js");
+var logger = require("node-lumberjack");
 
-log4js.configure({
-    appenders:[
-        { type:"console" }
-    ]
-});
-
-log4js.setGlobalLogLevel("INFO");
-
-var set_log_level = function (level) {
-	log4js.setGlobalLogLevel(level);
+function set_log_level(level) {
+    logger.setGlobalLogLevel(level);
 };
 
-module.exports = log4js;
+module.exports               = logger;
 module.exports.set_log_level = set_log_level;

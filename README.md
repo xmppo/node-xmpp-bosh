@@ -244,7 +244,7 @@ if the *callback=* GET query parameter is supplied.
 * [dns-srv] (https://github.com/dhruvbird/dns-srv)
 * [semver] (https://github.com/isaacs/node-semver)
 * [ws] (https://github.com/einaros/ws)
-* [log4js] (http://log4js.berlios.de/)
+* [node-lumberjack] (https://github.com/dhruvbird/node-lumberjack)
 * [jsdom] (https://github.com/tmpvar/jsdom) for tests
 * [jslint] (https://github.com/reid/node-jslint) for running lintit.sh
 

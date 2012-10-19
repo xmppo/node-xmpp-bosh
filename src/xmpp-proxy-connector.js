@@ -30,11 +30,8 @@ var util   = require('util');
 var us	   = require('underscore');
 
 var path		= require('path');
-var filename	= "[" + path.basename(path.normalize(__filename)) + "]";
+var filename	= path.basename(path.normalize(__filename));
 var log			= require('./log.js').getLogger(filename);
-
-var sprintfd = dutil.sprintfd;
-
 
 var DEFAULT_XMPP_PORT = 5222;
 
@@ -58,8 +55,8 @@ function XMPPProxyConnector(bosh_server, options) {
 
 
 	// Fired when an 'close' event is raised by the XMPP Proxy.
-	this._on_xmpp_proxy_close = function(error, stream) {
-		log.info("%s %s _on_xmpp_proxy_close - terminate stream", stream.session.sid, stream.name);
+	this._on_xmpp_proxy_close = function _on_xmpp_proxy_close(error, stream) {
+		log.info("%s %s - terminate stream", stream.session.sid, stream.name);
 		// Remove the object and notify the bosh server.
 		var ss = this.streams[stream.name];
 		if (!ss) {

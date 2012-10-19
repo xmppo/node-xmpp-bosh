@@ -38,7 +38,7 @@ var toNumber    = us.toNumber;
 var sprintf     = dutil.sprintf;
 var sprintfd    = dutil.sprintfd;
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 //

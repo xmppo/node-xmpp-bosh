@@ -17,7 +17,8 @@
     "dns-srv": "~0.0.6",
     "semver": "~1.0.8",
     "ws": "~0.4.19",
-    "log4js": "~0.5.2"
+    "node-lumberjack": "= 0.0.4",
+    "ws": "= 0.4.19"
   },
   "devDependencies": {
     "jsdom": "~0.2.15",

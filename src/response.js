@@ -29,7 +29,7 @@ var helper      = require('./helper.js');
 var NULL_FUNC   = dutil.NULL_FUNC;
 var path        = require('path');
 
-var filename    = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 function Response(res, request_id, sid, options) {
