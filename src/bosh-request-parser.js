@@ -30,7 +30,7 @@ var expat    = require('node-expat');
 var assert   = require('assert').ok;
 var path     = require('path');
 
-var filename = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename = path.basename(path.normalize(__filename));
 var log      = require('./log.js').getLogger(filename);
 
 function BoshRequestParser() {

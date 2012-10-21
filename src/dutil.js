@@ -27,7 +27,7 @@ var us       = require('underscore');
 var path     = require('path');
 var assert   = require('assert').ok;
 
-var filename = "[" + path.basename(path.normalize(__filename)) + "]";
+var filename = path.basename(path.normalize(__filename));
 var log      = require('./log.js').getLogger(filename);
 
 // The maximum number of characters that a single log line can contain
