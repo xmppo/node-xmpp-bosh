@@ -84,6 +84,8 @@ function BOSH_Options(opts) {
     this.MAX_STREAMS_PER_SESSION = _opts.max_streams_per_session || 8;
 
     this.PIDGIN_COMPATIBLE = _opts.pidgin_compatible || false;
+
+    this.SYSTEM_INFO_PASSWORD = _opts.system_info_password || '';
 }
 
 exports.BOSH_Options = BOSH_Options;

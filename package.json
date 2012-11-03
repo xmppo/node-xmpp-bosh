@@ -1,8 +1,8 @@
 {
   "name": "node-xmpp-bosh",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "main": "./src/main",
-  "bin": {
+ "bin": {    
     "bosh-server": "./run-server.js"
   },
   "description": "An XMPP BOSH server written for node.js in javascript",
@@ -16,9 +16,9 @@
     "eventpipe": "~0.0.5",
     "dns-srv": "~0.0.6",
     "semver": "~1.0.8",
-    "ws": "~0.4.19",
+    "ws": "= 0.4.19",
     "node-lumberjack": "= 0.0.4",
-    "ws": "= 0.4.19"
+    "ejs": "~0.8.3"
   },
   "devDependencies": {
     "jsdom": "~0.2.15",

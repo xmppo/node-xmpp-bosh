@@ -36,7 +36,8 @@ var log         = require('./log.js').getLogger(filename);
 
 var BoshRequestParser = require('./bosh-request-parser').BoshRequestParser;
 
-function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_handler,
+function HTTPServer(port, host, stat_func, system_info_func,
+                    bosh_request_handler, http_error_handler,
                     bosh_options) {
 
     var bosh_request_parser = new BoshRequestParser();
@@ -206,10 +207,53 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
             var _headers = { };
             dutil.copy(_headers, bosh_options.HTTP_GET_RESPONSE_HEADERS);
             _headers['Content-Type'] = 'text/html; charset=utf-8';
+
             res.writeHead(200, _headers);
 
             var stats = stat_func();
             res.end(stats);
+            return false;
+        }
+    }
+
+    function handle_get_system_info(req, res, u) {
+        var ppos = path.dirname(u.pathname).search(bosh_options.path);
+        if (ppos == -1) {
+            // Try matching both with and without the trailing slash.
+            ppos = (path.dirname(u.pathname) + "/").search(bosh_options.path);
+        }
+        var spos = path.basename(u.pathname).search("sysinfo");
+
+        if (req.method === 'GET' && ppos !== -1 && spos === 0) {
+            var _headers = { };
+            dutil.copy(_headers, bosh_options.HTTP_GET_RESPONSE_HEADERS);
+            _headers['Content-Type'] = 'text/html; charset=utf-8';
+
+            if (bosh_options.SYSTEM_INFO_PASSWORD.length === 0) {
+                res.writeHead(403, _headers);
+
+                res.end("No Password set or default password is being used. " +
+                        "Please set/change the password in the config file.");
+                return false;
+            }
+
+            // Check if we got the password back.
+            var auth_header = req.headers.authorization;
+            if (auth_header) {
+                auth_header = auth_header.split(' ')[1];
+                var auth_str = new Buffer(auth_header, 'base64').toString();
+                var real_auth_str = 'admin:' + bosh_options.SYSTEM_INFO_PASSWORD;
+                if (auth_str === real_auth_str) {
+                    res.writeHead(200, _headers);
+                    var sysinfo = system_info_func();
+                    res.end(sysinfo);
+                    return false;
+                }
+            }
+
+            _headers['WWW-Authenticate'] = 'Basic realm="System Information"';
+            res.writeHead(401, _headers);
+            res.end();
             return false;
         }
     }
@@ -260,9 +304,10 @@ function HTTPServer(port, host, stat_func, bosh_request_handler, http_error_hand
         .on('request', handle_get_bosh_request, 2)
         .on('request', handle_options, 3)
         .on('request', handle_get_favicon, 4)
-        .on('request', handle_get_statistics, 5)
-        .on('request', handle_get_crossdomainXML, 6)
-        .on('request', handle_unhandled_request, 7);
+        .on('request', handle_get_system_info, 5)
+        .on('request', handle_get_statistics, 6)
+        .on('request', handle_get_crossdomainXML, 7)
+        .on('request', handle_unhandled_request, 8);
 
     function http_request_handler(req, res) {
         var u = url.parse(req.url, true);

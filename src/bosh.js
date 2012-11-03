@@ -26,6 +26,8 @@
 var ltx         = require('ltx');
 var dutil       = require('./dutil.js');
 var us          = require('underscore');
+var fs          = require('fs');
+var os          = require('os');
 var sess        = require('./session.js');
 var strm        = require('./stream.js');
 var helper      = require('./helper.js');
@@ -33,6 +35,7 @@ var opt         = require('./options.js');
 var path        = require('path');
 var bee         = require('./bosh-event-emitter.js');
 var http        = require('./http-server.js');
+var ejs         = require('ejs');
 
 var toNumber    = us.toNumber;
 var sprintf     = dutil.sprintf;
@@ -82,38 +85,55 @@ exports.createServer = function (options) {
     // (and only) place of reference for object structure.
     //
 
-    var started;
+    var started =  new Date(); // When was this server started?
     var session_store;
     var stream_store;
     var bep;
     var bosh_options;
     var server;
+    var stats_template = ejs.compile(fs.readFileSync(require.resolve('../templates/stats.html'), 'utf8'));
+    var sysinfo_template = ejs.compile(fs.readFileSync(require.resolve('../templates/sysinfo.html'), 'utf8'));
+    var pkgJSON = JSON.parse(fs.readFileSync(require.resolve('../package.json')));
 
-    started = new Date(); // When was this server started?
+    function get_system_info() {
+        // Use a pre-compiled ejs template here.
+        var opt_keys = us.without(Object.keys(options), 'system_info_password');
+        var opts = opt_keys.map(function(opt_key) {
+            var v = options[opt_key];
+            if (v instanceof RegExp) {
+                v = String(v);
+            } else {
+                v = JSON.stringify(v);
+            }
+            return {
+                key: opt_key,
+                value: v
+            };
+        });
+        var content = sysinfo_template({
+            hostname:        os.hostname(),
+            uptime:          dutil.time_diff(started, new Date()),
+            version:         pkgJSON.version,
+            active_sessions: session_store.get_active_no(),
+            total_sessions:  session_store.get_total_no(),
+            active_streams:  stream_store.get_active_no(),
+            total_streams:   stream_store.get_total_no(),
+            options:         opts
+        });
+        return content;
+    }
 
     function get_statistics() {
-        var stats = [ ];
-        var content = new ltx.Element('html')
-            .c('head')
-            .c('title').t('node-xmpp-bosh').up()
-            .up()
-            .c('body')
-            .c('h1')
-            .c('a', {'href': 'http://dhruvbird.com/p/node-xmpp-bosh'})
-            .t('node-xmpp-bosh')
-            .up()
-            .up()
-            .c('h3').t('Bidirectional-streams Over Synchronous HTTP').up()
-            .c('p').t(sprintf('Uptime: %s', dutil.time_diff(started, new Date()))).up()
-            .c('p').t(sprintf('%s/%s active %s', session_store.get_active_no(),
-                            session_store.get_total_no(),
-                            dutil.pluralize(session_store.get_total_no(), 'session'))).up()
-            .c('p').t(sprintf('%s/%s active %s', stream_store.get_active_no(),
-                            stream_store.get_total_no(),
-                            dutil.pluralize(stream_store.get_total_no(), 'stream'))).up()
-            .tree();
-        stats.push(content.toString());
-        return stats.join('\n');
+        // Use a pre-compiled ejs template here.
+        var content = stats_template({
+            hostname:        os.hostname(),
+            uptime:          dutil.time_diff(started, new Date()),
+            active_sessions: session_store.get_active_no(),
+            total_sessions:  session_store.get_total_no(),
+            active_streams:  stream_store.get_active_no(),
+            total_streams:   stream_store.get_total_no()
+        });
+        return content;
     }
 
     function process_bosh_request(res, node) {
@@ -267,7 +287,8 @@ exports.createServer = function (options) {
 
     bosh_options = new opt.BOSH_Options(options);
     server = new http.HTTPServer(options.port, options.host, get_statistics,
-        bosh_request_handler, http_error_handler, bosh_options);
+                                 get_system_info, bosh_request_handler,
+                                 http_error_handler, bosh_options);
     // The BOSH event emitter. People outside will subscribe to
     // events from this guy. We return an instance of BoshEventPipe
     // to the outside world when anyone calls createServer()

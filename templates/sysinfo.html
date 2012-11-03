@@ -1,0 +1,40 @@
+<html>
+<head>
+  <title>node-xmpp-bosh version <%= version %> on <%= hostname %></title>
+  <style type="text/css">
+  body {
+      font-family: Helvetica Neue, Helvetica, Arial;
+      padding-left: 20px;
+      padding-top: 10px;
+  }
+  </style>
+</head>
+
+<body>
+  <h1>
+    <a href="http://dhruvbird.com/p/node-xmpp-bosh">node-xmpp-bosh</a> 
+    version <%= version %> on <%= hostname %>
+  </h1>
+  <h3>Bidirectional-streams Over Synchronous HTTP</h3>
+  <p>Uptime: <%= uptime %></p>
+  <p><%= active_sessions %>/<%= total_sessions %> active sessions</p>
+  <p><%= active_streams  %>/<%= total_streams  %> active streams</p>
+
+  <h3>Configuration Options</h3>
+  <table border="1" cellspacing="1" cellpadding="4">
+    <tr>
+      <th>Option</th>
+      <th>Value</th>
+    </tr>
+
+    <% options.forEach(function(option) { %>
+    <tr>
+      <td><%= option.key %></td>
+      <td><%= option.value %></td>
+    </tr>
+    <% }); %>
+
+  </table>
+
+</body>
+</html>
