@@ -102,6 +102,7 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 
 * **trim_default_length**: The maximum length of an XML stanza to be printed. Set to -1 for unlimited line length. **(default: 256)**
 
+* **system_info_password**: The password used to protect the /PATH/sysinfo/ URL. The username to use when prompted for authentication is 'admin' **(default: [not set])**
 
 ### Architecture
 

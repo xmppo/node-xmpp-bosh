@@ -63,6 +63,7 @@ exports.config = {
     // for unlimited line length.
     trim_default_length: 256,
 
-    // Set the password here to limit access to the /PATH/sysinfo/ URL.
+    // The password used to protect the /PATH/sysinfo/ URL. The
+    // username to use when prompted for authentication is 'admin'.
     system_info_password: ''
 };
