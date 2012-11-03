@@ -3,6 +3,18 @@ deployments. If you are a system administrator who is
 maintaining/administering a node-xmpp-bosh installation, you might
 want to check this file every time you update your copy.
 
+### v0.7.0
+
+* Introduced a new URL /PATH/sysinfo/ which is password protected by default. Use the username 'admin' and the password set in the config file to see the contents behind this URL.
+
+* Using [ejs](https://github.com/visionmedia/ejs) (Embedded JavaScript templates) instead of hand-crafting HTML code while displaying the status and system information pages.
+
+### v0.6.4
+
+* *package.json* dependencies use *~* instead of *=* wherever applicable.
+
+* Use *node-lubmerjack* instead of *log4js* for logging since we are able to now show the file name + line number + object name + function name in the log statement.
+
 ### v0.6.2
 
 * *package.json* now has dependencies with *=* instead of *>=* to prevent future versions of dependencies breaking node-xmpp-bosh with API incompatible changes (e.g. log4js)
