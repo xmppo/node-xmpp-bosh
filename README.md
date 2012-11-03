@@ -245,6 +245,7 @@ if the *callback=* GET query parameter is supplied.
 * [semver] (https://github.com/isaacs/node-semver)
 * [ws] (https://github.com/einaros/ws)
 * [node-lumberjack] (https://github.com/dhruvbird/node-lumberjack)
+* [ejs] (https://github.com/visionmedia/ejs)
 * [jsdom] (https://github.com/tmpvar/jsdom) for tests
 * [jslint] (https://github.com/reid/node-jslint) for running lintit.sh
 
