@@ -9,6 +9,8 @@ want to check this file every time you update your copy.
 
 * Using [ejs](https://github.com/visionmedia/ejs) (Embedded JavaScript templates) instead of hand-crafting HTML code while displaying the status and system information pages.
 
+* Update node-expat dependency to v2.0.0. See [issue #56](https://github.com/dhruvbird/node-xmpp-bosh/issues/56) for more details.
+
 ### v0.6.4
 
 * *package.json* dependencies use *~* instead of *=* wherever applicable.
