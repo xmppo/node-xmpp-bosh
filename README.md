@@ -17,7 +17,7 @@ to see the major changes in releases.
 ```
 $ bosh-server
 ```
-The BOSH is now available at: [http://localhost:5280/http-bind/](http://localhost:5280/http-bind/)
+The BOSH service is now available at: [http://localhost:5280/http-bind/](http://localhost:5280/http-bind/)
 
 2. For options, type:
 ```
@@ -52,7 +52,8 @@ $ bosh-server --help
 * HTTP POST & GET (for older browsers) are suported (see below for more details)
 * A websocket server on the same port as the BOSH server
 * Benchmarks: https://github.com/dhruvbird/node-xmpp-bosh/wiki/Benchmarks
-* Monitor the BOSH server [http://localhost:5280/](http://localhost:5280/) (available only if you have node-xmpp-bosh running on your system)
+* Monitor the BOSH server at [http://localhost:5280/http-bind/](http://localhost:5280/http-bind/) (available only if you have node-xmpp-bosh running on your system)
+* Get detailed information about the running service at [http://localhost:5280/http-bind/sysinfo/](http://localhost:5280/http-bind/sysinfo/) (available only if you have node-xmpp-bosh running on your system)
 
 
 ### Features not Planned
