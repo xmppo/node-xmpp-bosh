@@ -251,7 +251,8 @@ function HTTPServer(port, host, stat_func, system_info_func,
                 }
             }
 
-            _headers['WWW-Authenticate'] = 'Basic realm="System Information"';
+            _headers['WWW-Authenticate'] = 
+                'Basic realm=System Information. Enter username \'admin\'';
             res.writeHead(401, _headers);
             res.end();
             return false;
