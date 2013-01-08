@@ -112,7 +112,7 @@ The project itself is divided into 4 main components as of now.
 1. A BOSH front end (bosh.js). This starts and HTTP server and manages
 the BOSH sessions and XMPP streams on those sessions. Multiple
 Streams, message acks, etc... and handled by this component. This is
-an EventPipe.
+an [EventPipe](https://github.com/dhruvbird/eventpipe).
 
 2. An XMPP (Jabber) Proxy that is responsible for making single client
 connections to an XMPP server (xmpp-proxy.js). STARTTLS and any other
@@ -121,7 +121,8 @@ replaced with any other proxy component (such as 0MQ) that connects to
 the backend server using any custom protocol. You could in theory
 write a Yahoo! Proxy that presents XMPP compliant XML stanzas to its
 users but makes HTTP REST calls to communicate with the Yahoo! chat
-servers.  This is an EventEmitter.
+servers.  This is an
+[EventEmitter](http://nodejs.org/api/events.html).
 
 3. An endpoint lookup service (lookup-service.js) that implements
 rules for XMPP service endpoint discovery. This currently encodes
