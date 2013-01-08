@@ -37,6 +37,8 @@ var path        = require('path');
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
+var xmlTextDeclRE = /<\?xml [^\?]+\?>/;
+
 const STREAM_UNOPENED = 1;
 const STREAM_OPENED   = 2;
 
@@ -93,14 +95,14 @@ exports.createServer = function(bosh_server, webSocket) {
             'version': '1.0',
             'xml:lang': 'en',
             'from': to
-    }).toString();
+        }).toString();
         if (sstate.has_open_stream_tag) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending data: %s", sstate.name, ss_xml);
         sstate.conn.send(ss_xml);
     });
-    
+
     // Special case for WebSockets due to
     // https://github.com/dhruvbird/node-xmpp-bosh/issues/16
     wsep.on('stream-restarted', function(sstate, stanza) {
@@ -168,7 +170,20 @@ exports.createServer = function(bosh_server, webSocket) {
             
             // Check if this is a stream open message
             if (message.search('<stream:stream') != -1) {
-                // Yes, it is. Now, check if it is closed or unclosed
+                // Yes, it is.
+
+                // Remove the leading <?xml ... ?> declaration if present.
+                //
+                // See
+                // https://github.com/dhruvbird/node-xmpp-bosh/issues/59
+                // for more details.
+                //
+                var m = message.match(xmlTextDeclRE);
+                if (m) {
+                    message = message.replace(xmlTextDeclRE, '');
+                }
+
+                // Now, check if it is closed or unclosed
                 if (message.search('/>') === -1) {
                     // Unclosed - Close it to continue parsing
                     message += '</stream:stream>';
