@@ -3,6 +3,10 @@ deployments. If you are a system administrator who is
 maintaining/administering a node-xmpp-bosh installation, you might
 want to check this file every time you update your copy.
 
+### v0.7.2
+
+* [ltx](https://github.com/astro/ltx) dependency updated to v0.2.2
+
 ### v0.7.0
 
 * Introduced a new URL /PATH/sysinfo/ which is password protected by default. Use the username 'admin' and the password set in the config file to see the contents behind this URL.
