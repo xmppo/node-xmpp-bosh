@@ -140,6 +140,7 @@ dutil.copy(XMPPProxy.prototype, {
         // var self = this;
         this._detach_handlers();
 
+        log.warn("startTLS to %s requested", this._xmpp_host);
         var ct = require('./starttls.js')(this._sock, { }, function() {
             log.trace("%s %s _starttls - restart the stream", this._void_star.session.sid, this._void_star.name);
             // Restart the stream
