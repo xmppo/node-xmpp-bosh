@@ -431,12 +431,12 @@ Session.prototype = {
         if (rid < this.max_rid_sent) {
             // Always use _send_no_requeue() since it correctly
             // manipulates internal state.
-			var attrs = {
-				sid: this.sid,
-				message: "rid: " + String(rid) + " is < greatest rid sent (" +
-					String(this.max_rid_sent) + ")",
-				condition: 'item-not-found'
-			};
+	        var attrs = {
+			    sid: this.sid,
+			    message: "rid: " + String(rid) + " is < greatest rid sent (" +
+				    String(this.max_rid_sent) + ")",
+			    condition: 'item-not-found'
+		    };
             this._send_no_requeue(ro, helper.$body(attrs));
             return;
         }
@@ -474,10 +474,10 @@ Session.prototype = {
             // Send back an empty body element.
             // We don't add this to unacked_responses since it's wasteful. NO
             // WE ACTUALLY DO add it to unacked_responses
-			var attrs = {
-				sid: this.sid,
-				message: 'Timed out'
-			};
+		    var attrs = {
+			    sid: this.sid,
+			    message: 'Timed out'
+	        };
             this._send_no_requeue(ro, $body(attrs));
         }.bind(this), this.wait * 1000);
 
@@ -504,10 +504,10 @@ Session.prototype = {
         // We use get_response_object() since it also calls clearTimeout, etc...
         // for us for free.
         var ro = this.get_response_object();
-		var attrs = {
-			sid: this.sid,
-			message: 'Cleanup due to session termination'
-		};
+	    var attrs = {
+		    sid: this.sid,
+		    message: 'Cleanup due to session termination'
+	    };
 
         while (ro) {
             this._send_no_requeue(ro, helper.$body(attrs));
@@ -598,9 +598,9 @@ Session.prototype = {
     // 
     send_terminate_response: function (ro, condition) {
         log.info("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
-		var attrs = {
-			sid: this.sid,
-		};
+	    var attrs = {
+		    sid: this.sid,
+	    };
         if (condition) {
             attrs.condition = condition;
         }
