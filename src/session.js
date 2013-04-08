@@ -431,7 +431,13 @@ Session.prototype = {
         if (rid < this.max_rid_sent) {
             // Always use _send_no_requeue() since it correctly
             // manipulates internal state.
-            this._send_no_requeue(ro, helper.$body());
+			var attrs = {
+				sid: this.sid,
+				message: "rid: " + String(rid) + " is < greatest rid sent (" +
+					String(this.max_rid_sent) + ")",
+				condition: 'item-not-found'
+			};
+            this._send_no_requeue(ro, helper.$body(attrs));
             return;
         }
 
@@ -468,7 +474,11 @@ Session.prototype = {
             // Send back an empty body element.
             // We don't add this to unacked_responses since it's wasteful. NO
             // WE ACTUALLY DO add it to unacked_responses
-            this._send_no_requeue(ro, $body());
+			var attrs = {
+				sid: this.sid,
+				message: 'Timed out'
+			};
+            this._send_no_requeue(ro, $body(attrs));
         }.bind(this), this.wait * 1000);
 
         // Insert into its correct position (in RID order)
@@ -494,8 +504,13 @@ Session.prototype = {
         // We use get_response_object() since it also calls clearTimeout, etc...
         // for us for free.
         var ro = this.get_response_object();
+		var attrs = {
+			sid: this.sid,
+			message: 'Cleanup due to session termination'
+		};
+
         while (ro) {
-            this._send_no_requeue(ro, helper.$body());
+            this._send_no_requeue(ro, helper.$body(attrs));
             ro = this.get_response_object();
         }
 
@@ -583,7 +598,9 @@ Session.prototype = {
     // 
     send_terminate_response: function (ro, condition) {
         log.info("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
-        var attrs = { };
+		var attrs = {
+			sid: this.sid,
+		};
         if (condition) {
             attrs.condition = condition;
         }
@@ -922,10 +939,18 @@ Session.prototype = {
     // If the client has made more than "hold" connections
     // to us, then we relinquish the rest of the connections
     respond_to_extra_held_response_objects: function () {
+		if (this.res.length <= this.hold) {
+			return;
+		}
+
+		var attrs = {
+			sid: this.sid,
+			message: 'Exceeded ' + String(this.hold) + ' held response objects'
+		};
         while (this.res.length > this.hold) {
             log.trace("%s respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
             var ro = this.get_response_object();
-            this._send_no_requeue(ro, $body());
+            this._send_no_requeue(ro, $body(attrs));
         }
     },
 

@@ -33,6 +33,13 @@ var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 function Response(res, request_id, sid, options) {
+	if (!sid) {
+		log.warn("No SID passed while creating a Response object");
+	}
+	if (!res) {
+		log.warn("No res structure passed while creating a Response object");
+	}
+
     this.rid        = request_id;
     this._sid       = sid;
 	this._res		= res;
