@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset: 4; indent-tabs-mode: nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani, Anup Kalbalia
@@ -431,12 +431,11 @@ Session.prototype = {
         if (rid < this.max_rid_sent) {
             // Always use _send_no_requeue() since it correctly
             // manipulates internal state.
-	        var attrs = {
-			    sid: this.sid,
-			    message: "rid: " + String(rid) + " is < greatest rid sent (" +
-				    String(this.max_rid_sent) + ")",
-			    condition: 'item-not-found'
-		    };
+            var attrs = {
+                message: "rid: " + String(rid) + " is < greatest rid sent (" +
+                    String(this.max_rid_sent) + ")",
+                condition: 'item-not-found'
+            };
             this._send_no_requeue(ro, helper.$body(attrs));
             return;
         }
@@ -474,17 +473,23 @@ Session.prototype = {
             // Send back an empty body element.
             // We don't add this to unacked_responses since it's wasteful. NO
             // WE ACTUALLY DO add it to unacked_responses
-		    var attrs = {
-			    sid: this.sid,
-			    message: 'Timed out'
-	        };
+            var attrs = {
+                message: 'Timed out'
+            };
+            // The invariant here is is that
+            // add_held_http_connection() shall be called *before*
+            // this.first_response is set to false for
+            // PIDGIN_COMPATIBLE mode. Only then can we rely on it
+            // being 'true' when we come here for the first time.
+            if (this._options.PIDGIN_COMPATIBLE && this.first_response) {
+                attrs.sid = this.sid;
+            }
             this._send_no_requeue(ro, $body(attrs));
         }.bind(this), this.wait * 1000);
 
         // Insert into its correct position (in RID order)
         var pos;
-        for (pos = 0; pos < this.res.length && this.res[pos].rid < ro.rid; ++pos) {
-        }
+        for (pos = 0; pos < this.res.length && this.res[pos].rid < ro.rid; ++pos) { }
         this.res.splice(pos, 0, ro);
 
         log.trace("%s add_held_http_connection - now holding %s res obj", this.sid, this.res.length);
@@ -504,10 +509,9 @@ Session.prototype = {
         // We use get_response_object() since it also calls clearTimeout, etc...
         // for us for free.
         var ro = this.get_response_object();
-	    var attrs = {
-		    sid: this.sid,
-		    message: 'Cleanup due to session termination'
-	    };
+        var attrs = {
+            message: 'Cleanup due to session termination'
+        };
 
         while (ro) {
             this._send_no_requeue(ro, helper.$body(attrs));
@@ -598,9 +602,7 @@ Session.prototype = {
     // 
     send_terminate_response: function (ro, condition) {
         log.info("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
-	    var attrs = {
-		    sid: this.sid,
-	    };
+        var attrs = { };
         if (condition) {
             attrs.condition = condition;
         }
@@ -939,14 +941,13 @@ Session.prototype = {
     // If the client has made more than "hold" connections
     // to us, then we relinquish the rest of the connections
     respond_to_extra_held_response_objects: function () {
-		if (this.res.length <= this.hold) {
-			return;
-		}
+        if (this.res.length <= this.hold) {
+            return;
+        }
 
-		var attrs = {
-			sid: this.sid,
-			message: 'Exceeded ' + String(this.hold) + ' held response objects'
-		};
+        var attrs = {
+            message: 'Exceeded ' + String(this.hold) + ' held response objects'
+        };
         while (this.res.length > this.hold) {
             log.trace("%s respond_ex_held_ro - res.length: %s, hold: %s", this.sid, this.res.length, this.hold);
             var ro = this.get_response_object();
@@ -1020,7 +1021,7 @@ Session.prototype = {
                 delete this.unacked_responses[rid];
             }
         }.bind(this));
-	},
+    },
 
     // Precondition: This function should be called before handle_acks
     // since handle_acks deletes all unacked_reponses upto node.attrs.ack
@@ -1049,7 +1050,7 @@ Session.prototype = {
                 }, stream);
             }
         }
-	},
+    },
 
     // handle_broken_connections uses the response object "res" to
     // send response to the client in case of abnormal conditions
