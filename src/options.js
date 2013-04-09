@@ -24,6 +24,8 @@
  */
 
 var helper = require('./helper.js');
+var filename    = path.basename(path.normalize(__filename));
+var log         = require('./log.js').getLogger(filename);
 
 function BOSH_Options(opts) {
 
@@ -59,7 +61,13 @@ function BOSH_Options(opts) {
         helper.add_to_headers(this.HTTP_OPTIONS_RESPONSE_HEADERS, _opts.http_headers);
     }
 
+	log.debug("HTTP_GET_RESPONSE_HEADERS: %s", this.HTTP_GET_RESPONSE_HEADERS);
+	log.debug("HTTP_POST_RESPONSE_HEADERS: %s", this.HTTP_POST_RESPONSE_HEADERS);
+	log.debug("HTTP_OPTIONS_RESPONSE_HEADERS: %s", this.HTTP_OPTIONS_RESPONSE_HEADERS);
+
     this.path = _opts.path;
+
+	log.debug("path: %s", this.path);
 
     // The maximum number of bytes that the BOSH server will
     // "hold" from the client.
@@ -86,6 +94,10 @@ function BOSH_Options(opts) {
     this.PIDGIN_COMPATIBLE = _opts.pidgin_compatible || false;
 
     this.SYSTEM_INFO_PASSWORD = _opts.system_info_password || '';
+
+	log.debug("MAX_DATA_HELD: %s", this.MAX_DATA_HELD);
+	// TODO: Add the rest.
+	log.debug("PIDGIN_COMPATIBLE: %s", this.PIDGIN_COMPATIBLE);
 }
 
 exports.BOSH_Options = BOSH_Options;
