@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset: 4; indent-tabs-mode: nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani
@@ -78,6 +78,13 @@ dutil.copy(XMPPLookupService.prototype, {
         var self = this;
 
         // We first save all the user's handlers.
+        //
+        // NOTE: NEVER re-attach OR trigger event handlers in a
+        // nextTick() function. ALWAYS do it in the same tick since
+        // there might be pending events and the semantics might need
+        // a sequential ordering on the delivery of these events (for
+        // example the 'connect' and the 'data' events need to come in
+        // the order they arrived).
         var _add_all_listeners = SRV.removeListeners(socket);
 
         function _on_socket_connect(e) {

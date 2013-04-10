@@ -14,7 +14,7 @@
     "tav": "~0.1.0",
     "underscore": "~1.3.3",
     "eventpipe": "~0.0.5",
-    "dns-srv": "~0.0.6",
+    "dns-srv": "0.1.0",
     "semver": "~1.0.8",
     "ws": "= 0.4.19",
     "node-lumberjack": "= 0.0.4",

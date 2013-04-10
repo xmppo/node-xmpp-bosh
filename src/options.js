@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset: 4; indent-tabs-mode: nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani, Anup Kalbalia
@@ -23,13 +23,15 @@
  *
  */
 
-var helper = require('./helper.js');
+var helper      = require('./helper.js');
+var path        = require('path');
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 function BOSH_Options(opts) {
-
     var _opts = opts;
+
+	log.debug("Node.js version: %s", process.version);
 
     this.HTTP_GET_RESPONSE_HEADERS = {
         'Content-Type': 'text/html; charset=UTF-8',
@@ -61,9 +63,17 @@ function BOSH_Options(opts) {
         helper.add_to_headers(this.HTTP_OPTIONS_RESPONSE_HEADERS, _opts.http_headers);
     }
 
-	log.debug("HTTP_GET_RESPONSE_HEADERS: %s", this.HTTP_GET_RESPONSE_HEADERS);
-	log.debug("HTTP_POST_RESPONSE_HEADERS: %s", this.HTTP_POST_RESPONSE_HEADERS);
-	log.debug("HTTP_OPTIONS_RESPONSE_HEADERS: %s", this.HTTP_OPTIONS_RESPONSE_HEADERS);
+    (function debug_print_HTTP_headers(header_types) {
+        header_types.forEach(function(header_type) {
+            var hobj = this[header_type];
+            Object.keys(hobj).forEach(function(header_key) {
+                log.debug("%s::%s => %s", header_type, header_key, hobj[header_key]);
+            });
+		}.bind(this));
+	}.bind(this))(['HTTP_GET_RESPONSE_HEADERS',
+		           'HTTP_POST_RESPONSE_HEADERS',
+		           'HTTP_OPTIONS_RESPONSE_HEADERS']
+                 );
 
     this.path = _opts.path;
 
