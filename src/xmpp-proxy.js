@@ -85,13 +85,10 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
     return this;
 }
 
-
 util.inherits(XMPPProxy, events.EventEmitter);
 
 exports.Proxy = XMPPProxy;
 
-// Potential FIXME - Do we need the dutil.copy() call here - it's
-// polluting the logs.
 dutil.copy(XMPPProxy.prototype, {
     _detach_handlers: function() {
         if (this._lookup_service) {
@@ -171,9 +168,7 @@ dutil.copy(XMPPProxy.prototype, {
         // dutil.log_it("DEBUG", "XMPP PROXY::Is stream:features?", stanza.is('features'));
         // dutil.log_it("DEBUG", "XMPP PROXY::logging starttls:", stanza.getChild('starttls'));
 
-        if (stanza.is('features') &&
-            stanza.getChild('starttls')) {
-
+        if (stanza.is('features') && stanza.getChild('starttls')) {
             // 
             // We STARTTLS only if TLS is
             // [a] required or
@@ -184,12 +179,12 @@ dutil.copy(XMPPProxy.prototype, {
 
             if (starttls_stanza.getChild('required') || !this._no_tls_domains[this._xmpp_host]) {
                 /* Signal willingness to perform TLS handshake */
-                log.trace("%s %s _on_stanza starttls requested", this._void_star.session.sid, this._void_star.name);
+                log.trace("%s %s STARTTLS requested", this._void_star.session.sid, this._void_star.name);
                 var _starttls_request = 
                     new ltx.Element('starttls', {
                         xmlns: NS_XMPP_TLS
                     }).toString();
-                log.trace("%s %s Writing out starttls", this._void_star.session.sid, this._void_star.name);
+                log.trace("%s %s Writing out STARTTLS", this._void_star.session.sid, this._void_star.name);
                 this.send(_starttls_request);
             }
             else {
