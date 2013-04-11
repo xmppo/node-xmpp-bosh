@@ -89,7 +89,7 @@ dutil.copy(XMPPLookupService.prototype, {
 
         function _on_socket_connect(e) {
             log.trace('Connection to %s succeeded',self._domain_name);
-            _add_all_listeners(true);
+            _add_all_listeners(SRV.REMOVE_PREVIOUS_LISTENERS);
 
             // Re-trigger the connect event.
             self.emit('connect', e);
@@ -119,7 +119,7 @@ dutil.copy(XMPPLookupService.prototype, {
 
         function give_up_trying_to_connect(e) {
             log.warn('Giving up connection attempts to %s',self._domain_name);
-            _add_all_listeners(true);
+            _add_all_listeners(SRV.REMOVE_PREVIOUS_LISTENERS);
 
             // Trigger the error event.
             self.emit('error', 'host-unknown');

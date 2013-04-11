@@ -1,4 +1,4 @@
-// -*-  tab-width:4; c-basic-offset: 4; indent-tabs-mode: nil  -*-
+// -*-  tab-width:4; c-basic-offset:4; indent-tabs-mode:nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani, Anup Kalbalia
@@ -105,9 +105,15 @@ function BOSH_Options(opts) {
 
     this.SYSTEM_INFO_PASSWORD = _opts.system_info_password || '';
 
-	log.debug("MAX_DATA_HELD: %s", this.MAX_DATA_HELD);
-	// TODO: Add the rest.
-	log.debug("PIDGIN_COMPATIBLE: %s", this.PIDGIN_COMPATIBLE);
+    log.debug("MAX_DATA_HELD: %s",           this.MAX_DATA_HELD);
+    log.debug("MAX_BOSH_CONNECTIONS: %s",    this.MAX_BOSH_CONNECTIONS);
+    log.debug("WINDOW_SIZE: %s",             this.WINDOW_SIZE);
+    log.debug("DEFAULT_INACTIVITY: %s",      this.DEFAULT_INACTIVITY);
+    log.debug("MAX_INACTIVITY: %s",          this.MAX_INACTIVITY);
+    log.debug("HTTP_SOCKET_KEEPALIVE: %s",   this.HTTP_SOCKET_KEEPALIVE);
+    log.debug("MAX_STREAMS_PER_SESSION: %s", this.MAX_STREAMS_PER_SESSION);
+    log.debug("PIDGIN_COMPATIBLE: %s",       this.PIDGIN_COMPATIBLE);
+    log.debug("SYSTEM_INFO_PASSWORD: %s",    (this.SYSTEM_INFO_PASSWORD ? "[SET]" : "[NOT SET]"));
 }
 
 exports.BOSH_Options = BOSH_Options;
