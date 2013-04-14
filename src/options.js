@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset:4; indent-tabs-mode:nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani, Anup Kalbalia
@@ -23,11 +23,15 @@
  *
  */
 
-var helper = require('./helper.js');
+var helper      = require('./helper.js');
+var path        = require('path');
+var filename    = path.basename(path.normalize(__filename));
+var log         = require('./log.js').getLogger(filename);
 
 function BOSH_Options(opts) {
-
     var _opts = opts;
+
+	log.debug("Node.js version: %s", process.version);
 
     this.HTTP_GET_RESPONSE_HEADERS = {
         'Content-Type': 'text/html; charset=UTF-8',
@@ -59,7 +63,21 @@ function BOSH_Options(opts) {
         helper.add_to_headers(this.HTTP_OPTIONS_RESPONSE_HEADERS, _opts.http_headers);
     }
 
+    (function debug_print_HTTP_headers(header_types) {
+        header_types.forEach(function(header_type) {
+            var hobj = this[header_type];
+            Object.keys(hobj).forEach(function(header_key) {
+                log.debug("%s::%s => %s", header_type, header_key, hobj[header_key]);
+            });
+		}.bind(this));
+	}.bind(this))(['HTTP_GET_RESPONSE_HEADERS',
+		           'HTTP_POST_RESPONSE_HEADERS',
+		           'HTTP_OPTIONS_RESPONSE_HEADERS']
+                 );
+
     this.path = _opts.path;
+
+	log.debug("path: %s", this.path);
 
     // The maximum number of bytes that the BOSH server will
     // "hold" from the client.
@@ -86,6 +104,16 @@ function BOSH_Options(opts) {
     this.PIDGIN_COMPATIBLE = _opts.pidgin_compatible || false;
 
     this.SYSTEM_INFO_PASSWORD = _opts.system_info_password || '';
+
+    log.debug("MAX_DATA_HELD: %s",           this.MAX_DATA_HELD);
+    log.debug("MAX_BOSH_CONNECTIONS: %s",    this.MAX_BOSH_CONNECTIONS);
+    log.debug("WINDOW_SIZE: %s",             this.WINDOW_SIZE);
+    log.debug("DEFAULT_INACTIVITY: %s",      this.DEFAULT_INACTIVITY);
+    log.debug("MAX_INACTIVITY: %s",          this.MAX_INACTIVITY);
+    log.debug("HTTP_SOCKET_KEEPALIVE: %s",   this.HTTP_SOCKET_KEEPALIVE);
+    log.debug("MAX_STREAMS_PER_SESSION: %s", this.MAX_STREAMS_PER_SESSION);
+    log.debug("PIDGIN_COMPATIBLE: %s",       this.PIDGIN_COMPATIBLE);
+    log.debug("SYSTEM_INFO_PASSWORD: %s",    (this.SYSTEM_INFO_PASSWORD ? "[SET]" : "[NOT SET]"));
 }
 
 exports.BOSH_Options = BOSH_Options;

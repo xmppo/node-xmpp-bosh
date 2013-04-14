@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset: 4; indent-tabs-mode: nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani
@@ -33,6 +33,13 @@ var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 function Response(res, request_id, sid, options) {
+    if (!sid) {
+        log.warn("No SID passed while creating a Response object");
+    }
+    if (!res) {
+        log.warn("No res structure passed while creating a Response object");
+    }
+
     this.rid        = request_id;
     this._sid       = sid;
 	this._res		= res;
@@ -76,24 +83,24 @@ Response.prototype = {
 		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
 		this._res.end(msg);
 		log.debug("%s SENT(%s): %s", this._sid, this.rid, dutil.replace_promise(dutil.trim_promise(msg), '\n', ' '));
-	},
+    },
 
-	// If a client closes a connection and a response to that HTTP request
-	// has not yet been sent, then the 'error' event is NOT raised by node.js.
-	// Hence, we need not attach an 'error' event handler yet.
+    // If a client closes a connection and a response to that HTTP request
+    // has not yet been sent, then the 'error' event is NOT raised by node.js.
+    // Hence, we need not attach an 'error' event handler yet.
 
-	// res.socket could be undefined if this request's socket is still in the 
-	// process of sending the previous request's response. Either ways, we 
-	// can be sure that setTimeout and setKeepAlive have already been called 
-	// on this socket.
-	set_socket_options: function (wait) {
-		if (this._res.socket) {
-			// Increasing the timeout of the underlying socket to allow 
-			// wait > 120 sec
-			this._res.socket.setTimeout(wait * 1000 + 10);
-			this._res.socket.setKeepAlive(true, this._options.HTTP_SOCKET_KEEPALIVE);
-		}
-	}
+    // res.socket could be undefined if this request's socket is still in the 
+    // process of sending the previous request's response. Either ways, we 
+    // can be sure that setTimeout and setKeepAlive have already been called 
+    // on this socket.
+    set_socket_options: function (wait) {
+        if (this._res.socket) {
+            // Increasing the timeout of the underlying socket to allow 
+            // wait > 120 sec
+            this._res.socket.setTimeout(wait * 1000 + 10);
+            this._res.socket.setKeepAlive(true, this._options.HTTP_SOCKET_KEEPALIVE);
+        }
+    }
 };
 
 exports.Response = Response;
