@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset:4; indent-tabs-mode:nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani
@@ -85,10 +85,12 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
     return this;
 }
 
-
 util.inherits(XMPPProxy, events.EventEmitter);
 
 exports.Proxy = XMPPProxy;
+
+const ATTACH_SOCKET_HANDLERS = true;
+const SKIP_SOCKET_HANDLERS   = false;
 
 dutil.copy(XMPPProxy.prototype, {
     _detach_handlers: function() {
@@ -101,7 +103,7 @@ dutil.copy(XMPPProxy.prototype, {
         this._sock.removeAllListeners('close');
     }, 
 
-    _attach_handlers: function() {
+    _attach_handlers: function(socket_handlers_fate) {
         // Ideally, 'connect' and 'close' should be once() listeners
         // but having them as on() listeners has helped us catch some
         // nasty bugs, so we let them be.
@@ -109,9 +111,11 @@ dutil.copy(XMPPProxy.prototype, {
             this._lookup_service.on('connect', us.bind(this._on_connect, this));
             this._lookup_service.on('error', us.bind(this._on_lookup_error, this));
         }
-        this._sock.on  ('data',    us.bind(this._on_data, this));
-        this._sock.once('close',   us.bind(this._on_close, this));
-        this._sock.on  ('error',   dutil.NULL_FUNC);
+        if (socket_handlers_fate == ATTACH_SOCKET_HANDLERS) {
+            this._sock.on  ('data',    us.bind(this._on_data, this));
+            this._sock.once('close',   us.bind(this._on_close, this));
+            this._sock.on  ('error',   dutil.NULL_FUNC);
+        }
     }, 
 
     _attach_handlers_to_parser: function() {
@@ -145,7 +149,7 @@ dutil.copy(XMPPProxy.prototype, {
         // The socket is now the cleartext stream
         this._sock = ct;
 
-        this._attach_handlers();
+        this._attach_handlers(ATTACH_SOCKET_HANDLERS);
     },
 
     _get_stream_xml_open: function(stream_attrs) {
@@ -169,9 +173,7 @@ dutil.copy(XMPPProxy.prototype, {
         // dutil.log_it("DEBUG", "XMPP PROXY::Is stream:features?", stanza.is('features'));
         // dutil.log_it("DEBUG", "XMPP PROXY::logging starttls:", stanza.getChild('starttls'));
 
-        if (stanza.is('features') &&
-            stanza.getChild('starttls')) {
-
+        if (stanza.is('features') && stanza.getChild('starttls')) {
             // 
             // We STARTTLS only if TLS is
             // [a] required or
@@ -182,12 +184,12 @@ dutil.copy(XMPPProxy.prototype, {
 
             if (starttls_stanza.getChild('required') || !this._no_tls_domains[this._xmpp_host]) {
                 /* Signal willingness to perform TLS handshake */
-                log.trace("%s %s _on_stanza starttls requested", this._void_star.session.sid, this._void_star.name);
+                log.trace("%s %s STARTTLS requested", this._void_star.session.sid, this._void_star.name);
                 var _starttls_request = 
                     new ltx.Element('starttls', {
                         xmlns: NS_XMPP_TLS
                     }).toString();
-                log.trace("%s %s Writing out starttls", this._void_star.session.sid, this._void_star.name);
+                log.trace("%s %s Writing out STARTTLS", this._void_star.session.sid, this._void_star.name);
                 this.send(_starttls_request);
             }
             else {
@@ -209,7 +211,7 @@ dutil.copy(XMPPProxy.prototype, {
     connect: function() {
         // console.log(this);
         this._sock = new net.Stream();
-        this._attach_handlers();
+        this._attach_handlers(SKIP_SOCKET_HANDLERS);
         this._attach_handlers_to_parser();
         this._lookup_service.connect(this._sock);
     },
@@ -278,13 +280,15 @@ dutil.copy(XMPPProxy.prototype, {
 
             // Always, we connect on behalf of the real client.
             this.send(_ss_open);
-
             this.emit('connect', this._void_star);
         }
+        this._sock.on  ('data',    us.bind(this._on_data, this));
+        this._sock.once('close',   us.bind(this._on_close, this));
+        this._sock.on  ('error',   dutil.NULL_FUNC);
     }, 
 
     _on_data: function(d) {
-        log.debug("%s %s _on_data RECD %s bytes", this._void_star.session.sid, this._void_star.name, d.length);
+        log.debug("%s %s RECD %s bytes", this._void_star.session.sid, this._void_star.name, d.length);
 
         var stanza_size = this._parser.getCurrentByteIndex - this._prev_byte_index;
 
@@ -298,43 +302,43 @@ dutil.copy(XMPPProxy.prototype, {
     },
 
     _on_stream_start: function(attrs) {
-        log.trace("%s %s _on_stream_start: stream started", this._void_star.session.sid, this._void_star.name);
+        log.trace("%s %s stream started", this._void_star.session.sid, this._void_star.name);
         this._stream_attrs = { };
         dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
     },
 
     _on_stream_restart: function(attrs, stanza) {
-        log.trace("%s %s _on_stream_restart: stream restarted", this._void_star.session.sid, this._void_star.name);
+        log.trace("%s %s stream restarted", this._void_star.session.sid, this._void_star.name);
         dutil.copy(this._stream_attrs, attrs, ["xmlns:stream", "xmlns", "version"]);
         if (!this._suppress_stream_restart_event) {
             this.emit('restart', stanza, this._void_star);
         }
         this._suppress_stream_restart_event = false;
-	},
+    },
 
     _on_stream_end: function(attr) {
-        log.info("%s %s _on_stream_end: stream terminated", this._void_star.session.sid, this._void_star.name);
+        log.info("%s %s stream terminated", this._void_star.session.sid, this._void_star.name);
         this.terminate();
     },
 
     _on_stream_error: function(error) {
-        log.error("%s %s _on_stream_error - will terminate: %s", this._void_star.session.sid, this._void_star.name, error);
+        log.error("%s %s will terminate: %s", this._void_star.session.sid, this._void_star.name, error);
         this.terminate();
     },
 
     _close_connection: function(error) {
-        log.info("%s %s _close_connection error: %s", this._void_star.session.sid, this._void_star.name, error);
+        log.info("%s %s error: %s", this._void_star.session.sid, this._void_star.name, error);
         this.emit('close', error, this._void_star);
     },
     
     _on_close: function(had_error) {
         had_error = had_error || false;
-        log.info("%s %s _on_close error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
+        log.info("%s %s error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
         this._close_connection(had_error ? 'remote-connection-failed' : null);
     },
 
     _on_lookup_error: function(error) {
-        log.info("%s %s _on_lookup_error - %s", this._void_star.session.sid, this._void_star.name, error);
+        log.info("%s %s - %s", this._void_star.session.sid, this._void_star.name, error);
         this._close_connection(error);
     }
 });
