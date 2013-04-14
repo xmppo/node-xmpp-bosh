@@ -81,7 +81,9 @@ function main() {
 			value: false
 		}, 
 		config: {
-			note: "The config file to load (default: /etc/bosh.js.conf). NOTE: Command " + 
+			note: "The config file to load (default: /etc/bosh.js.conf). If a relative path " +
+				"specified, then it is assumed to be relative not to your Current Working Directory " +
+				"but to the install directory for node-xmpp-bosh. *NOTE*: Command " + 
 				"line options (if specified) will override options in the config file", 
 			value: BOSH_DEFAULT_CONFIG_PATH
 		}

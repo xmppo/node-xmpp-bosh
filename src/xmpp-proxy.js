@@ -1,4 +1,4 @@
-// -*-  tab-width:4  -*-
+// -*-  tab-width:4; c-basic-offset:4; indent-tabs-mode:nil  -*-
 
 /*
  * Copyright (c) 2011 Dhruv Matani
@@ -89,6 +89,9 @@ util.inherits(XMPPProxy, events.EventEmitter);
 
 exports.Proxy = XMPPProxy;
 
+const ATTACH_SOCKET_HANDLERS = true;
+const SKIP_SOCKET_HANDLERS   = false;
+
 dutil.copy(XMPPProxy.prototype, {
     _detach_handlers: function() {
         if (this._lookup_service) {
@@ -100,7 +103,7 @@ dutil.copy(XMPPProxy.prototype, {
         this._sock.removeAllListeners('close');
     }, 
 
-    _attach_handlers: function() {
+    _attach_handlers: function(socket_handlers_fate) {
         // Ideally, 'connect' and 'close' should be once() listeners
         // but having them as on() listeners has helped us catch some
         // nasty bugs, so we let them be.
@@ -108,9 +111,11 @@ dutil.copy(XMPPProxy.prototype, {
             this._lookup_service.on('connect', us.bind(this._on_connect, this));
             this._lookup_service.on('error', us.bind(this._on_lookup_error, this));
         }
-        this._sock.on  ('data',    us.bind(this._on_data, this));
-        this._sock.once('close',   us.bind(this._on_close, this));
-        this._sock.on  ('error',   dutil.NULL_FUNC);
+        if (socket_handlers_fate == ATTACH_SOCKET_HANDLERS) {
+            this._sock.on  ('data',    us.bind(this._on_data, this));
+            this._sock.once('close',   us.bind(this._on_close, this));
+            this._sock.on  ('error',   dutil.NULL_FUNC);
+        }
     }, 
 
     _attach_handlers_to_parser: function() {
@@ -144,7 +149,7 @@ dutil.copy(XMPPProxy.prototype, {
         // The socket is now the cleartext stream
         this._sock = ct;
 
-        this._attach_handlers();
+        this._attach_handlers(ATTACH_SOCKET_HANDLERS);
     },
 
     _get_stream_xml_open: function(stream_attrs) {
@@ -206,7 +211,7 @@ dutil.copy(XMPPProxy.prototype, {
     connect: function() {
         // console.log(this);
         this._sock = new net.Stream();
-        this._attach_handlers();
+        this._attach_handlers(SKIP_SOCKET_HANDLERS);
         this._attach_handlers_to_parser();
         this._lookup_service.connect(this._sock);
     },
@@ -275,9 +280,11 @@ dutil.copy(XMPPProxy.prototype, {
 
             // Always, we connect on behalf of the real client.
             this.send(_ss_open);
-
             this.emit('connect', this._void_star);
         }
+        this._sock.on  ('data',    us.bind(this._on_data, this));
+        this._sock.once('close',   us.bind(this._on_close, this));
+        this._sock.on  ('error',   dutil.NULL_FUNC);
     }, 
 
     _on_data: function(d) {
@@ -307,7 +314,7 @@ dutil.copy(XMPPProxy.prototype, {
             this.emit('restart', stanza, this._void_star);
         }
         this._suppress_stream_restart_event = false;
-	},
+    },
 
     _on_stream_end: function(attr) {
         log.info("%s %s stream terminated", this._void_star.session.sid, this._void_star.name);

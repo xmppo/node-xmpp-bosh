@@ -85,11 +85,9 @@ dutil.copy(XMPPLookupService.prototype, {
         // a sequential ordering on the delivery of these events (for
         // example the 'connect' and the 'data' events need to come in
         // the order they arrived).
-        var _add_all_listeners = SRV.removeListeners(socket);
 
         function _on_socket_connect(e) {
-            log.trace('Connection to %s succeeded',self._domain_name);
-            _add_all_listeners(SRV.REMOVE_PREVIOUS_LISTENERS);
+            log.trace('Connection to %s succeeded', self._domain_name);
 
             // Re-trigger the connect event.
             self.emit('connect', e);
@@ -112,14 +110,12 @@ dutil.copy(XMPPLookupService.prototype, {
             log.trace('try_connect_SRV_lookup - %s, %s',self._domain_name, self._port);
 
             // Then try a normal SRV lookup.
-
             var attempt = SRV.connect(socket, ['_xmpp-client._tcp'],
                 self._domain_name, self._port);
         }
 
         function give_up_trying_to_connect(e) {
             log.warn('Giving up connection attempts to %s',self._domain_name);
-            _add_all_listeners(SRV.REMOVE_PREVIOUS_LISTENERS);
 
             // Trigger the error event.
             self.emit('error', 'host-unknown');
