@@ -3,6 +3,11 @@ deployments. If you are a system administrator who is
 maintaining/administering a node-xmpp-bosh installation, you might
 want to check this file every time you update your copy.
 
+### v0.7.3
+
+* [dns-srv](https://github.com/dhruvbird/dns-srv) dependency updated to v0.2.0
+* Fix for new EventEmitter in node >= 0.10.0 which caused TLS negotiation failure with jabber.org and possibly other XMPP servers. See issue #66 for more details.
+
 ### v0.7.2
 
 * [ltx](https://github.com/astro/ltx) dependency updated to v0.2.2
