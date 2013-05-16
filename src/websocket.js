@@ -186,13 +186,11 @@ exports.createServer = function(bosh_server, webSocket) {
                     message += '</stream:stream>';
                     sstate.has_open_stream_tag = true;
                 }
-            } else {
-                // Remove any stream close tags we haven't added ourselves
-                message = message.replace(/<\/stream:stream>$/, '');
-                if (message.length === 0) {
-                    sstate.conn.close();
-                    return;
-                }
+            } else if (message === '</stream:stream>') {
+                // Stream close message from a client must appear in a message
+                // by itself - see draft-moffitt-xmpp-over-websocket-02
+                sstate.conn.close();
+                return;
             }
             
             // TODO: Maybe use a SAX based parser instead
