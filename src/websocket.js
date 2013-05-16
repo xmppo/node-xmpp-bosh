@@ -178,16 +178,20 @@ exports.createServer = function(bosh_server, webSocket) {
                 // https://github.com/dhruvbird/node-xmpp-bosh/issues/59
                 // for more details.
                 //
-                var m = message.match(xmlTextDeclRE);
-                if (m) {
-                    message = message.replace(xmlTextDeclRE, '');
-                }
+                message = message.replace(xmlTextDeclRE, '');
 
                 // Now, check if it is closed or unclosed
                 if (message.search('/>') === -1) {
                     // Unclosed - Close it to continue parsing
                     message += '</stream:stream>';
                     sstate.has_open_stream_tag = true;
+                }
+            } else {
+                // Remove any stream close tags we haven't added ourselves
+                message = message.replace(/<\/stream:stream>$/, '');
+                if (message.length === 0) {
+                    sstate.conn.close();
+                    return;
                 }
             }
             
