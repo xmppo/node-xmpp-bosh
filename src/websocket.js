@@ -186,7 +186,7 @@ exports.createServer = function(bosh_server, webSocket) {
                     message += '</stream:stream>';
                     sstate.has_open_stream_tag = true;
                 }
-            } else if (message === '</stream:stream>') {
+            } else if (message.search('</stream:stream>') !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
                 sstate.conn.close();
