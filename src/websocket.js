@@ -169,7 +169,7 @@ exports.createServer = function(bosh_server, webSocket) {
             }
             
             // Check if this is a stream open message
-            if (message.search('<stream:stream') != -1) {
+            if (message.indexOf('<stream:stream') !== -1) {
                 // Yes, it is.
 
                 // Remove the leading <?xml ... ?> declaration if present.
@@ -181,12 +181,12 @@ exports.createServer = function(bosh_server, webSocket) {
                 message = message.replace(xmlTextDeclRE, '');
 
                 // Now, check if it is closed or unclosed
-                if (message.search('/>') === -1) {
+                if (message.indexOf('/>') === -1) {
                     // Unclosed - Close it to continue parsing
                     message += '</stream:stream>';
                     sstate.has_open_stream_tag = true;
                 }
-            } else if (message.search('</stream:stream>') !== -1) {
+            } else if (message.indexOf('</stream:stream>') !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
                 sstate.conn.close();
