@@ -225,7 +225,7 @@ dutil.copy(XMPPProxy.prototype, {
 
     terminate: function() {
         if (this._is_connected) {
-            log.info("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
+            log.debug("%s %s - terminating", this._void_star.session.sid, this._void_star.name);
             // Detach the 'data' handler so that we don't get any more events.
             this._sock.removeAllListeners('data');
             this._parser.end();
@@ -317,7 +317,7 @@ dutil.copy(XMPPProxy.prototype, {
     },
 
     _on_stream_end: function(attr) {
-        log.info("%s %s stream terminated", this._void_star.session.sid, this._void_star.name);
+        log.debug("%s %s stream terminated", this._void_star.session.sid, this._void_star.name);
         this.terminate();
     },
 
@@ -327,13 +327,13 @@ dutil.copy(XMPPProxy.prototype, {
     },
 
     _close_connection: function(error) {
-        log.info("%s %s error: %s", this._void_star.session.sid, this._void_star.name, error);
+        log.debug("%s %s error: %s", this._void_star.session.sid, this._void_star.name, error);
         this.emit('close', error, this._void_star);
     },
     
     _on_close: function(had_error) {
         had_error = had_error || false;
-        log.info("%s %s error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
+        log.debug("%s %s error: %s", this._void_star.session.sid, this._void_star.name, !!had_error);
         this._close_connection(had_error ? 'remote-connection-failed' : null);
     },
 

@@ -300,7 +300,7 @@ Session.prototype = {
 
         // Check for stream terminate
         if (helper.is_stream_terminate_request(node)) {
-            log.info("%s Stream Terminate Request", this.sid);
+            log.debug("%s Stream Terminate Request", this.sid);
             // We may be required to terminate one stream, or all
             // the open streams on this BOSH session.
             this.handle_client_stream_terminate_request(stream, nodes,
@@ -601,7 +601,7 @@ Session.prototype = {
     // send to the client as to why the session was closed.
     // 
     send_terminate_response: function (ro, condition) {
-        log.info("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
+        log.debug("%s send_terminate_response - ro: %s, condition: %s", this.sid, !!ro, condition || "no-condition");
         var attrs = { };
         if (condition) {
             attrs.condition = condition;
