@@ -47,6 +47,7 @@ module.exports = function starttls(socket, options, cb) {
   return cleartext;
 };
 
+var socket_id = 1;
 
 function pipe(pair, socket) {
   pair.encrypted.pipe(socket);
@@ -58,14 +59,18 @@ function pipe(pair, socket) {
   cleartext.encrypted = pair.encrypted;
   cleartext.authorized = false;
 
+    var socket_id_local = socket_id++;
+
   function onerror(e) {
+      console.log("starttls::onerror() ->", socket_id_local);
     if (cleartext._controlReleased) {
       cleartext.emit('error', e);
     }
   }
 
   function onclose() {
-    socket.removeListener('error', onerror);
+      console.log("starttls::onclose() ->", socket_id_local);
+    // socket.removeListener('error', onerror);
     socket.removeListener('close', onclose);
   }
 
