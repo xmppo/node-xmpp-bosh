@@ -101,7 +101,7 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending data: %s", sstate.name, ss_xml);
-        if (!sstate.terminated && sn_state.hasOwnProperty(stream_name)) {
+        if (!sstate.terminated && sn_state.hasOwnProperty(sstate.name)) {
             try {
                 sstate.conn.send(ss_xml);
             } catch (e) {
@@ -118,7 +118,7 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
-        if (!sstate.terminated && sn_state.hasOwnProperty(stream_name)) {
+        if (!sstate.terminated && sn_state.hasOwnProperty(sstate.name)) {
             try {
                 sstate.conn.send(ss_xml);
             } catch (e) {
@@ -129,7 +129,7 @@ exports.createServer = function(bosh_server, webSocket) {
 
     wsep.on('response', function(response, sstate) {
         // Send the data back to the client
-        if (!sstate.terminated && sn_state.hasOwnProperty(stream_name)) {
+        if (!sstate.terminated && sn_state.hasOwnProperty(sstate.name)) {
             try {
                 sstate.conn.send(response.toString());
             } catch (e) {
@@ -141,7 +141,7 @@ exports.createServer = function(bosh_server, webSocket) {
     wsep.on('terminate', function(sstate, had_error) {
         if (sn_state.hasOwnProperty(sstate.name)) {
             if (sstate.terminated) {
-                log.warn('%s Multiple terminate events received', stream_name);
+                log.warn('%s Multiple terminate events received', sstate.name);
                 return;
             }
             sstate.terminated = true;
@@ -244,6 +244,12 @@ exports.createServer = function(bosh_server, webSocket) {
                 } else {
                     // Raise the stream-terminate event on wsep
                     wsep.emit('stream-terminate', sstate);
+                    sstate.terminated = true;
+                    try {
+                        sstate.conn.send('</stream:stream>');
+                    } catch (e) {
+                        log.warn(e.stack);
+                    }
                 }
                 return;
             }
@@ -309,6 +315,7 @@ exports.createServer = function(bosh_server, webSocket) {
                     // Bad client: did not close the stream first
                     // Raise the stream-terminate event on wsep
                     wsep.emit('stream-terminate', sstate);
+                    sstate.terminated = true;
                 }
             }
 
