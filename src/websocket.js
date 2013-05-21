@@ -139,17 +139,18 @@ exports.createServer = function(bosh_server, webSocket) {
     });
 
     wsep.on('terminate', function(sstate, had_error) {
-        if (sn_state.hasOwnProperty(sstate.name)) {
-            if (sstate.terminated) {
-                log.warn('%s Multiple terminate events received', sstate.name);
-                return;
-            }
-            sstate.terminated = true;
-            try {
-                sstate.conn.send('</stream:stream>');
-            } catch (e) {
-                log.warn(e.stack);
-            }
+        if (!sn_state.hasOwnProperty(sstate.name)) {
+            return;
+        }
+        if (sstate.terminated) {
+            log.warn('%s Multiple terminate events received', sstate.name);
+            return;
+        }
+        sstate.terminated = true;
+        try {
+            sstate.conn.send('</stream:stream>');
+        } catch (e) {
+            log.warn(e.stack);
         }
     });
     
@@ -177,9 +178,9 @@ exports.createServer = function(bosh_server, webSocket) {
             },
             has_open_stream_tag: false,
             terminated: false,
-            lastPong: Date.now(),
-            pingTimerId: setInterval(function () {
-                if (Date.now() - sstate.lastPong > 60000) {
+            last_pong: Date.now(),
+            ping_timer_id: setInterval(function () {
+                if (Date.now() - sstate.last_pong > 60000) {
                     log.warn("%s no pong - closing stream", stream_name);
                     sstate.terminated = true;
                     conn.close();
@@ -196,7 +197,7 @@ exports.createServer = function(bosh_server, webSocket) {
         sn_state[stream_name] = sstate;
 
         conn.on('pong', function() {
-            sstate.lastPong = Date.now();
+            sstate.last_pong = Date.now();
         });
 
         conn.on('message', function(message) {
@@ -320,7 +321,7 @@ exports.createServer = function(bosh_server, webSocket) {
             }
 
             // This code is run regardless of which end closed the stream
-            clearInterval(sstate.pingTimerId);
+            clearInterval(sstate.ping_timer_id);
             wsep.stat_stream_terminate();
         });
         
