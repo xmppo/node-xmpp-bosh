@@ -273,8 +273,8 @@ exports.createServer = function(bosh_server, webSocket) {
                 wsep.emit('stream-terminate', sstate);
             }
 
-			// This code is run regardless of which end closed the stream
-            clearInterval(pingTimerId);
+            // This code is run regardless of which end closed the stream
+            clearInterval(sstate.pingTimerId);
             wsep.stat_stream_terminate();
         });
         
