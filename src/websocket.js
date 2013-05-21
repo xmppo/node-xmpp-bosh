@@ -41,6 +41,7 @@ var xmlTextDeclRE = /<\?xml [^\?]+\?>/;
 
 const STREAM_UNOPENED = 1;
 const STREAM_OPENED   = 2;
+const STREAM_CLOSED   = 3;
 
 
 //
@@ -100,37 +101,55 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending data: %s", sstate.name, ss_xml);
-        sstate.conn.send(ss_xml);
+        if (!sstate.terminated && sn_state.hasOwnProperty(stream_name)) {
+            try {
+                sstate.conn.send(ss_xml);
+            } catch (e) {
+                log.warn(e.stack);
+            }
+        }
     });
 
     // Special case for WebSockets due to
     // https://github.com/dhruvbird/node-xmpp-bosh/issues/16
     wsep.on('stream-restarted', function(sstate, stanza) {
-      var ss_xml = stanza.toString();
-      if (sstate.has_open_stream_tag) {
-          ss_xml = ss_xml.replace('/>', '>');
-      }
-      log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
-      sstate.conn.send(ss_xml);
+        var ss_xml = stanza.toString();
+        if (sstate.has_open_stream_tag) {
+            ss_xml = ss_xml.replace('/>', '>');
+        }
+        log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
+        if (!sstate.terminated && sn_state.hasOwnProperty(stream_name)) {
+            try {
+                sstate.conn.send(ss_xml);
+            } catch (e) {
+                log.warn(e.stack);
+            }
+        }
     });
 
     wsep.on('response', function(response, sstate) {
         // Send the data back to the client
-        
-        if (!sstate.terminated) {
-            // TODO: Handle send() failed
-            sstate.conn.send(response.toString());
+        if (!sstate.terminated && sn_state.hasOwnProperty(stream_name)) {
+            try {
+                sstate.conn.send(response.toString());
+            } catch (e) {
+                log.warn(e.stack);
+            }
         }
     });
 
     wsep.on('terminate', function(sstate, had_error) {
         if (sn_state.hasOwnProperty(sstate.name)) {
-            // Stream terminate starting
-            delete sn_state[sstate.name];
-            // Note: Always delete before closing
-            // TODO: Handle close() failed
+            if (sstate.terminated) {
+                log.warn('%s Multiple terminate events received', stream_name);
+                return;
+            }
             sstate.terminated = true;
-            sstate.conn.close();
+            try {
+                sstate.conn.send('</stream:stream>');
+            } catch (e) {
+                log.warn(e.stack);
+            }
         }
     });
     
@@ -157,18 +176,20 @@ exports.createServer = function(bosh_server, webSocket) {
                 sid: "WEBSOCKET"
             },
             has_open_stream_tag: false,
+            terminated: false,
             lastPong: Date.now(),
             pingTimerId: setInterval(function () {
                 if (Date.now() - sstate.lastPong > 60000) {
                     log.warn("%s no pong - closing stream", stream_name);
                     sstate.terminated = true;
                     conn.close();
+                    return;
                 }
 
                 try {
                     conn.ping();
                 } catch (e) {
-                   log.warn(e);
+                   log.warn(e.stack);
                 }
             }, 30000)
         };
@@ -206,8 +227,24 @@ exports.createServer = function(bosh_server, webSocket) {
             } else if (message.indexOf('</stream:stream>') !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
-                sstate.terminated = true;
-                sstate.conn.close();
+                if (sstate.stream_state === STREAM_CLOSED) {
+                    log.warn('%s Multiple stream close tags received', stream_name);
+                    return;
+                }
+                sstate.stream_state = STREAM_CLOSED;
+                if (sstate.terminated) {
+                    // We initiated the stream close, so we should close the WS
+                    // Note: Always delete before closing
+                    delete sn_state[sstate.name];
+                    try {
+                        sstate.conn.close();
+                    } catch (e) {
+                        log.warn(e.stack);
+                    }
+                } else {
+                    // Raise the stream-terminate event on wsep
+                    wsep.emit('stream-terminate', sstate);
+                }
                 return;
             }
             
@@ -266,11 +303,13 @@ exports.createServer = function(bosh_server, webSocket) {
             log.trace("%s Stream close requested", stream_name);
             
             if (sn_state.hasOwnProperty(stream_name)) {
-                // Stream terminate starting
                 // Note: Always delete before emitting events
                 delete sn_state[stream_name];
-                // Raise the stream-terminate event on wsep
-                wsep.emit('stream-terminate', sstate);
+                if (sstate.stream_state !== STREAM_CLOSED) {
+                    // Bad client: did not close the stream first
+                    // Raise the stream-terminate event on wsep
+                    wsep.emit('stream-terminate', sstate);
+                }
             }
 
             // This code is run regardless of which end closed the stream
