@@ -157,7 +157,7 @@ exports.createServer = function(bosh_server, webSocket) {
                 sid: "WEBSOCKET"
             },
             has_open_stream_tag: false,
-            sstate.lastPong: Date.now(),
+            lastPong: Date.now(),
             pingTimerId: setInterval(function () {
                 if (Date.now() - sstate.lastPong > 60000) {
                     log.warn("%s no pong - closing stream", stream_name);
