@@ -124,15 +124,14 @@ exports.createServer = function(bosh_server, webSocket) {
     });
 
     wsep.on('terminate', function(sstate, had_error) {
-        if (!sn_state.hasOwnProperty(sstate.name)) {
-            return;
+        if (sn_state.hasOwnProperty(sstate.name)) {
+            // Stream terminate starting
+            delete sn_state[sstate.name];
+            // Note: Always delete before closing
+            // TODO: Handle close() failed
+            sstate.terminated = true;
+            sstate.conn.close();
         }
-        delete sn_state[sstate.name];
-        
-        // Note: Always delete before closing
-        // TODO: Handle close() failed
-        sstate.terminated = true;
-        sstate.conn.close();
     });
     
     websocket_server.on('connection', function(conn) {
@@ -157,10 +156,28 @@ exports.createServer = function(bosh_server, webSocket) {
             session: {
                 sid: "WEBSOCKET"
             },
-            has_open_stream_tag: false
+            has_open_stream_tag: false,
+            sstate.lastPong: Date.now(),
+            pingTimerId: setInterval(function () {
+                if (Date.now() - sstate.lastPong > 60000) {
+                    log.warn("%s no pong - closing stream", stream_name);
+                    sstate.terminated = true;
+                    conn.close();
+                }
+
+                try {
+                    conn.ping();
+                } catch (e) {
+                   log.warn(e);
+                }
+            }, 30000)
         };
         sn_state[stream_name] = sstate;
-        
+
+        conn.on('pong', function() {
+            sstate.lastPong = Date.now();
+        });
+
         conn.on('message', function(message) {
             // console.log("message:", message);
             if (typeof message != 'string') {
@@ -189,6 +206,7 @@ exports.createServer = function(bosh_server, webSocket) {
             } else if (message.indexOf('</stream:stream>') !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
+                sstate.terminated = true;
                 sstate.conn.close();
                 return;
             }
@@ -202,6 +220,7 @@ exports.createServer = function(bosh_server, webSocket) {
             var nodes = dutil.xml_parse(message);
             if (!nodes) {
                 log.warn("%s Closing connection due to invalid packet", stream_name);
+                sstate.terminated = true;
                 sstate.conn.close();
                 return;
             }
@@ -246,18 +265,17 @@ exports.createServer = function(bosh_server, webSocket) {
         conn.on('close', function() {
             log.trace("%s Stream close requested", stream_name);
             
-            if (!sn_state.hasOwnProperty(stream_name)) {
-                // Already terminated
-                return;
+            if (sn_state.hasOwnProperty(stream_name)) {
+                // Stream terminate starting
+                // Note: Always delete before emitting events
+                delete sn_state[stream_name];
+                // Raise the stream-terminate event on wsep
+                wsep.emit('stream-terminate', sstate);
             }
-            
+
+			// This code is run regardless of which end closed the stream
+            clearInterval(pingTimerId);
             wsep.stat_stream_terminate();
-            delete sn_state[stream_name];
-            
-            // Note: Always delete before emitting events
-            
-            // Raise the stream-terminate event on wsep
-            wsep.emit('stream-terminate', sstate);
         });
         
     });
