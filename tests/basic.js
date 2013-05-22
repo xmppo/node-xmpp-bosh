@@ -58,6 +58,9 @@ function onConnect(status)
     } else if (status == Strophe.Status.CONNFAIL) {
 		log('Strophe failed to connect.');
 		process.exit(1);
+    } else if (status == Strophe.Status.AUTHFAIL) {
+		log('Strophe failed to authenticate.');
+		process.exit(1);
     } else if (status == Strophe.Status.DISCONNECTING) {
 		log('Strophe is disconnecting.');
     } else if (status == Strophe.Status.DISCONNECTED) {
