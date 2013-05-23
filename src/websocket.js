@@ -43,6 +43,7 @@ const STREAM_UNOPENED = 1;
 const STREAM_OPENED   = 2;
 const STREAM_CLOSED   = 3;
 
+const XML_STREAM_CLOSE = '</stream:stream>';
 
 //
 // Important links:
@@ -101,13 +102,7 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending data: %s", sstate.name, ss_xml);
-        if (!sstate.terminated && sn_state.hasOwnProperty(sstate.name)) {
-            try {
-                sstate.conn.send(ss_xml);
-            } catch (e) {
-                log.warn(e.stack);
-            }
-        }
+        wsep.emit('response', ss_xml, sstate);
     });
 
     // Special case for WebSockets due to
@@ -118,13 +113,7 @@ exports.createServer = function(bosh_server, webSocket) {
             ss_xml = ss_xml.replace('/>', '>');
         }
         log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
-        if (!sstate.terminated && sn_state.hasOwnProperty(sstate.name)) {
-            try {
-                sstate.conn.send(ss_xml);
-            } catch (e) {
-                log.warn(e.stack);
-            }
-        }
+        wsep.emit('response', ss_xml, sstate);
     });
 
     wsep.on('response', function(response, sstate) {
@@ -146,12 +135,8 @@ exports.createServer = function(bosh_server, webSocket) {
             log.warn('%s Multiple terminate events received', sstate.name);
             return;
         }
+        wsep.emit('response', XML_STREAM_CLOSE, sstate);
         sstate.terminated = true;
-        try {
-            sstate.conn.send('</stream:stream>');
-        } catch (e) {
-            log.warn(e.stack);
-        }
     });
     
     websocket_server.on('connection', function(conn) {
@@ -222,10 +207,10 @@ exports.createServer = function(bosh_server, webSocket) {
                 // Now, check if it is closed or unclosed
                 if (message.indexOf('/>') === -1) {
                     // Unclosed - Close it to continue parsing
-                    message += '</stream:stream>';
+                    message += XML_STREAM_CLOSE;
                     sstate.has_open_stream_tag = true;
                 }
-            } else if (message.indexOf('</stream:stream>') !== -1) {
+            } else if (message.indexOf(XML_STREAM_CLOSE) !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
                 if (sstate.stream_state === STREAM_CLOSED) {
@@ -245,12 +230,8 @@ exports.createServer = function(bosh_server, webSocket) {
                 } else {
                     // Raise the stream-terminate event on wsep
                     wsep.emit('stream-terminate', sstate);
+                    wsep.emit('response', XML_STREAM_CLOSE, sstate);
                     sstate.terminated = true;
-                    try {
-                        sstate.conn.send('</stream:stream>');
-                    } catch (e) {
-                        log.warn(e.stack);
-                    }
                 }
                 return;
             }
