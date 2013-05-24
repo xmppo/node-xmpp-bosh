@@ -168,7 +168,12 @@ exports.createServer = function(bosh_server, webSocket) {
                 if (Date.now() - sstate.last_pong > 60000) {
                     log.warn("%s no pong - closing stream", stream_name);
                     sstate.terminated = true;
-                    conn.close();
+                    // Other end unresponsive: no point in a graceful close
+                    conn.terminate();
+                    // Prevent any further ping attempts (close event may not be
+                    // emitted immediately)
+                    clearInterval(sstate.ping_timer_id);
+                    sstate.ping_timer_id = null;
                     return;
                 }
 
@@ -302,7 +307,10 @@ exports.createServer = function(bosh_server, webSocket) {
             }
 
             // This code is run regardless of which end closed the stream
-            clearInterval(sstate.ping_timer_id);
+            if (sstate.ping_timer_id !== null) {
+                clearInterval(sstate.ping_timer_id);
+                sstate.ping_timer_id = null;
+            }
             wsep.stat_stream_terminate();
         });
         
