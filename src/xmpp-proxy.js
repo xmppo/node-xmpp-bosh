@@ -31,7 +31,8 @@ var events = require("events");
 var util   = require('util');
 var dutil  = require('./dutil.js');
 var us     = require('underscore');
-var XmppParser = require('./stream-parser.js').XmppStreamParser;
+var XmppParser  = require('./stream-parser.js').XmppStreamParser;
+var startTLS    = require('starttls').startTls;
 
 var path        = require('path');
 var filename    = path.basename(path.normalize(__filename));
@@ -141,14 +142,14 @@ dutil.copy(XMPPProxy.prototype, {
         this._detach_handlers();
 
         log.warn("startTLS to %s requested", this._xmpp_host);
-        var ct = require('./starttls.js')(this._sock, { }, function() {
+        var securePair = startTLS(this._sock, function() {
             log.trace("%s %s _starttls - restart the stream", this._void_star.session.sid, this._void_star.name);
             // Restart the stream
             this.restart();
         }.bind(this));
 
         // The socket is now the cleartext stream
-        this._sock = ct;
+        this._sock = securePair.cleartext;
 
         this._attach_handlers(ATTACH_SOCKET_HANDLERS);
     },

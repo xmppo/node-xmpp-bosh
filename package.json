@@ -18,7 +18,8 @@
     "semver": "~1.0.8",
     "ws": "= 0.4.19",
     "node-lumberjack": "= 0.0.4",
-    "ejs": "~0.8.3"
+    "ejs": "~0.8.3",
+    "starttls": "~0.1.7"
   },
   "devDependencies": {
     "jsdom": "~0.2.15",
