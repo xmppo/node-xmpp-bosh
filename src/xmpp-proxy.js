@@ -51,6 +51,7 @@ function XMPPProxy(xmpp_host, lookup_service, stream_start_attrs, options, void_
     // to improve logging. We may choose to get rid of
     // them later. Don't rely on this behaviour.
 
+    this._firewall       = options.firewall;
     this._void_star      = void_star;
     this._lookup_service = lookup_service;
     this._default_stream_attrs = {
@@ -210,6 +211,11 @@ dutil.copy(XMPPProxy.prototype, {
 
     connect: function() {
         // console.log(this);
+        if (this._firewall &&
+            !dutil.can_connect(this._xmpp_host, this._firewall)) {
+            this._close_connection('connection-disallowed-by-firewall-rules');
+            return;
+        }
         this._sock = new net.Stream();
         this._attach_handlers(SKIP_SOCKET_HANDLERS);
         this._attach_handlers_to_parser();

@@ -451,6 +451,44 @@ function inflated_attrs(node) {
 	return attrs;
 }
 
+function list_includes(needle, haystack) {
+	var i;
+	for (i = 0; i < haystack.length; ++i) {
+		if (us.isRegExp(haystack[i])) {
+			if (needle.search(haystack[i]) != -1) {
+				return true;
+			}
+		} else if (us.isString(haystack[i])) {
+			if (haystack[i] == needle) {
+				return true;
+			}
+		} else {
+			throw new Error("Array element '" + i + "' should be either a RegExp or a String");
+		}
+	}
+	return false;
+}
+
+function can_connect(host, firewall) {
+	if (!firewall) {
+		return true;
+	}
+	var has_allow = firewall.hasOwnProperty('allow') &&
+		firewall.allow instanceof Array;
+	var has_deny  = firewall.hasOwnProperty('deny') &&
+		firewall.deny instanceof Array;
+	switch (has_allow + has_deny) {
+	case 0:
+		return true;
+	case 1:
+	case 2:
+		if (has_allow) {
+			return list_includes(host, firewall.allow);
+		}
+		assert(has_deny != 0);
+		return !list_includes(host, firewall.deny);
+	}
+}
 
 // Add the following to underscore.js
 us.mixin({
@@ -496,6 +534,8 @@ exports.find_module        = find_module;
 exports.require_again      = require_again;
 exports.pluralize          = pluralize;
 exports.inflated_attrs     = inflated_attrs;
+exports.list_includes      = list_includes;
+exports.can_connect        = can_connect;
 exports.trim_promise       = trim_promise;
 exports.replace_promise    = replace_promise;
 exports.NULL_FUNC          = function() { };

@@ -48,15 +48,33 @@ exports.config = {
 	// 
 	no_tls_domains: [ /* 'chat.facebook.com' */ ], 
 
+	//
+	// A list of domains (string or regex) to either deny or allow
+	// connections to.
+	//
+	// Note: ONLY One of the 2 (deny or allow) shall be used depending
+	// on which array has values.
+	//
+	// * The one that is non-empty shall be used.
+	//
+	// * If both are non-empty (default), all connections are allowed.
+	//
+	// * If both are non-empty, then the ALLOW list is used and ONLY
+	// * connections to the domains listed in ALLOW are connected to.
+	//
+	firewall: {
+		allow: [ /* 'jabber.org', /(.*\.)?jappix.com$/ */ ],
+		deny:  [ /* 'gmail.com' */ ]
+	},
 
     // Set to 'true' if you want:
     // 
     // 1. The session creation response to contain the <stream:features/> tag.
     // 2. NO multiple streams support (only supports a single stream
     // per session in this mode).
-    // 
+    //
     // Useful to work around a pidgin (libpurple) bug.
-    // 
+    //
     pidgin_compatible: true,
 
     // The maximum length of an XML stanza to be printed. Set to -1
