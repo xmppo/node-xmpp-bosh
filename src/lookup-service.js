@@ -28,6 +28,8 @@ var SRV    = require('dns-srv');
 var dutil  = require('./dutil.js');
 var events = require('events');
 var path   = require('path');
+var us     = require('underscore');
+
 
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
@@ -50,24 +52,30 @@ var log         = require('./log.js').getLogger(filename);
  *         the following fields: 'route'
  * 
  */
-function XMPPLookupService(port, stream) {
+function XMPPLookupService(port, stream, route_filter) {
     this._domain_name = stream.to;
     this._port = port;
     this._route = stream.route;
+    this._allow_connect = true;
 
     var _special = {
         "gmail.com": "talk.google.com",
         "chat.facebook.com": "chat.facebook.com"
     };
 
-    if (_special.hasOwnProperty(this._domain_name)) {
-        if (!this._route) {
-            this._route = {
-                protocol: "xmpp",
-                host: _special[this._domain_name],
-                port: this._port
-            };
-        }
+    if (this.hasOwnProperty('route') &&
+        us.isRegExp(route_filter) &&
+        this.route.host.search(route_filter) != -1) {
+        this._allow_connect = false;
+    }
+
+    if (_special.hasOwnProperty(this._domain_name) &&
+        !this.hasOwnProperty('_route')) {
+        this._route = {
+            protocol: "xmpp",
+            host: _special[this._domain_name],
+            port: this._port
+        };
     }
 }
 
@@ -76,6 +84,10 @@ util.inherits(XMPPLookupService, events.EventEmitter);
 dutil.copy(XMPPLookupService.prototype, {
     connect: function(socket) {
         var self = this;
+
+        if (!this._allow_connect) {
+            self.emit('error', 'connection-disallowed-due-to-route-policy');
+        }
 
         // We first save all the user's handlers.
         //

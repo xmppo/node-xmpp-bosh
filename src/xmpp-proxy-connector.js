@@ -53,6 +53,17 @@ function XMPPProxyConnector(bosh_server, options) {
 	//
 	this.streams = { };
 
+	if (this.options.firewall) {
+		if (this.options.firewall.allow) {
+			log.debug("FIREWALL::ALLOW: %s", this.options.firewall.allow);
+		}
+		if (this.options.firewall.deny) {
+			log.debug("FIREWALL::DENY: %s", this.options.firewall.deny);
+		}
+	}
+	if (this.options.route_filter) {
+		log.debug("ROUTE_FILTER: %s", this.options.route_filter)
+	}
 
 	// Fired when an 'close' event is raised by the XMPP Proxy.
 	this._on_xmpp_proxy_close = function _on_xmpp_proxy_close(error, stream) {

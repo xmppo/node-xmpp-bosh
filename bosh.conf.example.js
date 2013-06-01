@@ -67,6 +67,16 @@ exports.config = {
 		deny:  [ /* 'gmail.com' */ ]
 	},
 
+	// If the route attribute is set, allow connections ONLY if the
+	// route attribute matches the regex below. This can be used in
+	// conjunction with 'firewall' to disallow connections if an IP
+	// address is specified in the route attribute of the request.
+	//
+	// The default configuration permits all values of the route
+	// attribute.
+	//
+	route_filter: /.*/,
+
     // Set to 'true' if you want:
     // 
     // 1. The session creation response to contain the <stream:features/> tag.
