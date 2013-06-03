@@ -256,13 +256,14 @@ if the *callback=* GET query parameter is supplied.
 ### Tested with
 
 * Servers:
-    1. [ejabberd](http://ejabberd.im/) hosted at [jappix.com](https://jappix.com/)
+    1. [Metronome](http://www.lightwitch.org/metronome) hosted at [jappix.com](https://jappix.com/)
     2. [M-Link](http://www.isode.com/products/m-link.html) hosted at [jabber.org](http://www.jabber.org/)
     3. [Google Talk](http://www.google.com/talk/) hosted at [gmail.com](http://gmail.com/)
     4. [Facebook](http://www.facebook.com/sitetour/chat.php) hosted at [chat.facebook.com](http://facebook.com/)
     5. Pappu hosted at [talk.to](https://talk.to/)
     6. [Prosody](http://prosody.im/) hosted at [dukgo.com](https://duck.co/#topic/28469000000637077)
     7. [Openfire](http://www.igniterealtime.org/projects/openfire/) hosted at [ChatMe.im](http://chatme.im/)
+    8. [ejabberd](http://www.ejabberd.im/) hosted at [Jabber.fr](http://jabber.fr/)
 
 * Clients:
     1. [strophe.js] (http://github.com/metajack/strophejs)
