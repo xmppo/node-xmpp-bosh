@@ -57,7 +57,7 @@ exports.config = {
 	//
 	// * The one that is non-empty shall be used.
 	//
-	// * If both are non-empty (default), all connections are allowed.
+	// * If both are empty (default), all connections are allowed.
 	//
 	// * If both are non-empty, then the ALLOW list is used and ONLY
 	// * connections to the domains listed in ALLOW are connected to.
