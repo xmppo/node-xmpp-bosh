@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var helper      = require('./helper.js');
 var path        = require('path');
 var filename    = path.basename(path.normalize(__filename));

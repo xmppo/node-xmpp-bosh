@@ -23,6 +23,7 @@
  *
  */
 
+"use strict";
 
 var http   = require('http');
 var ltx    = require('ltx');
@@ -39,11 +40,11 @@ var log         = require('./log.js').getLogger(filename);
 
 var xmlTextDeclRE = /<\?xml [^\?]+\?>/;
 
-const STREAM_UNOPENED = 1;
-const STREAM_OPENED   = 2;
-const STREAM_CLOSED   = 3;
+var STREAM_UNOPENED = 1;
+var STREAM_OPENED   = 2;
+var STREAM_CLOSED   = 3;
 
-const XML_STREAM_CLOSE = '</stream:stream>';
+var XML_STREAM_CLOSE = '</stream:stream>';
 
 //
 // Important links:

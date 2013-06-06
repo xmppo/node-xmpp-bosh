@@ -23,6 +23,7 @@
  *
  */
 
+"use strict";
 
 var bosh      = require('./bosh.js');
 var websocket = require('./websocket.js');

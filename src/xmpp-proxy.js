@@ -25,6 +25,8 @@
 
 /* The STARTTLS bits are taken from the node-xmpp project on github by astro */
 
+"use strict";
+
 var net    = require('net');
 var ltx    = require('ltx');
 var events = require("events");
@@ -90,8 +92,8 @@ util.inherits(XMPPProxy, events.EventEmitter);
 
 exports.Proxy = XMPPProxy;
 
-const ATTACH_SOCKET_HANDLERS = true;
-const SKIP_SOCKET_HANDLERS   = false;
+var ATTACH_SOCKET_HANDLERS = true;
+var SKIP_SOCKET_HANDLERS   = false;
 
 dutil.copy(XMPPProxy.prototype, {
     _detach_handlers: function() {

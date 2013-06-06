@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var dutil	    = require('./dutil.js');
 var uuid	    = require('node-uuid');
 var helper	    = require('./helper.js');

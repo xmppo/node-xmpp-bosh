@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var xp	   = require('./xmpp-proxy.js');
 var dutil  = require('./dutil.js');
 var lookup = require('./lookup-service.js');

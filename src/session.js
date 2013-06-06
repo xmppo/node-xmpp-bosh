@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var uuid        = require('node-uuid');
 var us          = require('underscore');
 var dutil       = require('./dutil.js');

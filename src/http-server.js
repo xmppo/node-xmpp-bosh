@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var dutil       = require('./dutil.js');
 var us          = require('underscore');
 var helper      = require('./helper.js');

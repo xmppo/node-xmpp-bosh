@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var util   = require('util');
 var SRV    = require('dns-srv');
 var dutil  = require('./dutil.js');

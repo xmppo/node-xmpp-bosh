@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var ltx         = require('ltx');
 var dutil       = require('./dutil.js');
 var us          = require('underscore');

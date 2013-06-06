@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var EventPipe   = require('eventpipe').EventPipe;
 var util        = require('util');
 var dutil       = require('./dutil.js');

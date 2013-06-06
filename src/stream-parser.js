@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var ltx    = require('ltx');
 var util   = require('util');
 var events = require('events');

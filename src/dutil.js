@@ -23,6 +23,8 @@
  *
  */
 
+"use strict";
+
 var us       = require('underscore');
 var path     = require('path');
 var assert   = require('assert').ok;
