@@ -30,8 +30,8 @@ var SRV    = require('dns-srv');
 var dutil  = require('./dutil.js');
 var events = require('events');
 var path   = require('path');
+var assert = require('assert').ok;
 var us     = require('underscore');
-
 
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
@@ -44,15 +44,16 @@ var log         = require('./log.js').getLogger(filename);
  * 2. Try to do an SRV record lookup for _xmpp-client._tcp record on the
  * target domain passed in as domain_name.
  *
- * A 'connect' event is raised on the passed 'socket' if connection succeeds.
- * If all attempts fail, an 'error' event is raised on the 'socket'.
+ * A 'connect' event is raised on the 'XMPPLookupService' object if
+ * the connection succeeds.  If all attempts fail, an 'error' event is
+ * raised on the same object.
  *
  * Expects:
  * --------
- * 
+ *
  * stream: An object that MUST have the following fields: 'to' and MAY have
  *         the following fields: 'route'
- * 
+ *
  */
 function XMPPLookupService(port, stream, route_filter) {
     this._domain_name = stream.to;
@@ -100,58 +101,58 @@ dutil.copy(XMPPLookupService.prototype, {
         // example the 'connect' and the 'data' events need to come in
         // the order they arrived).
 
-        function _on_socket_connect(e) {
+        function _on_socket_connected(e) {
             log.trace('Connection to %s succeeded', self._domain_name);
-
             // Re-trigger the connect event.
             self.emit('connect', e);
         }
 
-        function try_connect_route() {
-            // First just connect to the server if this._route is defined.
-            if (self._route) {
-                log.trace('try_connect_route - %s:%s', self._route.host, self._route.port);
-                // socket.setTimeout(10000);
-                socket.connect(self._route.port, self._route.host);
-            }
-            else {
-                // Trigger the 'error' event.
-                socket.emit('error');
-            }
-        }
-
-        function try_connect_SRV_lookup() {
-            log.trace('try_connect_SRV_lookup - %s, %s',self._domain_name, self._port);
-
-            // Then try a normal SRV lookup.
-            var attempt = SRV.connect(socket, ['_xmpp-client._tcp'],
-                self._domain_name, self._port);
-        }
-
-        function give_up_trying_to_connect(e) {
-            log.warn('Giving up connection attempts to %s',self._domain_name);
-
-            // Trigger the error event.
-            self.emit('error', 'host-unknown');
-        }
-
-        var cstates = [
+        var connectors = [
             try_connect_route,
             try_connect_SRV_lookup,
             give_up_trying_to_connect
         ];
 
-        function _on_socket_error(e) {
-            var next = cstates.shift();
-            next(e);
+        function _connect_next() {
+            var connector = connectors.shift();
+            assert(connector && typeof(connector) === 'function');
+            connector(_on_socket_connected, _connect_next);
         }
 
-        socket.on('error', _on_socket_error);
-        socket.on('connect', _on_socket_connect);
+        function try_connect_route(on_success, on_error) {
+            // First just connect to the server if this._route is defined.
+            if (self._route) {
+                log.trace('try_connect_route - %s:%s', self._route.host, self._route.port);
+                var emitter = SRV.connect(socket, [ ], self._domain_name, self._port);
+
+                emitter.once('connect', on_success);
+                emitter.once('error',   on_error);
+            }
+            else {
+                // Trigger the 'error' event.
+                on_error();
+            }
+        }
+
+        function try_connect_SRV_lookup(on_success, on_error) {
+            log.trace('try_connect_SRV_lookup - %s, %s',self._domain_name, self._port);
+
+            // Then try a normal SRV lookup.
+            var emitter = SRV.connect(socket, ['_xmpp-client._tcp'],
+                                      self._domain_name, self._port);
+
+            emitter.once('connect', on_success);
+            emitter.once('error',   on_error);
+        }
+
+        function give_up_trying_to_connect() {
+            log.warn('Giving up connection attempts to %s', self._domain_name);
+            // Trigger the error event.
+            self.emit('error', 'host-unknown');
+        }
 
         // Start the avalanche.
-        _on_socket_error();
-
+        _connect_next();
     }
 });
 
