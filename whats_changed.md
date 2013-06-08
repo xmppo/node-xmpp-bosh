@@ -3,6 +3,10 @@ deployments. If you are a system administrator who is
 maintaining/administering a node-xmpp-bosh installation, you might
 want to check this file every time you update your copy.
 
+### v0.7.6
+
+* Updated the dns-srv dependency to v0.3.0 - this makes node-xmpp-bosh mode robust since this version of dns-srv doesn't rely on undocumented EventEmitter API.
+
 ### v0.7.5
 
 * strict mode for almost all source javascript files.
