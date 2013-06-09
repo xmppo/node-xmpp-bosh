@@ -92,8 +92,13 @@ exports.start_bosh = function(options) {
 // webSocket: An optional reference to the 'websocket' module - in
 // case you need to provide your own proxy object
 //
-exports.start_websocket = function(bosh_server, webSocket) {
-	var ws_server = websocket.createServer(bosh_server, webSocket);
+exports.start_websocket = function(bosh_server, options, webSocket) {
+	options = options || { };
+	options = dutil.extend(options, {
+		websocket_ping_interval: 30
+	});
+
+	var ws_server = websocket.createServer(bosh_server, options, webSocket);
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
