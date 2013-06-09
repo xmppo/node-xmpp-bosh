@@ -85,6 +85,7 @@
     "node": ">=0.6.12"
   },
   "scripts": {
-    "start": "node run-server.js"
+    "start": "node run-server.js",
+    "test": "bash tests/all.sh"
   }
 }
