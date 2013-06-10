@@ -93,5 +93,11 @@ exports.config = {
 
     // The password used to protect the /PATH/sysinfo/ URL. The
     // username to use when prompted for authentication is 'admin'.
-    system_info_password: ''
+    system_info_password: '',
+
+	// The period, in seconds, between sending WebSocket ping frames to each
+	// client. If a client fails to respond with a pong frame twice in a row,
+	// the connection will be closed.
+	// Set to 0 to disable sending of WebSocket pings.
+	websocket_ping_interval: 30
 };

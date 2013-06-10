@@ -109,6 +109,8 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 
 * **system_info_password**: The password used to protect the /PATH/sysinfo/ URL. The username to use when prompted for authentication is 'admin' **(default: [not set])**
 
+* **websocket_ping_interval**: The period, in seconds, between sending WebSocket ping frames to each client. If a client fails to respond with a pong frame twice in a row, the connection will be closed. Set to 0 to disable sending of WebSocket pings. **(default: 30)**
+
 ### Architecture
 
 The project itself is divided into 4 main components as of now.

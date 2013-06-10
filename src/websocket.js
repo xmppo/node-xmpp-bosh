@@ -56,9 +56,12 @@ var XML_STREAM_CLOSE = '</stream:stream>';
 // https://github.com/superfeedr/strophejs/tree/protocol-ed
 //
 
-exports.createServer = function(bosh_server, webSocket) {
+exports.createServer = function(bosh_server, options, webSocket) {
     webSocket = webSocket || require('ws');
-    
+
+	// Config options
+	var ping_interval = options.websocket_ping_interval;
+
     // State information for XMPP streams
     var sn_state = { };
     
@@ -165,8 +168,11 @@ exports.createServer = function(bosh_server, webSocket) {
             has_open_stream_tag: false,
             terminated: false,
             last_pong: Date.now(),
-            ping_timer_id: setInterval(function () {
-                if (Date.now() - sstate.last_pong > 60000) {
+            ping_timer_id: null
+        };
+        if (ping_interval) {
+            sstate.ping_timer_id = setInterval(function () {
+                if (Date.now() - sstate.last_pong > ping_interval * 1000 * 2) {
                     log.warn("%s no pong - closing stream", stream_name);
                     sstate.terminated = true;
                     // Other end unresponsive: no point in a graceful close
@@ -183,8 +189,8 @@ exports.createServer = function(bosh_server, webSocket) {
                 } catch (e) {
                    log.warn(e.stack);
                 }
-            }, 30000)
-        };
+            }, ping_interval * 1000)
+        }
         sn_state[stream_name] = sstate;
 
         conn.on('pong', function() {
