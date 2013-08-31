@@ -8,6 +8,14 @@ function cleanup {
 }
 trap cleanup EXIT
 
+CURL=`which curl`
+echo "CURL: ${CURL}"
+if [ "X$CURL" = "X" ]
+then
+    echo "'curl' was not found in the PATH"
+    exit 1
+fi
+
 node run-server.js &
 
 sleep 1
