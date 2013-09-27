@@ -55,15 +55,14 @@ exports.config = {
 	// Note: ONLY One of the 2 (deny or allow) shall be used depending
 	// on which array has values.
 	//
-	// * The one that is non-empty shall be used.
+	// * If only one of the arrays is defined, then the one that is
+	// * non-empty/defined shall be used.
 	//
-	// * If both are empty (default), all connections are allowed.
-	//
-	// * If both are non-empty, then the ALLOW list is used and ONLY
+	// * If both are defined, then the ALLOW list is used and ONLY
 	// * connections to the domains listed in ALLOW are connected to.
 	//
 	firewall: {
-		allow: [ /* 'jabber.org', /(.*\.)?jappix.com$/ */ ],
+		// allow: [ /* 'jabber.org', /(.*\.)?jappix.com$/ */ ],
 		deny:  [ /* 'gmail.com' */ ]
 	},
 
