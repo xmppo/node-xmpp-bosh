@@ -89,13 +89,13 @@ exports.createServer = function(bosh_server, options, webSocket) {
         server:  bosh_server.server,
         handleProtocols: function(protocols, callback) {
             var protocol;
-            for (var i = 0; i < protocols.length; i++) {
-                if (protocols[i] === 'xmpp' || protocols[i] === '') {
-                    protocol = protocols[i];
-                    break;
-                }
-            }
-            callback(protocol !== undefined, protocol || undefined);
+			var our_protocols = protocols.filter(function(protocol) {
+				return protocol === 'xmpp' || protocol === '';
+			});
+			if (our_protocols.length > 0) {
+				protocol = our_protocols[0];
+			}
+            callback(protocol !== undefined, protocol);
         },
         // autoAcceptConnections: true,
     });
