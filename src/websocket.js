@@ -87,8 +87,17 @@ exports.createServer = function(bosh_server, options, webSocket) {
     
     var websocket_server = new webSocket.Server({
         server:  bosh_server.server,
+        handleProtocols: function(protocols, callback) {
+            var protocol;
+            for (var i = 0; i < protocols.length; i++) {
+                if (protocols[i] === 'xmpp' || protocols[i] === '') {
+                    protocol = protocols[i];
+                    break;
+                }
+            }
+            callback(protocol !== undefined, protocol || undefined);
+        },
         // autoAcceptConnections: true,
-        // subprotocol: 'xmpp'
     });
     
     wsep.server = websocket_server;
