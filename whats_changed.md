@@ -3,6 +3,24 @@ deployments. If you are a system administrator who is
 maintaining/administering a node-xmpp-bosh installation, you might
 want to check this file every time you update your copy.
 
+### v0.7.10
+
+* Update docs. and links. Thanks @Neustradamus
+
+### v0.7.9
+
+* Deny websocket connection unless correct sub-protocol is set or is left empty.
+
+### v0.7.8
+
+* Updated the default firewall rules in the example config file to not specify an allow list instead of an empty allow list, which would allow no hosts to be connected to.
+
+### v0.7.7
+
+* Include config option "websocket_ping_interval"
+* Update "ws" version from 0.4.19 to 0.4.29
+* Include more functional tests via "npm test"
+
 ### v0.7.6
 
 * Updated the dns-srv dependency to v0.3.0 - this makes node-xmpp-bosh mode robust since this version of dns-srv doesn't rely on undocumented EventEmitter API.

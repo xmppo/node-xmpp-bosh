@@ -53,7 +53,7 @@ var XML_STREAM_CLOSE = '</stream:stream>';
 // http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00
 //
 // Strophe.js modified for Websocket support
-// https://github.com/superfeedr/strophejs/tree/protocol-ed
+// https://github.com/superfeedr/strophejs/tree/protocol-ed [broken link]
 //
 
 exports.createServer = function(bosh_server, options, webSocket) {

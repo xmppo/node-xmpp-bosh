@@ -272,17 +272,17 @@ if the *callback=* GET query parameter is supplied.
     8. [ejabberd](http://www.ejabberd.im/) hosted at [Jabber.fr](http://jabber.fr/)
 
 * Clients:
-    1. [strophe.js] (http://github.com/metajack/strophejs)
+    1. [strophe.js] (https://github.com/strophe/strophejs)
     2. [JSJaC] (https://github.com/sstrigler/JSJaC) used at [jappix.org](http://jappix.org/)
     3. [dojox.xmpp] (http://dojoapi-mirror.devs.nu/jsdoc/dojox/1.2/dojox.xmpp) (modified since node-xmpp-bosh doesn't support the authid attribute)
     4. libpurple (pidgin as a client)
-    5. [strophe.js websocket client] (https://github.com/superfeedr/strophejs/tree/protocol-ed)
+    5. [strophe.js websocket client] (https://github.com/superfeedr/strophejs/tree/protocol-ed) [broken link]
     6. [node-xmpp] (https://github.com/astro/node-xmpp)
 
 
 ### Tested using
 
-1. [strophe.js] (http://github.com/metajack/strophejs)
+1. [strophe.js] (https://github.com/strophe/strophejs)
 
 
 ### Running tests
