@@ -24,12 +24,10 @@
     "jsdom": "~0.2.15",
     "jslint": "~0.1.9"
   },
-  "repositories": [
-    {
-      "type": "git",
-      "path": "git://github.com/dhruvbird/node-xmpp-bosh.git"
-    }
-  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dhruvbird/node-xmpp-bosh.git"
+  },
   "homepage": "https://github.com/dhruvbird/node-xmpp-bosh",
   "bugs": "https://github.com/dhruvbird/node-xmpp-bosh/issues",
   "maintainers": [
