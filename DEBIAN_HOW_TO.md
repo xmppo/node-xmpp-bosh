@@ -44,7 +44,7 @@ Get the latest node-xmpp-bosh version from [here](https://github.com/dhruvbird/n
 
 ```cd /usr/local/lib/bosh```
 
-```git clone git://github.com/dhruvbird/node-xmpp-bosh.git```
+```git clone git://github.com/dhruvbird/node-xmpp-bosh.git .```
 
 Now, we use npm to automatically fetch the dependencies for us.
 
