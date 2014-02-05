@@ -123,7 +123,7 @@ dutil.copy(XMPPLookupService.prototype, {
             // First just connect to the server if this._route is defined.
             if (self._route) {
                 log.trace('try_connect_route - %s:%s', self._route.host, self._route.port);
-                var emitter = SRV.connect(socket, [ ], self._domain_name, self._port);
+                var emitter = SRV.connect(socket, [ ], self._route.host, self._route.port);
 
                 emitter.once('connect', on_success);
                 emitter.once('error',   on_error);
