@@ -76,6 +76,10 @@ function main() {
 			note: "The host on which to the BOSH server should listen for connections (default: 0.0.0.0)", 
 			value: -1
 		}, 
+		secure: {
+			note: 'Is BOSH service endpoint secured by ssl (https) (default: no)', 
+			value: false
+		},
 		version: {
 			note: "Display version info and exit", 
 			value: false
@@ -136,6 +140,15 @@ function main() {
 		server_options.host = opts.host;
 	}
 
+	if (opts.secure === false) {
+		if (typeof server_options.secure == 'undefined') {
+			server_options.secure = false;
+		}
+	}
+	else {
+		server_options.secure = opts.secure;
+	}
+
 	if (opts.path === -1) {
 		if (!server_options.path) {
 			server_options.path = '/http-bind/';
@@ -162,15 +175,20 @@ function main() {
         dutil.TRIM_DEFAULT_LENGTH = server_options.trim_default_length;
     }
 
-	print_boxed_message(nxb.dutil.sprintf("Starting BOSH server 'v%s' on 'http://%s:%s%s' at '%s'", 
-										  get_version(), server_options.host, server_options.port, 
-										  server_options.path, new Date())
+	print_boxed_message(nxb.dutil.sprintf("Starting BOSH server 'v%s' on '%s://%s:%s%s' at '%s'", 
+										  get_version(),
+										  server_options.secure?'https':'http',
+										  server_options.host, 
+									      server_options.port, 
+										  server_options.path, 
+										  new Date())
 					   );
 
 	var bosh_server = nxb.start_bosh(server_options);
 
-	print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET server 'v%s' on ws://%s:%s' at '%s'", 
-										  get_version(), 
+	print_boxed_message(nxb.dutil.sprintf("Starting WEBSOCKET server 'v%s' on %s://%s:%s' at '%s'", 
+										  get_version(),
+										  server_options.secure?'wss':'ws',
                                           server_options.host, 
                                           server_options.port, 
 										  new Date())

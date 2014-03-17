@@ -172,9 +172,13 @@ function main() {
 			note: 'The XMPP server of \'domain\' shall be connected to'
 		}, 
 		endpoint: {
-			note: 'The BOSH service endpoint (default: http://localhost:5280/http-bind/)', 
-			value: 'http://localhost:5280/http-bind/'
+			note: 'The BOSH service endpoint (default: localhost:5280/http-bind/)', 
+			value: 'localhost:5280/http-bind/'
 		}, 
+		secure: {
+			note: 'Is BOSH service endpoint secured by ssl (https) (default: no)', 
+			value: false
+		},
 		route: {
 			note: 'The route attribute to use (default: <empty>)', 
 			value: ''
@@ -195,6 +199,11 @@ function main() {
     });
 
     options = opts;
+	if (options.secure) {
+		options.endpoint = 'https://'+options.endpoint;
+	} else {
+		options.endpoint = 'http://'+options.endpoint;
+	}
     start_test(options);
 }
 

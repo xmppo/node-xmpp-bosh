@@ -16,7 +16,14 @@ then
     exit 1
 fi
 
-node run-server.js &
+SECUREPARAM=''
+if [ "x$1" = "x--secure" ]
+then
+	# curl https request without certificate trust check
+	SECUREPARAM="--secure"
+fi
+
+node run-server.js $SECUREPARAM &
 
 sleep 1
 WAIT_SEC=3
@@ -39,7 +46,7 @@ else
     echo -e "\e[00;32mSUCCESS: tests/test_GET.sh\e[00m" 1>&2
 fi
 
-node tests/basic.js --username="nonxbtest@jappix.com" --password="nonxbtest" &
+node tests/basic.js --username="nonxbtest@jappix.com" --password="nonxbtest" $SECUREPARAM &
 wait $!
 if [ $? -eq 0 ]
 then
@@ -49,7 +56,7 @@ else
     echo -e "\e[00;32mSUCCESS: tests/basic.js\e[00m" 1>&2
 fi
 
-node tests/basic.js --username="nxbtest@jappix.com" --password="nonxbtest" &
+node tests/basic.js --username="nxbtest@jappix.com" --password="nonxbtest" $SECUREPARAM &
 wait $!
 if [ $? -eq 0 ]
 then
@@ -59,7 +66,7 @@ else
     echo -e "\e[00;32mSUCCESS: tests/basic.js\e[00m" 1>&2
 fi
 
-node tests/basic.js --username="nxbtest@jappix.com" --password="nxbtest" &
+node tests/basic.js --username="nxbtest@jappix.com" --password="nxbtest" $SECUREPARAM &
 wait $!
 if [ $? -ne 0 ]
 then

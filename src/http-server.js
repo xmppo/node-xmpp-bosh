@@ -28,10 +28,10 @@
 var dutil       = require('./dutil.js');
 var us          = require('underscore');
 var helper      = require('./helper.js');
-var http        = require('http');
 var url         = require('url');
 var path        = require('path');
 var EventPipe   = require('eventpipe').EventPipe;
+var fs          = require('fs');
 
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
@@ -40,7 +40,7 @@ var BoshRequestParser = require('./bosh-request-parser').BoshRequestParser;
 
 function HTTPServer(port, host, stat_func, system_info_func,
                     bosh_request_handler, http_error_handler,
-                    bosh_options) {
+                    bosh_options, secureFlag, secureParams) {
 
     var bosh_request_parser = new BoshRequestParser();
     var req_list1 = [ ], req_list2 = [ ];
@@ -318,8 +318,30 @@ function HTTPServer(port, host, stat_func, system_info_func,
         router.emit('request', req, res, u);
     }
 
-    // Initialize
-    var server = http.createServer(http_request_handler);
+    var server = null;
+    if (secureFlag) {
+      // Transfer all options from config.
+      var httpsOptions = secureParams;
+      // Checking cert files
+      if (fs.existsSync(secureParams.key)) {
+        httpsOptions['key'] = fs.readFileSync(secureParams.key);
+        httpsOptions['cert'] = fs.readFileSync(secureParams.cert);
+      }
+      if (fs.existsSync(secureParams.pfx)) {
+        httpsOptions['pfx'] = fs.readFileSync(secureParams.pfx);
+      }
+      if (httpsOptions['ca']) {
+          httpsOptions['ca'] = [].concat(httpsOptions['ca']).map(function (ca) {
+              return fs.existsSync(ca)?fs.readFileSync(ca):ca;
+          });
+      }
+
+      // Initialize
+      server = require('https').createServer(httpsOptions, http_request_handler);
+    } else {
+      server = require('http').createServer(http_request_handler);
+    }
+	
     server.on('error', http_error_handler);
     server.listen(port, host);
 
