@@ -153,6 +153,9 @@ exports.createServer = function(bosh_server, options, webSocket) {
     });
     
     websocket_server.on('connection', function(conn) {
+        // Listen for websocket client errors to prevent crashes
+        conn.on('error', emit_error);
+
         var stream_name = uuid();
         
         // Note: xmpp-proxy.js relies on the session object
