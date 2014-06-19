@@ -33,6 +33,7 @@ var dutil  = require('./dutil.js');
 var us     = require('underscore');
 var assert = require('assert').ok;
 var EventPipe = require('eventpipe').EventPipe;
+var helper = require('./helper.js');
 
 var path        = require('path');
 var filename    = path.basename(path.normalize(__filename));
@@ -210,7 +211,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
         });
 
         conn.on('message', function(message) {
-            // console.log("message:", message);
+//             console.log("typeof message: " + typeof message + ", message:", message);
             if (typeof message != 'string') {
                 log.warn("Only utf-8 supported...");
                 return;
@@ -234,6 +235,16 @@ exports.createServer = function(bosh_server, options, webSocket) {
                     message += XML_STREAM_CLOSE;
                     sstate.has_open_stream_tag = true;
                 }
+            } else if (message.indexOf('<message') !== -1 ||
+                       message.indexOf('<presence') !== -1) {
+              // Add extra <headers/> tag on all sent <message>, <presence> stanzas
+              //
+              // See
+              // https://github.com/dhruvbird/node-xmpp-bosh/issues/109
+              // for more details.
+              //
+              var messageHeaders = helper.get_message_headers(this._socket.remoteAddress);
+              message = helper.add_message_headers(message, messageHeaders);
             } else if (message.indexOf(XML_STREAM_CLOSE) !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02

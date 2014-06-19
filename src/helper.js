@@ -158,6 +158,45 @@ function save_terminate_condition_for_wait_time(obj, attr, condition, wait) {
     };
 }
 
+/**
+ * Adds <headers/> tag to the given message
+ * For further information see:
+ * - https://github.com/dhruvbird/node-xmpp-bosh/issues/109
+ * - http://xmpp.org/extensions/xep-0131.html
+ * @param {String} message of type <message>, <pressence>
+ * @param {String} headers to be added
+ * @returns {String} the message with <headers/> added
+ */
+function add_message_headers(message, headers) {
+  var newMessage = message;
+  var endPoints = ['</message>', '</presence>'];
+
+  endPoints.forEach(function(endPoint) {
+    var pos = message.indexOf(endPoint);
+    if (pos === -1) {
+      return;
+    }
+
+    newMessage = message.replace(endPoint, headers + endPoint);
+  });
+
+  return newMessage;
+}
+
+/**
+ * Get a <headers/> tag with the client ip
+ * For further information see:
+ * - https://github.com/dhruvbird/node-xmpp-bosh/issues/109
+ * - http://xmpp.org/extensions/xep-0131.html
+ * @param {String} remoteAddress
+ * @returns {String}
+ */
+function get_message_headers(remoteAddress) {
+  return "<headers xmlns='http://jabber.org/protocol/shim'>" +
+         "<header name='X-Forwarded-For'>" + remoteAddress + "</header>" +
+         "</headers>";
+}
+
 function get_stream_name(node) {
     return node.attrs.stream;
 }
@@ -213,12 +252,14 @@ function is_session_creation_packet(node) {
 
 // End misc. helpers
 
+exports.add_message_headers        = add_message_headers;
 exports.add_to_headers              = add_to_headers;
 exports.JSONPResponseProxy          = JSONPResponseProxy;
 exports.route_parse                 = route_parse;
 exports.save_terminate_condition_for_wait_time = save_terminate_condition_for_wait_time;
 exports.$terminate                  = $terminate;
 exports.$body                       = $body;
+exports.get_message_headers         = get_message_headers;
 exports.get_stream_name             = get_stream_name;
 exports.is_stream_restart_packet    = is_stream_restart_packet;
 exports.is_stream_add_request       = is_stream_add_request;
