@@ -52,6 +52,25 @@ function $terminate(attrs) {
     attrs.type = 'terminate';
     return $body(attrs);
 }
+
+/**
+ * Get a <headers/> tag with the client ip
+ * For further information see:
+ * - https://github.com/dhruvbird/node-xmpp-bosh/issues/109
+ * - http://xmpp.org/extensions/xep-0131.html
+ * @param {String} remoteAddress
+ * @returns {ltx.Element}
+ */
+function $headers(remoteAddress) {
+  var el = new ltx.Element('headers', {
+    xmlns: 'http://jabber.org/protocol/shim'
+  });
+  el.c('header', {
+    name: 'X-Forwarded-For'
+  }).t(remoteAddress);
+
+  return el;
+}
 // End packet builders
 
 
@@ -163,38 +182,20 @@ function save_terminate_condition_for_wait_time(obj, attr, condition, wait) {
  * For further information see:
  * - https://github.com/dhruvbird/node-xmpp-bosh/issues/109
  * - http://xmpp.org/extensions/xep-0131.html
- * @param {String} message of type <message>, <pressence>
- * @param {String} headers to be added
+ * @param {String} message
+ * @param {ltx.Element} headers to be added
  * @returns {String} the message with <headers/> added
  */
 function add_message_headers(message, headers) {
-  var newMessage = message;
-  var endPoints = ['</message>', '</presence>'];
+  // TODO: not implemented yet for <iq> (see xep-0131)
+  if (message.indexOf('<message') === -1 &&
+      message.indexOf('<presence') === -1) {
+      return message;
+  }
 
-  endPoints.forEach(function(endPoint) {
-    var pos = message.indexOf(endPoint);
-    if (pos === -1) {
-      return;
-    }
-
-    newMessage = message.replace(endPoint, headers + endPoint);
-  });
-
-  return newMessage;
-}
-
-/**
- * Get a <headers/> tag with the client ip
- * For further information see:
- * - https://github.com/dhruvbird/node-xmpp-bosh/issues/109
- * - http://xmpp.org/extensions/xep-0131.html
- * @param {String} remoteAddress
- * @returns {String}
- */
-function get_message_headers(remoteAddress) {
-  return "<headers xmlns='http://jabber.org/protocol/shim'>" +
-         "<header name='X-Forwarded-For'>" + remoteAddress + "</header>" +
-         "</headers>";
+  var xmlMessage = ltx.parse(message);
+  xmlMessage.cnode(headers);
+  return xmlMessage.root().toString();
 }
 
 function get_stream_name(node) {
@@ -259,7 +260,7 @@ exports.route_parse                 = route_parse;
 exports.save_terminate_condition_for_wait_time = save_terminate_condition_for_wait_time;
 exports.$terminate                  = $terminate;
 exports.$body                       = $body;
-exports.get_message_headers         = get_message_headers;
+exports.$headers                    = $headers;
 exports.get_stream_name             = get_stream_name;
 exports.is_stream_restart_packet    = is_stream_restart_packet;
 exports.is_stream_add_request       = is_stream_add_request;

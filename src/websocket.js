@@ -243,8 +243,8 @@ exports.createServer = function(bosh_server, options, webSocket) {
               // https://github.com/dhruvbird/node-xmpp-bosh/issues/109
               // for more details.
               //
-              var messageHeaders = helper.get_message_headers(this._socket.remoteAddress);
-              message = helper.add_message_headers(message, messageHeaders);
+              var headers = helper.$headers(this._socket.remoteAddress);
+              message = helper.add_message_headers(message, headers);
             } else if (message.indexOf(XML_STREAM_CLOSE) !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
