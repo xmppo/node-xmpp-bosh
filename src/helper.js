@@ -182,20 +182,20 @@ function save_terminate_condition_for_wait_time(obj, attr, condition, wait) {
  * For further information see:
  * - https://github.com/dhruvbird/node-xmpp-bosh/issues/109
  * - http://xmpp.org/extensions/xep-0131.html
- * @param {String} message
+ * @param {String|ltx.Element} message
  * @param {ltx.Element} headers to be added
  * @returns {String} the message with <headers/> added
  */
 function add_message_headers(message, headers) {
   // TODO: not implemented yet for <iq> (for doing it see xep-0131#protocol)
-  var xmlMessage = ltx.parse(message);
+  var xmlMessage = (typeof message !== 'string' ? message : ltx.parse(message));
   if (!xmlMessage.is('message') &&
       !xmlMessage.is('presence')) {
       return message;
   }
 
   xmlMessage.cnode(headers);
-  return xmlMessage.root().toString();
+  return xmlMessage;
 }
 
 function get_stream_name(node) {

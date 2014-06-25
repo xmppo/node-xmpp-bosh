@@ -264,6 +264,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
             // Add extra <headers/> tag on all sent <message>, <presence> stanzas
             var headers = helper.$headers(this._socket.remoteAddress);
             message = helper.add_message_headers(message, headers);
+            message = (typeof message !== 'string' ? message.root().toString() : message);
 
             // TODO: Maybe use a SAX based parser instead
             message = '<dummy>' + message + '</dummy>';
