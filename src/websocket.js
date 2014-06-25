@@ -235,16 +235,6 @@ exports.createServer = function(bosh_server, options, webSocket) {
                     message += XML_STREAM_CLOSE;
                     sstate.has_open_stream_tag = true;
                 }
-            } else if (message.indexOf('<message') !== -1 ||
-                       message.indexOf('<presence') !== -1) {
-              // Add extra <headers/> tag on all sent <message>, <presence> stanzas
-              //
-              // See
-              // https://github.com/dhruvbird/node-xmpp-bosh/issues/109
-              // for more details.
-              //
-              var headers = helper.$headers(this._socket.remoteAddress);
-              message = helper.add_message_headers(message, headers);
             } else if (message.indexOf(XML_STREAM_CLOSE) !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
@@ -270,7 +260,11 @@ exports.createServer = function(bosh_server, options, webSocket) {
                 }
                 return;
             }
-            
+
+            // Add extra <headers/> tag on all sent <message>, <presence> stanzas
+            var headers = helper.$headers(this._socket.remoteAddress);
+            message = helper.add_message_headers(message, headers);
+
             // TODO: Maybe use a SAX based parser instead
             message = '<dummy>' + message + '</dummy>';
             

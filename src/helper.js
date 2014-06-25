@@ -187,13 +187,13 @@ function save_terminate_condition_for_wait_time(obj, attr, condition, wait) {
  * @returns {String} the message with <headers/> added
  */
 function add_message_headers(message, headers) {
-  // TODO: not implemented yet for <iq> (see xep-0131)
-  if (message.indexOf('<message') === -1 &&
-      message.indexOf('<presence') === -1) {
+  // TODO: not implemented yet for <iq> (for doing it see xep-0131#protocol)
+  var xmlMessage = ltx.parse(message);
+  if (!xmlMessage.is('message') &&
+      !xmlMessage.is('presence')) {
       return message;
   }
 
-  var xmlMessage = ltx.parse(message);
   xmlMessage.cnode(headers);
   return xmlMessage.root().toString();
 }
