@@ -290,7 +290,7 @@ exports.createServer = function (options) {
     bosh_options = new opt.BOSH_Options(options);
     server = new http.HTTPServer(options.port, options.host, get_statistics,
                                  get_system_info, bosh_request_handler,
-                                 http_error_handler, bosh_options);
+                                 http_error_handler, bosh_options, options.secure, options.secure_parameters);
     // The BOSH event emitter. People outside will subscribe to
     // events from this guy. We return an instance of BoshEventPipe
     // to the outside world when anyone calls createServer()

@@ -6,6 +6,22 @@ exports.config = {
 	path: /^\/http-bind(\/+)?$/, 
 	logging: 'INFO', 
 	
+	// Https serving option
+	secure: true,
+	
+	// Https server settings
+	secure_parameters: {
+		// Classic cert files structure
+		// key: './cert/server.key',
+		// cert: './cert/server.crt',
+		// Pfx cert container
+		pfx: './cert/server.pfx',
+    ciphers: 'RSA:DH:SSLv2:!MD5:!aNULL'
+    // More security parameters on 
+    // http://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+    // For `key`, `cert`, `pfx` and `ca` you can use links to files here.
+	},
+	
 	// The maximum number of bytes that the BOSH server will 
 	// "hold" from the client
 	max_data_held: 100000, 
