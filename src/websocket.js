@@ -104,9 +104,8 @@ exports.createServer = function(bosh_server, options, webSocket) {
     
     wsep.on('stream-added', function(sstate) {
         var to = sstate.to || '';
-        var ss_xml = new ltx.Element('stream:stream', {
-            'xmlns': 'jabber:client',
-            'xmlns:stream': 'http://etherx.jabber.org/streams',
+        var ss_xml = new ltx.Element('open', {
+            'xmlns': 'urn:ietf:params:xml:ns:xmpp-framing',
             'version': '1.0',
             'xml:lang': 'en',
             'from': to
@@ -234,7 +233,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
                     message += XML_STREAM_CLOSE;
                     sstate.has_open_stream_tag = true;
                 }
-            } else if (message.indexOf(XML_STREAM_CLOSE) !== -1) {
+            } else if (message.indexOf(XML_STREAM_CLOSE) !== -1 || message.indexOf('<close') !== -1) {
                 // Stream close message from a client must appear in a message
                 // by itself - see draft-moffitt-xmpp-over-websocket-02
                 if (sstate.stream_state === STREAM_CLOSED) {
@@ -254,7 +253,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
                 } else {
                     // Raise the stream-terminate event on wsep
                     wsep.emit('stream-terminate', sstate);
-                    wsep.emit('response', XML_STREAM_CLOSE, sstate);
+                    wsep.emit('response', '<close xmlns="urn:ietf:params:xml:ns:xmpp-framing" />', sstate);
                     sstate.terminated = true;
                 }
                 return;
@@ -280,13 +279,13 @@ exports.createServer = function(bosh_server, options, webSocket) {
             // The stream start node is special since we trigger a
             // stream-add event when we get it.
             var ss_node = nodes.filter(function(node) {
-                return typeof node.is === 'function' && node.is('stream');
+                return typeof node.is === 'function' && (node.is('stream') || node.is('open'));
             });
             
             ss_node = us.first(ss_node);
             
             nodes = nodes.filter(function(node) {
-                return typeof node.is === 'function' ? !node.is('stream') : true;
+                return typeof node.is === 'function' ? !(node.is('stream') || node.is('open')) : true;
             });
             
             if (ss_node) {
