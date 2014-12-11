@@ -238,7 +238,7 @@ if the *callback=* GET query parameter is supplied.
 
 * [http://xmpp.org/extensions/xep-0124.html](http://xmpp.org/extensions/xep-0124.html)
 * [http://xmpp.org/extensions/xep-0206.html](http://xmpp.org/extensions/xep-0206.html)
-* [http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00](http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00)
+* [https://tools.ietf.org/html/draft-ietf-xmpp-websocket-10](https://tools.ietf.org/html/draft-ietf-xmpp-websocket-10)
 
 
 ### Dependencies
@@ -278,6 +278,7 @@ if the *callback=* GET query parameter is supplied.
     4. libpurple (pidgin as a client)
     5. [strophe.js websocket client] (https://github.com/superfeedr/strophejs/tree/protocol-ed) [broken link]
     6. [node-xmpp] (https://github.com/astro/node-xmpp)
+    7. [stanza.io] (https://github.com/otalk/stanza.io)
 
 
 ### Tested using
