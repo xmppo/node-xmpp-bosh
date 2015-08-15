@@ -262,7 +262,8 @@ exports.createServer = function(bosh_server, options, webSocket) {
             }
 
             // Add extra <headers/> tag on all sent <message>, <presence> stanzas
-            var headers = helper.$headers(this._socket.remoteAddress);
+            var clientAddress = this.upgradeReq.headers['x-forwarded-for'] || this._socket.remoteAddress;
+            var headers = helper.$headers(clientAddress);
             message = helper.add_message_headers(message, headers);
             message = (typeof message !== 'string' ? message.root().toString() : message);
 
