@@ -33,6 +33,7 @@ var dutil  = require('./dutil.js');
 var us     = require('underscore');
 var assert = require('assert').ok;
 var EventPipe = require('eventpipe').EventPipe;
+var helper = require('./helper.js');
 
 var path        = require('path');
 var filename    = path.basename(path.normalize(__filename));
@@ -210,7 +211,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
         });
 
         conn.on('message', function(message) {
-            // console.log("message:", message);
+//             console.log("typeof message: " + typeof message + ", message:", message);
             if (typeof message != 'string') {
                 log.warn("Only utf-8 supported...");
                 return;
@@ -259,7 +260,13 @@ exports.createServer = function(bosh_server, options, webSocket) {
                 }
                 return;
             }
-            
+
+            // Add extra <headers/> tag on all sent <message>, <presence> stanzas
+            var clientAddress = this.upgradeReq.headers['x-forwarded-for'] || this._socket.remoteAddress;
+            var headers = helper.$headers(clientAddress);
+            message = helper.add_message_headers(message, headers);
+            message = (typeof message !== 'string' ? message.root().toString() : message);
+
             // TODO: Maybe use a SAX based parser instead
             message = '<dummy>' + message + '</dummy>';
             
