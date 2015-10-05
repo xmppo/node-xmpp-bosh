@@ -187,7 +187,7 @@ function HTTPServer(port, host, stat_func, system_info_func,
 
     function handle_options(req, res, u) {
         if (req.method === 'OPTIONS') {
-            res.writeHead(200, bosh_options.HTTP_OPTIONS_RESPONSE_HEADERS);
+            res.writeHead(200, bosh_options.http_options_response_headers(req.headers));
             res.end();
             return false;
         }
@@ -206,8 +206,7 @@ function HTTPServer(port, host, stat_func, system_info_func,
     function handle_get_statistics(req, res, u) {
         var ppos = u.pathname.search(bosh_options.path);
         if (req.method === 'GET' && ppos !== -1 && !u.query.hasOwnProperty('data')) {
-            var _headers = { };
-            dutil.copy(_headers, bosh_options.HTTP_GET_RESPONSE_HEADERS);
+            var _headers = bosh_options.http_get_response_headers(req.headers)
             _headers['Content-Type'] = 'text/html; charset=utf-8';
 
             res.writeHead(200, _headers);
@@ -227,8 +226,7 @@ function HTTPServer(port, host, stat_func, system_info_func,
         var spos = path.basename(u.pathname).search("sysinfo");
 
         if (req.method === 'GET' && ppos !== -1 && spos === 0) {
-            var _headers = { };
-            dutil.copy(_headers, bosh_options.HTTP_GET_RESPONSE_HEADERS);
+            var _headers = bosh_options.http_get_response_headers(req.headers);
             _headers['Content-Type'] = 'text/html; charset=utf-8';
 
             if (bosh_options.SYSTEM_INFO_PASSWORD.length === 0) {
@@ -268,7 +266,7 @@ function HTTPServer(port, host, stat_func, system_info_func,
     //
     function handle_get_crossdomainXML(req, res, u) {
         if (req.method === 'GET' && req.url === "/crossdomain.xml") {
-            res.writeHead(200, bosh_options.HTTP_GET_RESPONSE_HEADERS);
+            res.writeHead(200, bosh_options.http_get_response_headers(req.headers));
             var crossdomain = '<?xml version="1.0"?>';
             crossdomain += '<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">';
             crossdomain += '<cross-domain-policy>';
@@ -283,8 +281,7 @@ function HTTPServer(port, host, stat_func, system_info_func,
 
     function handle_unhandled_request(req, res, u) {
         log.trace("Invalid request, method: %s path: %s", req.method, u.pathname);
-        var _headers = { };
-        dutil.copy(_headers, bosh_options.HTTP_POST_RESPONSE_HEADERS);
+        var _headers = bosh_options.http_post_response_headers(req.headers);
         _headers['Content-Type'] = 'text/plain; charset=utf-8';
         res.writeHead(404, _headers);
         res.end();

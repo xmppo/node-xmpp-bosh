@@ -27,59 +27,19 @@
 
 var helper      = require('./helper.js');
 var path        = require('path');
+var bheaders    = require('./bosh-headers.js');
+
 var filename    = path.basename(path.normalize(__filename));
 var log         = require('./log.js').getLogger(filename);
 
 function BOSH_Options(opts) {
     var _opts = opts;
 
-	log.debug("Node.js version: %s", process.version);
-
-    this.HTTP_GET_RESPONSE_HEADERS = {
-        'Content-Type': 'text/html; charset=UTF-8',
-        'Cache-Control': 'no-cache, no-store',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
-        'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
-        'Access-Control-Max-Age': '14400'
-    };
-
-    this.HTTP_POST_RESPONSE_HEADERS = {
-        'Content-Type': 'text/xml; charset=UTF-8',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
-        'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
-        'Access-Control-Max-Age': '14400'
-    };
-
-    this.HTTP_OPTIONS_RESPONSE_HEADERS = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, x-requested-with, Set-Cookie',
-        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-        'Access-Control-Max-Age': '14400'
-    };
-
-    if (_opts.http_headers) {
-        helper.add_to_headers(this.HTTP_GET_RESPONSE_HEADERS, _opts.http_headers);
-        helper.add_to_headers(this.HTTP_POST_RESPONSE_HEADERS, _opts.http_headers);
-        helper.add_to_headers(this.HTTP_OPTIONS_RESPONSE_HEADERS, _opts.http_headers);
-    }
-
-    (function debug_print_HTTP_headers(header_types) {
-        header_types.forEach(function(header_type) {
-            var hobj = this[header_type];
-            Object.keys(hobj).forEach(function(header_key) {
-                log.debug("%s::%s => %s", header_type, header_key, hobj[header_key]);
-            });
-		}.bind(this));
-	}.bind(this))(['HTTP_GET_RESPONSE_HEADERS',
-		           'HTTP_POST_RESPONSE_HEADERS',
-		           'HTTP_OPTIONS_RESPONSE_HEADERS']
-                 );
+    log.debug("Node.js version: %s", process.version);
 
     this.path = _opts.path;
 
-	log.debug("path: %s", this.path);
+    log.debug("path: %s", this.path);
 
     // The maximum number of bytes that the BOSH server will
     // "hold" from the client.
@@ -116,6 +76,11 @@ function BOSH_Options(opts) {
     log.debug("MAX_STREAMS_PER_SESSION: %s", this.MAX_STREAMS_PER_SESSION);
     log.debug("PIDGIN_COMPATIBLE: %s",       this.PIDGIN_COMPATIBLE);
     log.debug("SYSTEM_INFO_PASSWORD: %s",    (this.SYSTEM_INFO_PASSWORD ? "[SET]" : "[NOT SET]"));
+
+    var bosh_headers = new bheaders.BOSHHeaders(_opts);
+    this.http_get_response_headers = bosh_headers.make_headers.bind(undefined, 'GET');
+    this.http_post_response_headers = bosh_headers.make_headers.bind(undefined, 'POST');
+    this.http_options_response_headers = bosh_headers.make_headers.bind(undefined, 'OPTIONS');
 }
 
 exports.BOSH_Options = BOSH_Options;

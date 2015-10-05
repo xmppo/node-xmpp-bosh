@@ -56,18 +56,6 @@ function $terminate(attrs) {
 
 
 // Begin HTTP header helpers
-function add_to_headers(dest, src) {
-    var acah = dest['Access-Control-Allow-Headers'].split(', ');
-    var k;
-    for (k in src) {
-        if (src.hasOwnProperty(k)) {
-            dest[k] = src[k];
-            acah.push(k);
-        }
-    }
-    dest['Access-Control-Allow-Headers'] = acah.join(', ');
-}
-
 function JSONPResponseProxy(req, res) {
     this.req_ = req;
     this.res_ = res;
@@ -213,7 +201,6 @@ function is_session_creation_packet(node) {
 
 // End misc. helpers
 
-exports.add_to_headers              = add_to_headers;
 exports.JSONPResponseProxy          = JSONPResponseProxy;
 exports.route_parse                 = route_parse;
 exports.save_terminate_condition_for_wait_time = save_terminate_condition_for_wait_time;
