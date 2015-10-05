@@ -36,6 +36,7 @@ exports.config = {
 	// The maximum number of active streams allowed per BOSH session
 	max_streams_per_session: 8, 
 
+	// Headers applied to every http response
 	http_headers: { }, 
 
 	// 
@@ -65,6 +66,10 @@ exports.config = {
 		// allow: [ /* 'jabber.org', /(.*\.)?jappix.com$/ */ ],
 		deny:  [ /* 'gmail.com' */ ]
 	},
+
+	// Set to 'true' if you want to use the value of the Origin request header
+	// instead of '*' in the 'Access-Control-Allow-Origin' response header.
+	echo_origin_in_cors_header: false,
 
 	// If the route attribute is set, allow connections ONLY if the
 	// route attribute matches the regex below. This can be used in

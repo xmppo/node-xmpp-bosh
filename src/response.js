@@ -82,7 +82,7 @@ Response.prototype = {
         }
         // According to the spec. we need to send a Content-Length header
         this._res.setHeader("Content-Length", Buffer.byteLength(msg, 'utf8'));
-		this._res.writeHead(200, this._options.HTTP_POST_RESPONSE_HEADERS);
+        this._res.writeHead(200, this._options.http_post_response_headers(this._res.request_headers));
 		this._res.end(msg);
 		log.debug("%s SENT(%s): %s", this._sid, this.rid, dutil.replace_promise(dutil.trim_promise(msg), '\n', ' '));
     },
