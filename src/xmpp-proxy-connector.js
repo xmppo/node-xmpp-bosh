@@ -35,7 +35,7 @@ var path		= require('path');
 var filename	= path.basename(path.normalize(__filename));
 var log			= require('./log.js').getLogger(filename);
 
-var DEFAULT_XMPP_PORT = 5222;
+var DEFAULT_XMPP_PORT = process.env.DEFAULT_XMPP_PORT || 5222;
 
 
 
