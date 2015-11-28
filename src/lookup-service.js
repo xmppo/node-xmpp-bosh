@@ -109,6 +109,7 @@ dutil.copy(XMPPLookupService.prototype, {
 
         var connectors = [
             try_connect_route,
+            try_connect_domain,
             try_connect_SRV_lookup,
             give_up_trying_to_connect
         ];
@@ -132,6 +133,17 @@ dutil.copy(XMPPLookupService.prototype, {
                 // Trigger the 'error' event.
                 on_error();
             }
+        }
+
+        function try_connect_domain(on_success, on_error) {
+            log.trace('try_connect_domain_lookup - %s, %s',self._domain_name, self._port);
+
+            // Then try a normal SRV lookup.
+            var emitter = SRV.connect(socket, [],
+                                      self._domain_name, self._port);
+
+            emitter.once('connect', on_success);
+            emitter.once('error',   on_error);
         }
 
         function try_connect_SRV_lookup(on_success, on_error) {
