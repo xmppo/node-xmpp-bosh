@@ -48,6 +48,10 @@ exports.config = {
 	// 
 	no_tls_domains: [ /* 'chat.facebook.com' */ ], 
 
+	// Set to 'true' to disable the '_xmpp-client._tcp' SRV lookup and
+	// just resolve the hostname instead.
+	no_srv: false,
+
 	//
 	// A list of domains (string or regex) to either deny or allow
 	// connections to.

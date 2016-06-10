@@ -102,6 +102,6 @@ exports.start_websocket = function(bosh_server, options, webSocket) {
 
 	// The connector is responsible for communicating with the real XMPP server.
 	// We allow different types of connectors to exist.
-	var conn = new xpc.Connector(ws_server, { });
+	var conn = new xpc.Connector(ws_server, options);
     return ws_server;
 };
