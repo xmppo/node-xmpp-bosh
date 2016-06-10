@@ -45,6 +45,7 @@ var STREAM_OPENED   = 2;
 var STREAM_CLOSED   = 3;
 
 var XML_STREAM_CLOSE = '</stream:stream>';
+var XML_CLOSE_TAG = '<close xmlns="urn:ietf:params:xml:ns:xmpp-framing" />';
 
 //
 // Important links:
@@ -61,6 +62,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
 
 	// Config options
 	var ping_interval = options.websocket_ping_interval;
+    var use_stream_tags = !!options.use_stream_tags;
 
     // State information for XMPP streams
     var sn_state = { };
@@ -104,12 +106,17 @@ exports.createServer = function(bosh_server, options, webSocket) {
     
     wsep.on('stream-added', function(sstate) {
         var to = sstate.to || '';
-        var ss_xml = new ltx.Element('open', {
-            'xmlns': 'urn:ietf:params:xml:ns:xmpp-framing',
+        var tagName = use_stream_tags ? 'stream:stream' : 'open';
+        var attributes = {
+            'xmlns': use_stream_tags ? 'jabber:client' : 'urn:ietf:params:xml:ns:xmpp-framing',
             'version': '1.0',
             'xml:lang': 'en',
             'from': to
-        }).toString();
+        }
+        if(use_stream_tags) {
+            attributes['xmlns:stream'] = 'http://etherx.jabber.org/streams'
+        }
+        var ss_xml = new ltx.Element(tagName, attributes).toString();
         if (sstate.has_open_stream_tag) {
             ss_xml = ss_xml.replace('/>', '>');
         }
@@ -253,7 +260,7 @@ exports.createServer = function(bosh_server, options, webSocket) {
                 } else {
                     // Raise the stream-terminate event on wsep
                     wsep.emit('stream-terminate', sstate);
-                    wsep.emit('response', '<close xmlns="urn:ietf:params:xml:ns:xmpp-framing" />', sstate);
+                    wsep.emit('response', use_stream_tags ? XML_STREAM_CLOSE : XML_CLOSE_TAG, sstate);
                     sstate.terminated = true;
                 }
                 return;
