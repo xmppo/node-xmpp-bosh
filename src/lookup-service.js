@@ -55,11 +55,12 @@ var log         = require('./log.js').getLogger(filename);
  *         the following fields: 'route'
  *
  */
-function XMPPLookupService(port, stream, route_filter) {
+function XMPPLookupService(port, stream, route_filter, no_srv) {
     this._domain_name = stream.to;
     this._port = port;
     this._route = stream.route;
     this._allow_connect = true;
+    this._no_srv = !!no_srv;
 
     var _special = {
         "gmail.com": "talk.google.com",
@@ -138,7 +139,7 @@ dutil.copy(XMPPLookupService.prototype, {
             log.trace('try_connect_SRV_lookup - %s, %s',self._domain_name, self._port);
 
             // Then try a normal SRV lookup.
-            var emitter = SRV.connect(socket, ['_xmpp-client._tcp'],
+            var emitter = SRV.connect(socket, self._no_srv ? [ ] : ['_xmpp-client._tcp'],
                                       self._domain_name, self._port);
 
             emitter.once('connect', on_success);

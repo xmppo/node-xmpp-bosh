@@ -76,6 +76,10 @@ function main() {
 			note: "The host on which to the BOSH server should listen for connections (default: 0.0.0.0)", 
 			value: -1
 		}, 
+		no_srv: {
+			note: "Pass 'true' to disable the '_xmpp-client._tcp' SRV lookup and just resolve the hostname instead",
+			value: -1
+		},
 		version: {
 			note: "Display version info and exit", 
 			value: false
@@ -155,6 +159,15 @@ function main() {
 	}
 	else {
 		server_options.logging = opts.logging.toUpperCase();
+	}
+
+	if (opts.no_srv === -1) {
+		if(!server_options.no_srv) {
+			server_options.no_srv = false;
+		}
+	}
+	else {
+		server_options.no_srv = true;
 	}
 
     // Set the default line trim length.
