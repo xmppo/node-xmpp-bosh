@@ -111,6 +111,8 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 
 * **websocket_ping_interval**: The period, in seconds, between sending WebSocket ping frames to each client. If a client fails to respond with a pong frame twice in a row, the connection will be closed. Set to 0 to disable sending of WebSocket pings. **(default: 30)**
 
+* **use_stream_tags**: Set to 'true' to enable the use of legacy `<stream>` tags instead of `<open>` and `<close>`. You may need this if your client is not up to date with the spec. **(default: false)**
+
 ### Architecture
 
 The project itself is divided into 4 main components as of now.
