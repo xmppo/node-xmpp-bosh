@@ -16,7 +16,7 @@
     "eventpipe": "~0.0.5",
     "dns-srv": "0.3.0",
     "semver": "~1.0.8",
-    "ws": "git+https://github.com/einaros/ws.git#f429240aea",
+    "ws": "~1.1.0",
     "node-lumberjack": "= 0.0.4",
     "ejs": "~0.8.3"
   },
