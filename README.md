@@ -111,6 +111,8 @@ Note: The **=** sign is important here. Replacing the equal sign with a space wi
 
 * **websocket_ping_interval**: The period, in seconds, between sending WebSocket ping frames to each client. If a client fails to respond with a pong frame twice in a row, the connection will be closed. Set to 0 to disable sending of WebSocket pings. **(default: 30)**
 
+* **use_stream_tags**: Set to 'true' to enable the use of legacy `<stream>` tags instead of `<open>` and `<close>`. You may need this if your client is not up to date with the spec. **(default: false)**
+
 ### Architecture
 
 The project itself is divided into 4 main components as of now.
@@ -238,7 +240,7 @@ if the *callback=* GET query parameter is supplied.
 
 * [http://xmpp.org/extensions/xep-0124.html](http://xmpp.org/extensions/xep-0124.html)
 * [http://xmpp.org/extensions/xep-0206.html](http://xmpp.org/extensions/xep-0206.html)
-* [http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00](http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00)
+* [https://tools.ietf.org/html/draft-ietf-xmpp-websocket-10](https://tools.ietf.org/html/draft-ietf-xmpp-websocket-10)
 
 
 ### Dependencies
@@ -278,6 +280,7 @@ if the *callback=* GET query parameter is supplied.
     4. libpurple (pidgin as a client)
     5. [strophe.js websocket client] (https://github.com/superfeedr/strophejs/tree/protocol-ed) [broken link]
     6. [node-xmpp] (https://github.com/astro/node-xmpp)
+    7. [stanza.io] (https://github.com/otalk/stanza.io)
 
 
 ### Tested using

@@ -98,5 +98,8 @@ exports.config = {
 	// client. If a client fails to respond with a pong frame twice in a row,
 	// the connection will be closed.
 	// Set to 0 to disable sending of WebSocket pings.
-	websocket_ping_interval: 30
+	websocket_ping_interval: 30,
+
+	// Set to true to use legacy <stream> tags instead of <open> and <close>
+	use_stream_tags: false,
 };
