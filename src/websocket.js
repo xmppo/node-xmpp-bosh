@@ -131,6 +131,12 @@ exports.createServer = function(bosh_server, options, webSocket) {
         if (sstate.has_open_stream_tag) {
             ss_xml = ss_xml.replace('/>', '>');
         }
+
+        if(!use_stream_tags) {
+            ss_xml = ss_xml.replace('<stream:stream', '<open');
+            ss_xml = ss_xml.replace('xmlns="jabber:client"', 'xmlns="urn:ietf:params:xml:ns:xmpp-framing"');
+        }
+
         log.trace("%s sending stream:stream tag on stream restart: %s", sstate.name, ss_xml);
         wsep.emit('response', ss_xml, sstate);
     });
